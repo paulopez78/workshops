@@ -1,7 +1,8 @@
 # Workshop
 
 # Setup: 
-* [Rider](https://www.jetbrains.com/rider/download/) or [Visual Studio 2019] ()
+* [Rider](https://www.jetbrains.com/rider/download/)
+* [Visual Studio](https://visualstudio.microsoft.com/downloads/)
 * [Docker](https://www.docker.com/products/docker-desktop) 
 * [Git](https://git-scm.com/downloads)
 
@@ -11,7 +12,6 @@
 - dotnet core and dotnet 5
 - new dotnet sdk (cli), new csproj file format.
 - dotnet aspnetcore, configuration, logging and DI.
-- c# 9 new features and functional programming
 
 ## Day 2
 - docker concepts
