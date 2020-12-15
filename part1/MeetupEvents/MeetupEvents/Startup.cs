@@ -22,10 +22,14 @@ namespace MeetupEvents
         {
             services.AddControllers();
 
-            var defaultCapacity = Configuration.GetValue<int>("MeetupEvents:DefaultCapacity");
-            var options = new MeetupEventsOptions(defaultCapacity);
-
-            services.AddSingleton(options);
+            // var defaultCapacity = Configuration.GetValue<int>("MeetupEvents:DefaultCapacity");
+            // var meetupOptions = new MeetupEventsOptions(100);
+            
+            // Configuration.GetSection("MeetupEvents").Bind(meetupOptions);
+            // var meetupOptions = Configuration.GetSection("MeetupEvents").Get<MeetupEventsOptions>();
+            
+            services.Configure<MeetupEventsOptions>(Configuration.GetSection("MeetupEvents"));
+            
             services.AddSingleton(new MeetupEventsDb());
             services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo {Title = "meetupevents", Version = "v1"}); });
         }

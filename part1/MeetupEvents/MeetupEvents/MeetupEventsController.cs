@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -8,20 +7,17 @@ namespace MeetupEvents
     [ApiController]
     public class MeetupEventsController : ControllerBase
     {
-        private MeetupEventsDb      _db;
-        private MeetupEventsOptions _options;
+        private readonly MeetupEventsDb      _db;
+        private readonly MeetupEventsOptions _options;
 
-        public MeetupEventsController(MeetupEventsDb db, MeetupEventsOptions options)
+        public MeetupEventsController(MeetupEventsDb db, IOptions<MeetupEventsOptions> options)
         {
             _db = db;
-            _options = options;
+            _options = options.Value;
         }
 
         [HttpGet]
-        public IActionResult Get()
-        {
-            return Ok(_db.GetAll());
-        }
+        public IActionResult Get() => Ok(_db.GetAll());
 
         [HttpGet("{id}")]
         public IActionResult Get(int id)
@@ -37,9 +33,9 @@ namespace MeetupEvents
         public IActionResult CreateEvent(MeetupEvent meetupEvent)
         {
             if (meetupEvent.Capacity == 0)
-                _db.Add(meetupEvent with { Capacity = _options.DefaultCapacity });
-            else
-                _db.Add(meetupEvent);
+                meetupEvent = meetupEvent with { Capacity = _options.DefaultCapacity };
+
+            _db.Add(meetupEvent);
 
             return Ok();
         }
@@ -59,5 +55,8 @@ namespace MeetupEvents
         }
     }
 
-    public record MeetupEventsOptions(int DefaultCapacity);
+    public record MeetupEventsOptions
+    {
+        public int DefaultCapacity { get; init; }
+    }
 }
