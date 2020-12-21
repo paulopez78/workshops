@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
-namespace MeetupEvents
+namespace Meetup.Scheduling
 {
     public class Startup
     {
@@ -26,7 +26,7 @@ namespace MeetupEvents
 
             services.Configure<MeetupEventsOptions>(Configuration.GetSection("MeetupEvents"));
 
-            services.AddSingleton(new MeetupEventsDb());
+            services.AddSingleton(new MeetupApplicationService());
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo {Title = "meetupevents", Version = "v1"});
