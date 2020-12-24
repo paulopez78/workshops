@@ -64,10 +64,6 @@ namespace Meetup.Scheduling
             return false;
         }
 
-        static bool HasCapacity(MeetupEventEntity meetupEvent)
-            => meetupEvent.Capacity > meetupEvent.InvitationResponse.Count(x => x.Going);
-
-
         public void IncreaseCapacity(IncreaseCapacity command)
         {
             var meetupEvent = Get(command.EventId);
@@ -87,6 +83,10 @@ namespace Meetup.Scheduling
                 MeetupEvents[command.EventId] = meetupEvent with { Capacity = newCapacity };
             }
         }
+        
+        static bool HasCapacity(MeetupEventEntity meetupEvent)
+            => meetupEvent.Capacity > meetupEvent.InvitationResponse.Count(x => x.Going);
+
     }
 
     public record AcceptInvitation(Guid EventId, Guid UserId);
@@ -95,11 +95,9 @@ namespace Meetup.Scheduling
 
     public record IncreaseCapacity(Guid EventId, int Capacity);
 
-
     public record ReduceCapacity(Guid EventId, int Capacity);
 
-    public record MeetupEventEntity(string Group, string Title, int Capacity, bool Published,
-        List<InvitationResponse> InvitationResponse);
+    public record MeetupEventEntity(string Group, string Title, int Capacity, bool Published, List<InvitationResponse> InvitationResponse);
 
     public record InvitationResponse(Guid UserId, bool Going);
 }
