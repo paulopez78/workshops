@@ -10,11 +10,19 @@ namespace Meetup.Scheduling.Domain
         public string Group { get; }
         public string Title { get; }
         public int Capacity { get; private set; }
-
         public MeetupEventStatus Status { get; private set; } = MeetupEventStatus.Draft;
 
-        private readonly List<Invitation> _invitations = new();
-        public IReadOnlyCollection<Invitation> Invitations => _invitations;
+        readonly List<Attendant> _attendants = new();
+        public IReadOnlyCollection<Attendant> Attendants => _attendants;
+
+        IReadOnlyList<Attendant> Going => Attendants.Where(x => x.Status == AttendantStatus.Going)
+            .OrderBy(x => x.ModifiedAt).ToList();
+
+        IReadOnlyList<Attendant> Waiting => Attendants.Where(x => x.Status == AttendantStatus.Waiting)
+            .OrderBy(x => x.ModifiedAt).ToList();
+
+        int FreeSpots => Capacity - Going.Count;
+        bool HasFreeSpots => FreeSpots > 0;
 
         public MeetupEvent(Guid id, string group, string title, int capacity)
         {
@@ -37,52 +45,69 @@ namespace Meetup.Scheduling.Domain
         }
 
         public void IncreaseCapacity(int increase)
-            => Capacity += increase;
+        {
+            Capacity += increase;
+            UpdateAttendantsList();
+        }
 
         public void ReduceCapacity(int decrease)
         {
             var newCapacity = Capacity - decrease;
-            Capacity = newCapacity < 1 ? 0 : newCapacity;
+            Capacity = newCapacity > 0 ? newCapacity : 0;
+            UpdateAttendantsList();
         }
 
         public void AcceptInvitation(Guid userId, DateTimeOffset acceptedAt)
         {
             EnforceScheduledStatus();
 
-            if (NotEnoughCapacity())
-                throw new ApplicationException("Meetup event doesnt have enough capacity");
+            var invitation = GetOrAddInvitation(userId);
 
-            var invitation = TryAddInvitation(userId);
-            invitation.Accept(acceptedAt);
+            if (HasFreeSpots)
+                invitation.Accept(acceptedAt);
+            else
+                invitation.Wait(acceptedAt);
         }
 
-
-        public void DeclineInvitation(Guid userId)
+        public void DeclineInvitation(Guid userId, DateTimeOffset declinedAt)
         {
             EnforceScheduledStatus();
-            
-            var invitation = TryAddInvitation(userId);
-            invitation.Decline();
+
+            var invitation = GetOrAddInvitation(userId);
+            invitation.Decline(declinedAt);
+
+            UpdateAttendantsList();
         }
-        
+
+        void UpdateAttendantsList()
+        {
+            if (HasFreeSpots)
+            {
+                Waiting.Take(FreeSpots).ToList().ForEach(x => x.Accept());
+            }
+            else
+            {
+                var reducedCapacity = Going.Count - Capacity;
+                Going.TakeLast(reducedCapacity).ToList().ForEach(x => x.Wait());
+            }
+        }
+
         void EnforceScheduledStatus()
         {
             if (Status is not MeetupEventStatus.Scheduled)
                 throw new ApplicationException("Meetup not scheduled");
         }
-        
-        Invitation TryAddInvitation(Guid userId)
+
+        Attendant GetOrAddInvitation(Guid userId)
         {
-            var invitation = Invitations.FirstOrDefault(x => x.UserId == userId);
+            var invitation = Attendants.FirstOrDefault(x => x.UserId == userId);
             if (invitation is not null) return invitation;
-            
-            invitation = new Invitation(userId);
-            _invitations.Add(invitation);
+
+            invitation = new Attendant(userId);
+            _attendants.Add(invitation);
 
             return invitation;
         }
-
-        bool NotEnoughCapacity() => Invitations.Count(x => x.Going) >= Capacity;
     }
 
     public enum MeetupEventStatus
@@ -92,27 +117,52 @@ namespace Meetup.Scheduling.Domain
         Cancelled
     }
 
-    public class Invitation
+    public class Attendant
     {
-        public Invitation(Guid userId)
+        public Attendant(Guid userId)
         {
             UserId = userId;
+            Status = AttendantStatus.Unknown;
         }
 
         public Guid Id { get; }
 
         public Guid UserId { get; }
 
-        public bool Going { get; private set; }
-        
-        public DateTimeOffset AcceptedAt { get; private set; }
+        public AttendantStatus Status { get; private set; }
+
+        public DateTimeOffset ModifiedAt { get; private set; }
+
+        public void Accept() =>
+            Status = AttendantStatus.Going;
 
         public void Accept(DateTimeOffset acceptedAt)
         {
-            AcceptedAt = acceptedAt;
-            Going = true;
+            ModifiedAt = acceptedAt;
+            Status = AttendantStatus.Going;
         }
 
-        public void Decline() => Going = false;
+        public void Wait() =>
+            Status = AttendantStatus.Waiting;
+
+        public void Wait(DateTimeOffset waitingAt)
+        {
+            ModifiedAt = waitingAt;
+            Status = AttendantStatus.Waiting;
+        }
+
+        public void Decline(DateTimeOffset declinedAt)
+        {
+            ModifiedAt = declinedAt;
+            Status = AttendantStatus.NotGoing;
+        }
+    }
+
+    public enum AttendantStatus
+    {
+        Unknown,
+        Going,
+        NotGoing,
+        Waiting
     }
 }

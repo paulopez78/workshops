@@ -46,7 +46,7 @@ namespace Meetup.Scheduling
                     DeclineInvitation cmd
                         => Execute(
                             cmd.Id,
-                            entity => entity.DeclineInvitation(cmd.UserId)
+                            entity => entity.DeclineInvitation(cmd.UserId, DateTimeOffset.Now)
                         ),
                     _
                         => throw new ApplicationException("command handler not found")

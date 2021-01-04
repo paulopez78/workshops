@@ -31,10 +31,18 @@ namespace Meetup.Scheduling.Data
         {
             await using var dbConnection = new Npgsql.NpgsqlConnection(ConnectionString);
 
-            var result = await dbConnection.QuerySingleOrDefaultAsync<MeetupEvent>(
-                "SELECT M.\"Id\", M.\"Title\", M.\"Group\", M.\"Capacity\", M.\"Status\", I.\"Id\", I.\"UserId\", I.\"Going\" "+
-                "FROM \"MeetupEvents\" M INNER JOIN \"Invitation\" I ON M.\"Id\" = I.\"MeetupEventId\" " +
+            MeetupEvent? result = null;
+
+            await dbConnection.QueryAsync<MeetupEvent, Attendant, MeetupEvent>(
+                "SELECT M.\"Id\", M.\"Title\", M.\"Group\", M.\"Capacity\", M.\"Status\", A.\"Id\", A.\"UserId\", A.\"Status\" " +
+                "FROM \"MeetupEvents\" M LEFT JOIN \"Attendant\" A ON M.\"Id\" = A.\"MeetupEventId\" " +
                 "WHERE M.\"Id\"=@id",
+                (evt, inv) =>
+                {
+                    result ??= evt;
+                    if (inv is not null) evt.Attendants.Add(inv);
+                    return result;
+                },
                 new {Id = id});
 
             return result;
@@ -46,23 +54,17 @@ namespace Meetup.Scheduling.Data
 
             var lookup = new Dictionary<Guid, MeetupEvent>();
 
-            await dbConnection.QueryAsync<MeetupEvent, Invitation, MeetupEvent>(
-                "SELECT M.\"Id\", M.\"Title\", M.\"Group\", M.\"Capacity\", M.\"Status\", I.\"Id\", I.\"UserId\", I.\"Going\" " +
-                "FROM \"MeetupEvents\" M INNER JOIN \"Invitation\" I ON M.\"Id\" = I.\"MeetupEventId\" " +
+            await dbConnection.QueryAsync<MeetupEvent, Attendant, MeetupEvent>(
+                "SELECT M.\"Id\", M.\"Title\", M.\"Group\", M.\"Capacity\", M.\"Status\", A.\"Id\", A.\"UserId\", A.\"Status\" " +
+                "FROM \"MeetupEvents\" M LEFT JOIN \"Attendant\" A ON M.\"Id\" = A.\"MeetupEventId\" " +
                 "WHERE M.\"Group\"=@group",
                 (evt, inv) =>
                 {
-                    if (lookup.TryGetValue(evt.Id, out var meetupEvent))
-                    {
-                        meetupEvent.Invitations.Add(inv);
-                    }
-                    else
-                    {
-                        evt.Invitations.Add(inv);
-                        lookup.Add(evt.Id, evt);
-                    }
-                
-                    return evt;
+                    if (!lookup.ContainsKey(evt.Id)) lookup.Add(evt.Id, evt);
+
+                    var meetupEvent = lookup[evt.Id];
+                    if (inv is not null) meetupEvent.Attendants.Add(inv);
+                    return meetupEvent;
                 },
                 new {Group = group});
 
@@ -70,15 +72,16 @@ namespace Meetup.Scheduling.Data
         }
     }
 
+    # nullable disable
     public record MeetupEvent
     {
         public Guid Id { get; }
         public string Title { get; }
         public string Group { get; }
         public int Capacity { get; }
-        public int Status { get; }
-        public List<Invitation> Invitations { get; } = new();
+        public string Status { get; }
+        public List<Attendant> Attendants{ get; } = new();
     }
 
-    public record Invitation(Guid Id, Guid UserId, bool Going);
+    public record Attendant(Guid Id, Guid UserId, string Status);
 }

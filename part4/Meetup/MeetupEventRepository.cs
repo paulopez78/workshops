@@ -30,7 +30,7 @@ namespace Meetup.Scheduling
         public MeetupEventPostgresRepository(MeetupDbContext dbContext) => DbContext = dbContext;
 
         public Task<Domain.MeetupEvent?> Load(Guid id)
-            => DbContext.MeetupEvents.Include(x => x.Invitations).SingleOrDefaultAsync(x => x.Id == id)!;
+            => DbContext.MeetupEvents.Include(x => x.Attendants).SingleOrDefaultAsync(x => x.Id == id)!;
 
         public async Task<Guid> Save(Domain.MeetupEvent entity)
         {

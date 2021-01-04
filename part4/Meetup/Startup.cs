@@ -29,7 +29,7 @@ namespace Meetup.Scheduling
             services.Configure<MeetupEventsOptions>(Configuration.GetSection("MeetupEvents"));
             var connectionString = Configuration.GetConnectionString("MeetupEvents");
             
-            services.AddEntityFrameworkNpgsql();
+            // services.AddEntityFrameworkNpgsql();
             services.AddDbContext<MeetupDbContext>(options => options.UseNpgsql(connectionString));
 
             //services.AddSingleton(new InMemoryDatabase());
