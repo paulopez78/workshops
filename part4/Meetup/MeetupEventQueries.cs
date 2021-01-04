@@ -40,7 +40,7 @@ namespace Meetup.Scheduling.Data
                 (evt, inv) =>
                 {
                     result ??= evt;
-                    if (inv is not null) evt.Attendants.Add(inv);
+                    if (inv is not null) result.Attendants.Add(inv);
                     return result;
                 },
                 new {Id = id});
@@ -75,12 +75,12 @@ namespace Meetup.Scheduling.Data
     # nullable disable
     public record MeetupEvent
     {
-        public Guid Id { get; }
-        public string Title { get; }
-        public string Group { get; }
-        public int Capacity { get; }
-        public string Status { get; }
-        public List<Attendant> Attendants{ get; } = new();
+        public Guid Id { get; set; }
+        public string Title { get; set; }
+        public string Group { get; set; }
+        public int Capacity { get; set; }
+        public string Status { get; set; }
+        public List<Attendant> Attendants{ get; set; } = new();
     }
 
     public record Attendant(Guid Id, Guid UserId, string Status);

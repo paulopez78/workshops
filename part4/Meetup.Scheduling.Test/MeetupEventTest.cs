@@ -129,7 +129,7 @@ namespace Meetup.Scheduling.Test
             // assert
             Assert.Throws<ApplicationException>(AcceptInvitation);
         }
-        
+
         [Fact]
         public void Given_Event_With_Capacity_When_Accept_Invitation_Then_User_Going()
         {
@@ -188,7 +188,7 @@ namespace Meetup.Scheduling.Test
             Assert.Equal(AttendantStatus.Going, entity.Attendants.Status(carla));
             Assert.Equal(AttendantStatus.Waiting, entity.Attendants.Status(joe));
         }
-        
+
         [Fact]
         public void Given_Meetup_Event_When_Increase_Capacity_Then_AttendantsList_Updated()
         {
@@ -210,11 +210,11 @@ namespace Meetup.Scheduling.Test
         Guid joe = NewGuid();
         Guid carla = NewGuid();
         Guid alice = NewGuid();
-        
-        static Domain.MeetupEvent CreateMeetupEvent(int capacity = 42)
+
+        static MeetupEvent CreateMeetupEvent(int capacity = 42)
             => new(NewGuid(), "netcorebcn", "microservices failures", capacity);
 
-        static Domain.MeetupEvent CreatePublishedEvent(int capacity = 2)
+        static MeetupEvent CreatePublishedEvent(int capacity = 2)
         {
             var meetupEvent = CreateMeetupEvent(capacity);
             meetupEvent.Publish();

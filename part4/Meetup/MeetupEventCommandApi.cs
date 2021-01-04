@@ -1,7 +1,5 @@
 using System;
-using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using Meetup.Scheduling.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using static Meetup.Scheduling.Commands.V1;
@@ -24,44 +22,39 @@ namespace Meetup.Scheduling
         }
 
         [HttpPost]
-        public Task<IActionResult> Post(string group, MeetupEvent meetupEvent) =>
-            Handle(
-                new Create(
-                    @group,
-                    meetupEvent.Title,
-                    meetupEvent.Capacity == 0 ? Options.DefaultCapacity : meetupEvent.Capacity)
-            );
+        public Task<IActionResult> Post(Create command) =>
+            Handle(command.Capacity == 0 ? command with {Capacity = Options.DefaultCapacity} : command);
 
         [HttpPut("{eventId:guid}/capacity/increase")]
-        public Task<IActionResult> IncreaseCapacity(Guid eventId, int capacity) =>
-            Handle(new IncreaseCapacity(eventId, capacity));
+        public Task<IActionResult> IncreaseCapacity(IncreaseCapacity command) =>
+            Handle(command);
 
         [HttpPut("{eventId:guid}/capacity/reduce")]
-        public Task<IActionResult> ReduceCapacity(Guid eventId, int capacity) =>
-            Handle(new ReduceCapacity(eventId, capacity));
+        public Task<IActionResult> ReduceCapacity(ReduceCapacity command) =>
+            Handle(command);
 
         [HttpPut("{eventId:guid}/publish")]
-        public Task<IActionResult> PublishEvent(Guid eventId) =>
-            Handle(new Publish(eventId));
+        public Task<IActionResult> PublishEvent(Publish command) =>
+            Handle(command);
 
         [HttpPut("{eventId:guid}/cancel")]
-        public Task<IActionResult> CancelEvent(Guid eventId) =>
-            Handle(new Cancel(eventId));
+        public Task<IActionResult> CancelEvent(Cancel command) =>
+            Handle(command);
 
         [HttpPut("{eventId:guid}/invitations/accept")]
-        public Task<IActionResult> Accept(Guid eventId, Guid userId) =>
-            Handle(new AcceptInvitation(eventId, userId));
+        public Task<IActionResult> Accept(AcceptInvitation command) =>
+            Handle(command);
 
         [HttpPut("{eventId:guid}/invitations/decline")]
-        public Task<IActionResult> Decline(Guid eventId, Guid userId) =>
-            Handle(new DeclineInvitation(eventId, userId));
+        public Task<IActionResult> Decline(DeclineInvitation command) =>
+            Handle(command);
 
         async Task<IActionResult> Handle(object command)
         {
             try
             {
                 var result = await ApplicationService.Handle(command);
-                return Ok(result);
+                return Ok(new CommandResult(result));
             }
             catch (ApplicationException e)
             {
@@ -70,7 +63,7 @@ namespace Meetup.Scheduling
         }
     }
 
-    public record MeetupEvent([Required] string Title, int Capacity = 100);
+    public record CommandResult(Guid EventId);
 
     public record MeetupEventsOptions
     {

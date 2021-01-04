@@ -20,32 +20,32 @@ namespace Meetup.Scheduling
                             cmd.Capacity)),
                     Publish cmd
                         => Execute(
-                            cmd.Id,
+                            cmd.EventId,
                             entity => entity.Publish()
                         ),
                     Cancel cmd
                         => Execute(
-                            cmd.Id,
+                            cmd.EventId,
                             entity => entity.Cancel()
                         ),
                     IncreaseCapacity cmd
                         => Execute(
-                            cmd.Id,
+                            cmd.EventId,
                             entity => entity.IncreaseCapacity(cmd.Capacity)
                         ),
                     ReduceCapacity cmd
                         => Execute(
-                            cmd.Id,
+                            cmd.EventId,
                             entity => entity.ReduceCapacity(cmd.Capacity)
                         ),
                     AcceptInvitation cmd
                         => Execute(
-                            cmd.Id,
+                            cmd.EventId,
                             entity => entity.AcceptInvitation(cmd.UserId, DateTimeOffset.Now)
                         ),
                     DeclineInvitation cmd
                         => Execute(
-                            cmd.Id,
+                            cmd.EventId,
                             entity => entity.DeclineInvitation(cmd.UserId, DateTimeOffset.Now)
                         ),
                     _

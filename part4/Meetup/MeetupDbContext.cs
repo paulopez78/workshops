@@ -11,11 +11,11 @@ namespace Meetup.Scheduling
         {
         }
 
-        public DbSet<Domain.MeetupEvent> MeetupEvents { get; set; }
+        public DbSet<MeetupEvent> MeetupEvents { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Domain.MeetupEvent>(b =>
+            modelBuilder.Entity<MeetupEvent>(b =>
             {
                 b.HasKey(p => p.Id);
                 b.Property(p => p.Title);

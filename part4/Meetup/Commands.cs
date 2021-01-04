@@ -8,17 +8,17 @@ namespace Meetup.Scheduling
         {
             public record Create(string Group, string Title, int Capacity);
 
-            public record Publish(Guid Id);
+            public record Publish(Guid EventId);
 
-            public record Cancel(Guid Id);
+            public record Cancel(Guid EventId);
 
-            public record AcceptInvitation(Guid Id, Guid UserId);
+            public record AcceptInvitation(Guid EventId, Guid UserId);
 
-            public record DeclineInvitation(Guid Id, Guid UserId);
+            public record DeclineInvitation(Guid EventId, Guid UserId);
 
-            public record IncreaseCapacity(Guid Id, int Capacity);
+            public record IncreaseCapacity(Guid EventId, int Capacity);
 
-            public record ReduceCapacity(Guid Id, int Capacity);
+            public record ReduceCapacity(Guid EventId, int Capacity);
         }
     }
 }
