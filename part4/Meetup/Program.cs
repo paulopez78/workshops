@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace Meetup.Scheduling
 {
-    public static class Program
+    public class Program
     {
         public static Task Main(string[] args)
         {

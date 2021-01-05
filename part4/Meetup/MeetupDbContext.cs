@@ -23,7 +23,12 @@ namespace Meetup.Scheduling
                 b.Property(p => p.Capacity);
                 b.Property(p => p.Status).HasConversion(new EnumToStringConverter<MeetupEventStatus>());
                 b.HasMany(p => p.Attendants);
+                b.Property(p => p.Version).IsConcurrencyToken();
+                // b.UseXminAsConcurrencyToken();
             });
+
+            //https://docs.microsoft.com/en-us/ef/core/modeling/concurrency?tabs=data-annotations
+            //https://www.npgsql.org/efcore/modeling/concurrency.html
 
             modelBuilder.Entity<Attendant>(b =>
             {
@@ -32,6 +37,7 @@ namespace Meetup.Scheduling
                 b.Property(p => p.UserId);
                 b.Property(p => p.Status).HasConversion(new EnumToStringConverter<AttendantStatus>());
                 b.Property(p => p.ModifiedAt);
+                // b.UseXminAsConcurrencyToken();
             });
         }
     }

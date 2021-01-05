@@ -10,6 +10,9 @@ namespace Meetup.Scheduling.Domain
         public string Group { get; }
         public string Title { get; }
         public int Capacity { get; private set; }
+
+        public int Version { get; private set; } = -1;
+        
         public MeetupEventStatus Status { get; private set; } = MeetupEventStatus.Draft;
 
         readonly List<Attendant> _attendants = new();
@@ -31,6 +34,9 @@ namespace Meetup.Scheduling.Domain
             Title = title;
             Capacity = capacity;
         }
+
+        public void IncreaseVersion() => Version += 1;
+        public void SetVersion(int version) => Version = version;
 
         public void Publish()
         {

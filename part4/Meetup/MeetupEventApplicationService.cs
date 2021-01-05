@@ -1,5 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Polly;
 using static Meetup.Scheduling.Commands.V1;
 
 namespace Meetup.Scheduling
@@ -7,9 +10,14 @@ namespace Meetup.Scheduling
     public class MeetupEventApplicationService
     {
         readonly IRepository MeetupEventRepository;
+        readonly ILogger<MeetupEventApplicationService> Logger;
 
-        public MeetupEventApplicationService(IRepository meetupEventRepository)
-            => MeetupEventRepository = meetupEventRepository;
+        public MeetupEventApplicationService(IRepository meetupEventRepository,
+            ILogger<MeetupEventApplicationService> logger)
+        {
+            MeetupEventRepository = meetupEventRepository;
+            Logger = logger;
+        }
 
         public Task<Guid> Handle(object command)
             =>
@@ -54,13 +62,31 @@ namespace Meetup.Scheduling
 
         async Task<Guid> Execute(Guid id, Action<Domain.MeetupEvent> action)
         {
-            var entity = await MeetupEventRepository.Load(id);
-            if (entity is null) throw new ApplicationException($"Entity not found {id}");
+            Random jitterer = new();
+            var retries = 10;
 
-            action(entity);
+            var retryPolicy = Policy
+                .Handle<DbUpdateConcurrencyException>()
+                .WaitAndRetryAsync(retries, _ => TimeSpan.FromMilliseconds(jitterer.Next(100, 250)),
+                    (exception, retrycount) =>
+                    {
+                        Logger.LogError(exception, $"Concurrency exception, Retrying {retrycount} of {retries}");
+                    }
+                );
 
-            await MeetupEventRepository.Save(entity);
-            return id;
+            return await retryPolicy.ExecuteAsync(Execute);
+
+            async Task<Guid> Execute()
+            {
+                var entity = await MeetupEventRepository.Load(id);
+                if (entity is null) throw new ApplicationException($"Entity not found {id}");
+
+                action(entity);
+
+                await MeetupEventRepository.Save(entity);
+
+                return id;
+            }
         }
     }
 }

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Polly;
 
 namespace Meetup.Scheduling
 {
@@ -23,22 +25,50 @@ namespace Meetup.Scheduling
         }
     }
 
-    public class MeetupEventPostgresRepository: IRepository
+    public class MeetupEventPostgresRepository : IRepository
     {
         readonly MeetupDbContext DbContext;
+        private readonly ILogger<MeetupEventPostgresRepository> Logger;
 
-        public MeetupEventPostgresRepository(MeetupDbContext dbContext) => DbContext = dbContext;
+        public MeetupEventPostgresRepository(MeetupDbContext dbContext, ILogger<MeetupEventPostgresRepository> logger)
+        {
+            DbContext = dbContext;
+            Logger = logger;
+        }
 
         public Task<Domain.MeetupEvent?> Load(Guid id)
             => DbContext.MeetupEvents.Include(x => x.Attendants).SingleOrDefaultAsync(x => x.Id == id)!;
 
         public async Task<Guid> Save(Domain.MeetupEvent entity)
         {
-            var dbEntity = await Load(entity.Id);
-            if (dbEntity is null) await DbContext.MeetupEvents.AddAsync(entity);
-            
-            await DbContext.SaveChangesAsync();
-            return entity.Id;
+            Random jitterer = new();
+            var retries = 10;
+
+            var retryPolicy = Policy
+                .Handle<DbUpdateConcurrencyException>()
+                .WaitAndRetryAsync(retries, _ => TimeSpan.FromMilliseconds(jitterer.Next(100, 250)),
+                    (exception, retrycount) =>
+                    {
+                        Logger.LogError(exception, $"Concurrency exception, Retrying {retrycount} of {retries}");
+                    }
+                );
+
+            // return await retryPolicy.ExecuteAsync(Save);
+            return await Save();
+
+            async Task<Guid> Save()
+            {
+                var dbEntity = await Load(entity.Id);
+
+                if (dbEntity is null)
+                    await DbContext.MeetupEvents.AddAsync(entity);
+
+                if (DbContext.ChangeTracker.HasChanges())
+                    entity.IncreaseVersion();
+
+                await DbContext.SaveChangesAsync();
+                return entity.Id;
+            }
         }
     }
 

@@ -6,18 +6,26 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
+using Xunit.Abstractions;
 using static Meetup.Scheduling.Commands.V1;
 using static Meetup.Scheduling.Test.MeetupSchedulingTestExtensions;
 
 namespace Meetup.Scheduling.Test
 {
-    public class MeetupSchedulingTest : IClassFixture<WebApplicationFactory<Startup>>
+    public class MeetupSchedulingTest : IClassFixture<WebApiFixture>, IDisposable
     {
+        readonly WebApiFixture Fixture;
         readonly HttpClient Client;
 
-        public MeetupSchedulingTest(WebApplicationFactory<Startup> fixture) => Client = fixture.CreateClient();
+        public MeetupSchedulingTest(WebApiFixture fixture, ITestOutputHelper output)
+        {
+            Fixture = fixture;
+            Fixture.Output = output;
+            Client = Fixture.CreateClient();
+        }
+
+        public void Dispose() => Fixture.Output = null;
 
         [Fact]
         public async Task Should_Create_Meetup_Event()
@@ -102,6 +110,32 @@ namespace Meetup.Scheduling.Test
             Assert.Equal("Going", meetupEvent.Attendants.Status(carla));
             Assert.Equal("Going", meetupEvent.Attendants.Status(alice));
             Assert.Equal("Waiting", meetupEvent.Attendants.Status(joe));
+        }
+
+        [Fact]
+        public async Task Should_Concurrency()
+        {
+            // arrange
+            var eventId = await Client.CreateMeetup(capacity: 2).ThenOk();
+            await Client.Publish(eventId).ThenOk();
+
+            await Task.WhenAll(
+                Accept(carla),
+                Accept(alice),
+                Accept(joe)
+            );
+
+            // assert
+            var meetupEvent = await Client.Get(eventId);
+            Assert.Equal(3, meetupEvent.Attendants?.Count);
+            Assert.Equal(1, meetupEvent.Attendants?.Count(x => x.Status == "Waiting"));
+            
+            async Task Accept(Guid userId)
+            {
+                // var jitter = TimeSpan.FromMilliseconds(new Random().Next(0, 1000));
+                //await Task.Delay(jitter);
+                await Client.AcceptInvitation(eventId, userId);
+            }
         }
 
         static Guid joe = Guid.NewGuid();
