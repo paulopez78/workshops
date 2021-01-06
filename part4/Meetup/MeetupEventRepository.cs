@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Polly;
 
 namespace Meetup.Scheduling
 {
@@ -27,7 +26,7 @@ namespace Meetup.Scheduling
 
     public class MeetupEventPostgresRepository : IRepository
     {
-        readonly MeetupDbContext DbContext;
+        readonly         MeetupDbContext                        DbContext;
         private readonly ILogger<MeetupEventPostgresRepository> Logger;
 
         public MeetupEventPostgresRepository(MeetupDbContext dbContext, ILogger<MeetupEventPostgresRepository> logger)
@@ -41,34 +40,16 @@ namespace Meetup.Scheduling
 
         public async Task<Guid> Save(Domain.MeetupEvent entity)
         {
-            Random jitterer = new();
-            var retries = 10;
+            var dbEntity = await Load(entity.Id);
 
-            var retryPolicy = Policy
-                .Handle<DbUpdateConcurrencyException>()
-                .WaitAndRetryAsync(retries, _ => TimeSpan.FromMilliseconds(jitterer.Next(100, 250)),
-                    (exception, retrycount) =>
-                    {
-                        Logger.LogError(exception, $"Concurrency exception, Retrying {retrycount} of {retries}");
-                    }
-                );
+            if (dbEntity is null)
+                await DbContext.MeetupEvents.AddAsync(entity);
 
-            // return await retryPolicy.ExecuteAsync(Save);
-            return await Save();
+            if (DbContext.ChangeTracker.HasChanges())
+                entity.IncreaseVersion();
 
-            async Task<Guid> Save()
-            {
-                var dbEntity = await Load(entity.Id);
-
-                if (dbEntity is null)
-                    await DbContext.MeetupEvents.AddAsync(entity);
-
-                if (DbContext.ChangeTracker.HasChanges())
-                    entity.IncreaseVersion();
-
-                await DbContext.SaveChangesAsync();
-                return entity.Id;
-            }
+            await DbContext.SaveChangesAsync();
+            return entity.Id;
         }
     }
 

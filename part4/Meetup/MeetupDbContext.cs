@@ -38,6 +38,8 @@ namespace Meetup.Scheduling
                 b.Property(p => p.Status).HasConversion(new EnumToStringConverter<AttendantStatus>());
                 b.Property(p => p.ModifiedAt);
                 // b.UseXminAsConcurrencyToken();
+                b.HasIndex("UserId", "MeetupEventId")
+                    .IsUnique();
             });
         }
     }

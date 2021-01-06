@@ -16,7 +16,7 @@ namespace Meetup.Scheduling.Test
     public class MeetupSchedulingTest : IClassFixture<WebApiFixture>, IDisposable
     {
         readonly WebApiFixture Fixture;
-        readonly HttpClient Client;
+        readonly HttpClient    Client;
 
         public MeetupSchedulingTest(WebApiFixture fixture, ITestOutputHelper output)
         {
@@ -121,6 +121,7 @@ namespace Meetup.Scheduling.Test
 
             await Task.WhenAll(
                 Accept(carla),
+                Accept(carla),
                 Accept(alice),
                 Accept(joe)
             );
@@ -129,26 +130,26 @@ namespace Meetup.Scheduling.Test
             var meetupEvent = await Client.Get(eventId);
             Assert.Equal(3, meetupEvent.Attendants?.Count);
             Assert.Equal(1, meetupEvent.Attendants?.Count(x => x.Status == "Waiting"));
-            
+
             async Task Accept(Guid userId)
             {
                 // var jitter = TimeSpan.FromMilliseconds(new Random().Next(0, 1000));
-                //await Task.Delay(jitter);
+                // await Task.Delay(jitter);
                 await Client.AcceptInvitation(eventId, userId);
             }
         }
 
-        static Guid joe = Guid.NewGuid();
+        static Guid joe   = Guid.NewGuid();
         static Guid carla = Guid.NewGuid();
         static Guid alice = Guid.NewGuid();
     }
 
     public static class MeetupSchedulingTestExtensions
     {
-        public const string Group = "netcorebcn";
-        public const string Title = "Microservices failures";
-        public const int Capacity = 2;
-        static string BaseUrl = $"/api/meetup/{Group}/events";
+        public const string Group    = "netcorebcn";
+        public const string Title    = "Microservices failures";
+        public const int    Capacity = 2;
+        static       string BaseUrl  = $"/api/meetup/{Group}/events";
 
         public static Task<HttpResponseMessage> CreateMeetup(this HttpClient client, string title = Title,
             int capacity = Capacity) =>
