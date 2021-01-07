@@ -5,6 +5,7 @@ using Meetup.Scheduling.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Polly;
+using Polly.Retry;
 using static Meetup.Scheduling.Commands.V1;
 
 namespace Meetup.Scheduling
@@ -18,7 +19,7 @@ namespace Meetup.Scheduling
             ILogger<MeetupEventApplicationService> logger)
         {
             MeetupEventRepository = meetupEventRepository;
-            Logger = logger;
+            Logger                = logger;
         }
 
         public Task<Guid> Handle(object command)
@@ -26,8 +27,13 @@ namespace Meetup.Scheduling
                 command switch
                 {
                     Create cmd
-                        => MeetupEventRepository.Save(new Domain.MeetupEvent(Guid.NewGuid(), cmd.Group, cmd.Title,
+                        => MeetupEventRepository.Save(new MeetupEvent(Guid.NewGuid(), cmd.Group, cmd.Title,
                             cmd.Capacity)),
+                    UpdateDetails cmd
+                        => Handle(
+                            cmd.EventId,
+                            entity => entity.UpdateDetails(cmd.Title)
+                        ),
                     Publish cmd
                         => Handle(
                             cmd.EventId,
@@ -62,12 +68,23 @@ namespace Meetup.Scheduling
                         => throw new ApplicationException("command handler not found")
                 };
 
-        async Task<Guid> Handle(Guid id, Action<Domain.MeetupEvent> action)
+        async Task<Guid> Handle(Guid id, Action<MeetupEvent> action)
         {
-            // Random jitterer = new();
-            var retries = 3;
+            var entity = await MeetupEventRepository.Load(id);
+            if (entity is null) throw new ApplicationException($"Entity not found {id}");
 
-            return await Policy
+            action(entity);
+
+            await MeetupEventRepository.Save(entity);
+
+            return id;
+        }
+
+        Task<Guid> HandleWithRetry(Guid id, Action<MeetupEvent> action)
+        {
+            return RetryConcurrentUpdate().ExecuteAsync(() => Handle(id, action));
+
+            AsyncRetryPolicy RetryConcurrentUpdate(int retries = 3) => Policy
                 .Handle<DbUpdateConcurrencyException>()
                 // .WaitAndRetryAsync(retries, _ => TimeSpan.FromMilliseconds(jitterer.Next(0, 0)),
                 .RetryAsync(retries,
@@ -79,20 +96,7 @@ namespace Meetup.Scheduling
                         if (exception is not DbUpdateConcurrencyException ex) return;
                         var entry = ex.Entries.FirstOrDefault(x => x.Entity is MeetupEvent);
                         entry?.OriginalValues.SetValues(entry.GetDatabaseValues());
-                    }
-                ).ExecuteAsync(Execute);
-
-            async Task<Guid> Execute()
-            {
-                var entity = await MeetupEventRepository.Load(id);
-                if (entity is null) throw new ApplicationException($"Entity not found {id}");
-
-                action(entity);
-
-                await MeetupEventRepository.Save(entity);
-
-                return id;
-            }
+                    });
         }
     }
 }

@@ -6,6 +6,9 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Polly;
+using Polly.Extensions.Http;
+using Polly.Retry;
 using Xunit;
 using Xunit.Abstractions;
 using static Meetup.Scheduling.Commands.V1;
@@ -20,9 +23,9 @@ namespace Meetup.Scheduling.Test
 
         public MeetupSchedulingTest(WebApiFixture fixture, ITestOutputHelper output)
         {
-            Fixture = fixture;
+            Fixture        = fixture;
             Fixture.Output = output;
-            Client = Fixture.CreateClient();
+            Client         = Fixture.CreateClient();
         }
 
         public void Dispose() => Fixture.Output = null;
@@ -113,14 +116,14 @@ namespace Meetup.Scheduling.Test
         }
 
         [Fact]
-        public async Task Should_Concurrency()
+        public async Task Should_Retry_When_Concurrency_Conflict_Detected()
         {
             // arrange
             var eventId = await Client.CreateMeetup(capacity: 2).ThenOk();
             await Client.Publish(eventId).ThenOk();
 
             await Task.WhenAll(
-                Accept(carla),
+                // Accept(carla),
                 Accept(carla),
                 Accept(alice),
                 Accept(joe)
@@ -131,12 +134,40 @@ namespace Meetup.Scheduling.Test
             Assert.Equal(3, meetupEvent.Attendants?.Count);
             Assert.Equal(1, meetupEvent.Attendants?.Count(x => x.Status == "Waiting"));
 
-            async Task Accept(Guid userId)
-            {
-                // var jitter = TimeSpan.FromMilliseconds(new Random().Next(0, 1000));
-                // await Task.Delay(jitter);
-                await Client.AcceptInvitation(eventId, userId);
-            }
+            Task Accept(Guid userId) =>
+                RandomJitter(() => Client.AcceptInvitation(eventId, userId), 0);
+        }
+
+        [Fact]
+        public async Task Should_Throw_When_Concurrency_Conflict_Detected()
+        {
+            // arrange
+            var expectedTitle = "Microservices successful case study";
+            var eventId       = await Client.CreateMeetup(capacity: 2).ThenOk();
+            await Client.Publish(eventId).ThenOk();
+
+            await Task.WhenAll(
+                Accept(carla),
+                UpdateTitle(expectedTitle)
+            );
+
+            // assert
+            var meetupEvent = await Client.Get(eventId);
+            Assert.Equal("Going", meetupEvent.Attendants.Status(carla));
+            Assert.Equal(expectedTitle, meetupEvent.Title);
+
+            Task Accept(Guid userId) =>
+                RandomJitter(() => Client.AcceptInvitation(eventId, userId), 0);
+
+            Task UpdateTitle(string title) =>
+                RandomJitter(() => Client.UpdateTitle(eventId, title), 0);
+        }
+
+        async Task RandomJitter(Func<Task> action, int max = 1000)
+        {
+            var jitter = TimeSpan.FromMilliseconds(new Random().Next(0, max));
+            await Task.Delay(jitter);
+            await action();
         }
 
         static Guid joe   = Guid.NewGuid();
@@ -149,11 +180,15 @@ namespace Meetup.Scheduling.Test
         public const string Group    = "netcorebcn";
         public const string Title    = "Microservices failures";
         public const int    Capacity = 2;
-        static       string BaseUrl  = $"/api/meetup/{Group}/events";
+
+        static string BaseUrl = $"/api/meetup/{Group}/events";
 
         public static Task<HttpResponseMessage> CreateMeetup(this HttpClient client, string title = Title,
             int capacity = Capacity) =>
             client.PostAsync(BaseUrl, Serialize(new Create(Group, title, capacity)));
+
+        public static Task<HttpResponseMessage> UpdateTitle(this HttpClient client, Guid eventId, string title)
+            => client.Put($"details", eventId, new UpdateDetails(eventId, title));
 
         public static Task<HttpResponseMessage> Publish(this HttpClient client, Guid eventId)
             => client.Put($"publish", eventId, new Publish(eventId));
@@ -189,12 +224,20 @@ namespace Meetup.Scheduling.Test
         }
 
         static Task<HttpResponseMessage> Put(this HttpClient client, string url, Guid eventId, object command)
-            => client.PutAsync($"{BaseUrl}/{eventId}/{url}", Serialize(command));
+            => Retry().ExecuteAsync(() => client.PutAsync($"{BaseUrl}/{eventId}/{url}", Serialize(command)));
 
         static StringContent Serialize(object command)
             => new(JsonSerializer.Serialize(command), Encoding.UTF8, "application/json");
 
         public static string Status(this IEnumerable<Data.Attendant> attendants, Guid userId) =>
             attendants.FirstOrDefault(x => x.UserId == userId)?.Status;
+
+        static AsyncRetryPolicy<HttpResponseMessage> Retry()
+        {
+            Random jitterer = new();
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .WaitAndRetryAsync(5, _ => TimeSpan.FromMilliseconds(jitterer.Next(0, 100)));
+        }
     }
 }

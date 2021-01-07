@@ -6,17 +6,17 @@ namespace Meetup.Scheduling.Domain
 {
     public class MeetupEvent
     {
-        public Guid Id { get; }
-        public string Group { get; }
-        public string Title { get; }
-        public int Capacity { get; private set; }
+        public Guid   Id       { get; }
+        public string Group    { get; }
+        public string Title    { get; private set; }
+        public int    Capacity { get; private set; }
 
         public int Version { get; private set; } = -1;
-        
+
         public MeetupEventStatus Status { get; private set; } = MeetupEventStatus.Draft;
 
-        readonly List<Attendant> _attendants = new();
-        public IReadOnlyCollection<Attendant> Attendants => _attendants;
+        readonly List<Attendant>                _attendants = new();
+        public   IReadOnlyCollection<Attendant> Attendants => _attendants;
 
         IReadOnlyList<Attendant> Going => Attendants.Where(x => x.Status == AttendantStatus.Going)
             .OrderBy(x => x.ModifiedAt).ToList();
@@ -24,19 +24,24 @@ namespace Meetup.Scheduling.Domain
         IReadOnlyList<Attendant> Waiting => Attendants.Where(x => x.Status == AttendantStatus.Waiting)
             .OrderBy(x => x.ModifiedAt).ToList();
 
-        int FreeSpots => Capacity - Going.Count;
+        int  FreeSpots    => Capacity - Going.Count;
         bool HasFreeSpots => FreeSpots > 0;
 
         public MeetupEvent(Guid id, string group, string title, int capacity)
         {
-            Id = id;
-            Group = group;
-            Title = title;
+            Id       = id;
+            Group    = group;
+            Title    = title;
             Capacity = capacity;
         }
 
         public void IncreaseVersion() => Version += 1;
-        public void SetVersion(int version) => Version = version;
+
+        public void UpdateDetails(string title)
+        {
+            if (string.IsNullOrEmpty(title)) throw new ArgumentNullException(nameof(title));
+            Title = title;
+        }
 
         public void Publish()
         {
@@ -145,7 +150,7 @@ namespace Meetup.Scheduling.Domain
         public void Accept(DateTimeOffset acceptedAt)
         {
             ModifiedAt = acceptedAt;
-            Status = AttendantStatus.Going;
+            Status     = AttendantStatus.Going;
         }
 
         public void Wait() =>
@@ -154,13 +159,13 @@ namespace Meetup.Scheduling.Domain
         public void Wait(DateTimeOffset waitingAt)
         {
             ModifiedAt = waitingAt;
-            Status = AttendantStatus.Waiting;
+            Status     = AttendantStatus.Waiting;
         }
 
         public void Decline(DateTimeOffset declinedAt)
         {
             ModifiedAt = declinedAt;
-            Status = AttendantStatus.NotGoing;
+            Status     = AttendantStatus.NotGoing;
         }
     }
 

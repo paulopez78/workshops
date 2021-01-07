@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using static Meetup.Scheduling.Commands.V1;
 
@@ -11,19 +13,23 @@ namespace Meetup.Scheduling
     public class MeetupEventCommandApi : ControllerBase
     {
         readonly MeetupEventApplicationService ApplicationService;
-        readonly MeetupEventsOptions Options;
+        readonly MeetupEventsOptions           Options;
 
         public MeetupEventCommandApi(
             MeetupEventApplicationService applicationService,
             IOptions<MeetupEventsOptions> options)
         {
             ApplicationService = applicationService;
-            Options = options.Value;
+            Options            = options.Value;
         }
 
         [HttpPost]
         public Task<IActionResult> Post(Create command) =>
             Handle(command.Capacity == 0 ? command with {Capacity = Options.DefaultCapacity} : command);
+
+        [HttpPut("{eventId:guid}/details")]
+        public Task<IActionResult> UpdateDetails(UpdateDetails command) =>
+            Handle(command);
 
         [HttpPut("{eventId:guid}/capacity/increase")]
         public Task<IActionResult> IncreaseCapacity(IncreaseCapacity command) =>
@@ -59,6 +65,11 @@ namespace Meetup.Scheduling
             catch (ApplicationException e)
             {
                 return BadRequest(e.Message);
+            }
+
+            catch (DbUpdateConcurrencyException e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
     }

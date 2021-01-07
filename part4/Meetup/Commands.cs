@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Meetup.Scheduling
 {
@@ -6,7 +7,9 @@ namespace Meetup.Scheduling
     {
         public static class V1
         {
-            public record Create(string Group, string Title, int Capacity);
+            public record Create(string Group, [Required] string Title, int Capacity);
+
+            public record UpdateDetails(Guid EventId, [Required] string Title);
 
             public record Publish(Guid EventId);
 
