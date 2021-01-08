@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meetup.Scheduling", "Meetup\Meetup.Scheduling.csproj", "{45CEC4E3-0F12-4160-8CC7-0854CC4D17DF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meetup.Scheduling", "Meetup.Scheduling\Meetup.Scheduling.csproj", "{45CEC4E3-0F12-4160-8CC7-0854CC4D17DF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meetup.Scheduling.Test", "Meetup.Scheduling.Test\Meetup.Scheduling.Test.csproj", "{50653703-77DC-4A32-B3A3-75037C014D70}"
 EndProject

@@ -23,7 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Meetup\Meetup.Scheduling.csproj" />
+      <ProjectReference Include="..\Meetup.Scheduling\Meetup.Scheduling.csproj" />
     </ItemGroup>
 
 </Project>
