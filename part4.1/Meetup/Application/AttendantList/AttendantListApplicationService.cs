@@ -23,25 +23,25 @@ namespace Meetup.Scheduling.Application.AttendantList
                 command switch
                 {
                     CreateAttendantList cmd
-                        => Repository.Save(new Domain.AttendantList(Guid.NewGuid(), cmd.meetupEventId, cmd.Capacity)),
+                        => Repository.Save(new Domain.AttendantList(Guid.NewGuid(), cmd.MeetupEventId, cmd.Capacity)),
                     IncreaseCapacity cmd
                         => Handle(
-                            cmd.EventId,
+                            cmd.AttendantListId,
                             entity => entity.IncreaseCapacity(cmd.Capacity)
                         ),
                     ReduceCapacity cmd
                         => Handle(
-                            cmd.EventId,
+                            cmd.AttendantListId,
                             entity => entity.ReduceCapacity(cmd.Capacity)
                         ),
                     AcceptInvitation cmd
                         => Handle(
-                            cmd.EventId,
+                            cmd.AttendantListId,
                             entity => entity.AcceptInvitation(cmd.UserId, DateTimeOffset.Now)
                         ),
                     DeclineInvitation cmd
                         => Handle(
-                            cmd.EventId,
+                            cmd.AttendantListId,
                             entity => entity.DeclineInvitation(cmd.UserId, DateTimeOffset.Now)
                         ),
                     _

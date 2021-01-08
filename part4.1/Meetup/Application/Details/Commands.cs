@@ -7,7 +7,7 @@ namespace Meetup.Scheduling.Application.Details
     {
         public static class V1
         {
-            public record Create(string Group, [Required] string Title, int Capacity);
+            public record Create(string Group, [Required] string Title);
 
             public record UpdateDetails(Guid EventId, [Required] string Title);
 

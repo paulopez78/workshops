@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Meetup.Scheduling.Application
+namespace Meetup.Scheduling.Infrastructure
 {
-    [Route("/api/meetup/{group}/events")]
+    [Route("/api/meetup/")]
     [ApiController]
     public abstract class MeetupController: ControllerBase
     {

@@ -1,58 +1,34 @@
-using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+using Meetup.Scheduling.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using static Meetup.Scheduling.Application.AttendantList.Commands.V1;
 
 namespace Meetup.Scheduling.Application.AttendantList
 {
-    [Route("/api/meetup/{group}/events")]
-    [ApiController]
-    public class AttendantListCommandApi : ControllerBase
+    public class AttendantListCommandApi : MeetupController 
     {
         readonly AttendantListApplicationService ApplicationService;
 
-        public AttendantListCommandApi(AttendantListApplicationService applicationService)
-        {
-            ApplicationService = applicationService;
-        }
+        public AttendantListCommandApi(AttendantListApplicationService applicationService) => ApplicationService = applicationService;
 
-        [HttpPost("{eventId:guid}/attendants")]
+        [HttpPost("attendants")]
         public Task<IActionResult> Post(CreateAttendantList command) =>
-            Handle(command);
+            Handle(ApplicationService, command);
 
-        [HttpPut("{eventId:guid}/capacity/increase")]
+        [HttpPut("attendants/capacity/increase")]
         public Task<IActionResult> IncreaseCapacity(IncreaseCapacity command) =>
-            Handle(command);
+            Handle(ApplicationService, command);
 
-        [HttpPut("{eventId:guid}/capacity/reduce")]
+        [HttpPut("attendants/capacity/reduce")]
         public Task<IActionResult> ReduceCapacity(ReduceCapacity command) =>
-            Handle(command);
+            Handle(ApplicationService, command);
 
-        [HttpPut("{eventId:guid}/attendants/accept")]
+        [HttpPut("attendants/accept")]
         public Task<IActionResult> Accept(AcceptInvitation command) =>
-            Handle(command);
+            Handle(ApplicationService, command);
 
-        [HttpPut("{eventId:guid}/attendants/decline")]
+        [HttpPut("attendants/decline")]
         public Task<IActionResult> Decline(DeclineInvitation command) =>
-            Handle(command);
-
-        async Task<IActionResult> Handle(object command)
-        {
-            try
-            {
-                var result = await ApplicationService.Handle(command);
-                return Ok(new CommandResult(result));
-            }
-            catch (ApplicationException e)
-            {
-                return BadRequest(e.Message);
-            }
-            catch (DbUpdateConcurrencyException e)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
-            }
-        }
+            Handle(ApplicationService, command);
     }
 }

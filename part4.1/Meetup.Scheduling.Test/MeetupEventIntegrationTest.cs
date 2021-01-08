@@ -11,9 +11,8 @@ using Polly.Extensions.Http;
 using Polly.Retry;
 using Xunit;
 using Xunit.Abstractions;
-using Meetup.Scheduling.Application;
-using Meetup.Scheduling.Application.Details;
 using Meetup.Scheduling.Application.Queries;
+using Meetup.Scheduling.Infrastructure;
 using static Meetup.Scheduling.Application.Details.Commands.V1;
 using static Meetup.Scheduling.Application.AttendantList.Commands.V1;
 using static Meetup.Scheduling.Test.MeetupSchedulingTestExtensions;
@@ -63,11 +62,11 @@ namespace Meetup.Scheduling.Test
         public async Task Should_Accept_Invitation()
         {
             // arrange
-            var eventId = await Client.CreateMeetup().ThenOk();
-            await Client.Publish(eventId).ThenOk();
+            var eventId         = await Client.CreateMeetup().ThenOk();
+            var attendantListId = await Client.CreateAttendantList(eventId).ThenOk();
 
             // act
-            await Client.AcceptInvitation(eventId, joe).ThenOk();
+            await Client.AcceptInvitation(attendantListId, joe).ThenOk();
 
             // assert
             var meetupEvent = await Client.Get(eventId);
@@ -79,20 +78,22 @@ namespace Meetup.Scheduling.Test
         {
             // arrange
             var eventId = await Client.CreateMeetup().ThenOk();
+            await Client.CreateAttendantList(eventId).ThenOk();
 
             // act
-            await Client.AcceptInvitation(eventId, joe).ThenBadRequest();
+            // status is not an invariant of the attendant list
+            // await Client.AcceptInvitation(eventId, joe).ThenBadRequest();
         }
 
         [Fact]
         public async Task Should_Decline_Invitation()
         {
             // arrange
-            var eventId = await Client.CreateMeetup().ThenOk();
-            await Client.Publish(eventId).ThenOk();
+            var eventId         = await Client.CreateMeetup().ThenOk();
+            var attendantListId = await Client.CreateAttendantList(eventId).ThenOk();
 
             // act
-            await Client.DeclineInvitation(eventId, joe).ThenOk();
+            await Client.DeclineInvitation(attendantListId, joe).ThenOk();
 
             // assert
             var meetupEvent = await Client.Get(eventId);
@@ -103,13 +104,13 @@ namespace Meetup.Scheduling.Test
         public async Task Should_Joe_Wait()
         {
             // arrange
-            var eventId = await Client.CreateMeetup(capacity: 2).ThenOk();
-            await Client.Publish(eventId).ThenOk();
+            var eventId         = await Client.CreateMeetup().ThenOk();
+            var attendantListId = await Client.CreateAttendantList(eventId).ThenOk();
 
             // act
-            await Client.AcceptInvitation(eventId, carla).ThenOk();
-            await Client.AcceptInvitation(eventId, alice).ThenOk();
-            await Client.AcceptInvitation(eventId, joe).ThenOk();
+            await Client.AcceptInvitation(attendantListId, carla).ThenOk();
+            await Client.AcceptInvitation(attendantListId, alice).ThenOk();
+            await Client.AcceptInvitation(attendantListId, joe).ThenOk();
 
             // assert
             var meetupEvent = await Client.Get(eventId);
@@ -123,8 +124,8 @@ namespace Meetup.Scheduling.Test
         public async Task Should_Retry_When_Concurrency_Conflict_Detected()
         {
             // arrange
-            var eventId = await Client.CreateMeetup(capacity: 2).ThenOk();
-            await Client.Publish(eventId).ThenOk();
+            var eventId         = await Client.CreateMeetup().ThenOk();
+            var attendantListId = await Client.CreateAttendantList(eventId).ThenOk();
 
             await Task.WhenAll(
                 // Accept(carla),
@@ -139,16 +140,16 @@ namespace Meetup.Scheduling.Test
             Assert.Equal(1, meetupEvent.Attendants?.Count(x => x.Status == "Waiting"));
 
             Task Accept(Guid userId) =>
-                RandomJitter(() => Client.AcceptInvitation(eventId, userId), 0);
+                RandomJitter(() => Client.AcceptInvitation(attendantListId, userId), 0);
         }
 
         [Fact]
         public async Task Should_Throw_When_Concurrency_Conflict_Detected()
         {
             // arrange
-            var expectedTitle = "Microservices successful case study";
-            var eventId       = await Client.CreateMeetup(capacity: 2).ThenOk();
-            await Client.Publish(eventId).ThenOk();
+            var expectedTitle   = "Microservices successful case study";
+            var eventId         = await Client.CreateMeetup().ThenOk();
+            var attendantListId = await Client.CreateAttendantList(eventId).ThenOk();
 
             await Task.WhenAll(
                 Accept(carla),
@@ -161,7 +162,7 @@ namespace Meetup.Scheduling.Test
             Assert.Equal(expectedTitle, meetupEvent.Title);
 
             Task Accept(Guid userId) =>
-                RandomJitter(() => Client.AcceptInvitation(eventId, userId), 0);
+                RandomJitter(() => Client.AcceptInvitation(attendantListId, userId), 0);
 
             Task UpdateTitle(string title) =>
                 RandomJitter(() => Client.UpdateTitle(eventId, title), 0);
@@ -185,23 +186,29 @@ namespace Meetup.Scheduling.Test
         public const string Title    = "Microservices failures";
         public const int    Capacity = 2;
 
-        static string BaseUrl = $"/api/meetup/{Group}/events";
+        const  string BaseUrl      = "/api/meetup";
+        static string QueryBaseUrl = $"{BaseUrl}/{Group}/events";
 
-        public static Task<HttpResponseMessage> CreateMeetup(this HttpClient client, string title = Title,
-            int capacity = Capacity) =>
-            client.PostAsync(BaseUrl, Serialize(new Commands.V1.Create(Group, title, capacity)));
+        public static Task<HttpResponseMessage> CreateMeetup(this HttpClient client, string title = Title)
+            => client.Post("events/details", new Create(Group, title));
+
+        public static Task<HttpResponseMessage> CreateAttendantList(this HttpClient client, Guid eventId,
+            int capacity = Capacity)
+            => client.Post("attendants", new CreateAttendantList(eventId, capacity));
 
         public static Task<HttpResponseMessage> UpdateTitle(this HttpClient client, Guid eventId, string title)
-            => client.Put($"details", eventId, new UpdateDetails(eventId, title));
+            => client.Put($"events/details", new UpdateDetails(eventId, title));
 
         public static Task<HttpResponseMessage> Publish(this HttpClient client, Guid eventId)
-            => client.Put($"publish", eventId, new Publish(eventId));
+            => client.Put($"events/publish", new Publish(eventId));
 
-        public static Task<HttpResponseMessage> AcceptInvitation(this HttpClient client, Guid eventId, Guid userId)
-            => client.Put($"invitations/accept", eventId, new AcceptInvitation(eventId, userId));
+        public static Task<HttpResponseMessage> AcceptInvitation(this HttpClient client, Guid attendantListId,
+            Guid userId)
+            => client.Put($"attendants/accept", new AcceptInvitation(attendantListId, userId));
 
-        public static Task<HttpResponseMessage> DeclineInvitation(this HttpClient client, Guid eventId, Guid userId)
-            => client.Put($"invitations/decline", eventId, new DeclineInvitation(eventId, userId));
+        public static Task<HttpResponseMessage> DeclineInvitation(this HttpClient client, Guid attendantListId,
+            Guid userId)
+            => client.Put($"attendants/decline", new DeclineInvitation(attendantListId, userId));
 
         public static async Task<Guid> ThenOk(this Task<HttpResponseMessage> httpResponseMessage)
         {
@@ -220,15 +227,18 @@ namespace Meetup.Scheduling.Test
 
         public static async Task<MeetupEvent> Get(this HttpClient client, Guid eventId)
         {
-            var queryResponse = await client.GetAsync($"{BaseUrl}/{eventId}");
+            var queryResponse = await client.GetAsync($"{QueryBaseUrl}/{eventId}");
             queryResponse.EnsureSuccessStatusCode();
 
             var queryResult = await queryResponse.Content.ReadFromJsonAsync<MeetupEvent>();
             return queryResult;
         }
 
-        static Task<HttpResponseMessage> Put(this HttpClient client, string url, Guid eventId, object command)
-            => Retry().ExecuteAsync(() => client.PutAsync($"{BaseUrl}/{eventId}/{url}", Serialize(command)));
+        static Task<HttpResponseMessage> Put(this HttpClient client, string url, object command)
+            => Retry().ExecuteAsync(() => client.PutAsync($"{BaseUrl}/{url}", Serialize(command)));
+
+        static Task<HttpResponseMessage> Post(this HttpClient client, string url, object command)
+            => Retry().ExecuteAsync(() => client.PostAsync($"{BaseUrl}/{url}", Serialize(command)));
 
         static StringContent Serialize(object command)
             => new(JsonSerializer.Serialize(command), Encoding.UTF8, "application/json");

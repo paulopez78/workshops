@@ -13,16 +13,16 @@ namespace Meetup.Scheduling.Application.Queries
         public MeetupEventQueryApi(MeetupEventPostgresQueries queries) => Queries = queries;
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(string group)
-            => Ok(await Queries.GetByGroup(group));
+        public async Task<IActionResult> GetByGroup([FromRoute] V1.GetByGroup query)
+            => Ok(await Queries.Handle(query));
 
         [HttpGet("{eventId:guid}")]
-        public async Task<IActionResult> Get(Guid eventId)
+        public async Task<IActionResult> GetById([FromRoute] V1.GetById query)
         {
-            var meetupEvent = await Queries.Get(eventId);
+            var meetupEvent = await Queries.Handle(query);
 
             return meetupEvent is null
-                ? NotFound($"MeetupEvent {eventId} not found")
+                ? NotFound($"MeetupEvent {query.EventId} not found")
                 : Ok(meetupEvent);
         }
     }
