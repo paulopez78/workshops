@@ -18,12 +18,12 @@ namespace Meetup.Scheduling.Application.AttendantList
             Logger     = logger;
         }
 
-        public Task<Guid> Handle(object command)
+        public Task<CommandResult> Handle(object command)
             =>
                 command switch
                 {
                     CreateAttendantList cmd
-                        => Repository.Save(new Domain.AttendantList(Guid.NewGuid(), cmd.MeetupEventId, cmd.Capacity)),
+                        => Handle(new Domain.AttendantList(Guid.NewGuid(), cmd.MeetupEventId, cmd.Capacity)),
                     IncreaseCapacity cmd
                         => Handle(
                             cmd.AttendantListId,
@@ -48,7 +48,13 @@ namespace Meetup.Scheduling.Application.AttendantList
                         => throw new ApplicationException("command handler not found")
                 };
 
-        async Task<Guid> Handle(Guid id, Action<Domain.AttendantList> action)
+        async Task<CommandResult> Handle(Domain.AttendantList entity)
+        {
+            var id = await Repository.Save(entity);
+            return new(id);
+        }
+
+        async Task<CommandResult> Handle(Guid id, Action<Domain.AttendantList> action)
         {
             var entity = await Repository.Load(id);
             if (entity is null) throw new ApplicationException($"Entity not found {id}");
@@ -57,7 +63,7 @@ namespace Meetup.Scheduling.Application.AttendantList
 
             await Repository.Save(entity);
 
-            return id;
+            return new(id);
         }
     }
 }

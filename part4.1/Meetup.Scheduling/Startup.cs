@@ -24,20 +24,8 @@ namespace Meetup.Scheduling
         {
             services.AddControllers();
 
-            // var defaultCapacity = Configuration.GetValue<int>("MeetupEvents:DefaultCapacity");
-            // var meetupOptions = new MeetupEventsOptions(100);
-
-            // Configuration.GetSection("MeetupEvents").Bind(meetupOptions);
-            // var meetupOptions = Configuration.GetSection("MeetupEvents").Get<MeetupEventsOptions>();
-
-            // services.Configure<MeetupEventsOptions>(Configuration.GetSection("MeetupEvents"));
             var connectionString = Configuration.GetConnectionString("MeetupEvents");
-
-            // services.AddEntityFrameworkNpgsql();
             services.AddDbContext<MeetupSchedulingDbContext>(options => options.UseNpgsql(connectionString));
-
-            //services.AddSingleton(new InMemoryDatabase());
-            //services.AddSingleton<MeetupEventRepository>();
 
             services.AddScoped<MeetupEventDetailsRepository>();
             services.AddScoped<MeetupEventDetailsApplicationService>();

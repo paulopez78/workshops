@@ -1,34 +1,37 @@
 using System.Threading.Tasks;
-using Meetup.Scheduling.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using static Meetup.Scheduling.Application.AttendantList.Commands.V1;
 
 namespace Meetup.Scheduling.Application.AttendantList
 {
-    public class AttendantListCommandApi : MeetupController 
+    [Route("/api/meetup/attendants")]
+    [ApiController]
+    public class AttendantListCommandApi : ControllerBase
     {
-        readonly AttendantListApplicationService ApplicationService;
+        readonly IApplicationService ApplicationService;
 
-        public AttendantListCommandApi(AttendantListApplicationService applicationService) => ApplicationService = applicationService;
+        public AttendantListCommandApi(AttendantListApplicationService applicationService, ILogger<AttendantListCommandApi> logger)
+            => ApplicationService = applicationService.Build(logger);
 
-        [HttpPost("attendants")]
+        [HttpPost()]
         public Task<IActionResult> Post(CreateAttendantList command) =>
-            Handle(ApplicationService, command);
+            ApplicationService.HandleCommand(command);
 
-        [HttpPut("attendants/capacity/increase")]
+        [HttpPut("capacity/increase")]
         public Task<IActionResult> IncreaseCapacity(IncreaseCapacity command) =>
-            Handle(ApplicationService, command);
+            ApplicationService.HandleCommand(command);
 
-        [HttpPut("attendants/capacity/reduce")]
+        [HttpPut("capacity/reduce")]
         public Task<IActionResult> ReduceCapacity(ReduceCapacity command) =>
-            Handle(ApplicationService, command);
+            ApplicationService.HandleCommand(command);
 
-        [HttpPut("attendants/accept")]
+        [HttpPut("accept")]
         public Task<IActionResult> Accept(AcceptInvitation command) =>
-            Handle(ApplicationService, command);
+            ApplicationService.HandleCommand(command);
 
-        [HttpPut("attendants/decline")]
+        [HttpPut("decline")]
         public Task<IActionResult> Decline(DeclineInvitation command) =>
-            Handle(ApplicationService, command);
+            ApplicationService.HandleCommand(command);
     }
 }

@@ -1,30 +1,34 @@
 using System.Threading.Tasks;
 using Meetup.Scheduling.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using static Meetup.Scheduling.Application.Details.Commands.V1;
 
 namespace Meetup.Scheduling.Application.Details
 {
-    public class MeetupEventDetailsCommandApi : MeetupController 
+    [Route("/api/meetup/events")]
+    [ApiController]
+    public class MeetupEventDetailsCommandApi : ControllerBase
     {
-        readonly MeetupEventDetailsApplicationService ApplicationService;
+        readonly IApplicationService ApplicationService;
 
-        public MeetupEventDetailsCommandApi(MeetupEventDetailsApplicationService applicationService) => ApplicationService = applicationService;
+        public MeetupEventDetailsCommandApi(MeetupEventDetailsApplicationService applicationService, ILogger<MeetupEventDetailsCommandApi> logger)
+            => ApplicationService = applicationService.Build(logger);
 
-        [HttpPost("events/details")]
+        [HttpPost("details")]
         public Task<IActionResult> Post(Create command) =>
-            Handle(ApplicationService, command);
+            ApplicationService.HandleCommand(command);
 
-        [HttpPut("events/details")]
+        [HttpPut("details")]
         public Task<IActionResult> UpdateDetails(UpdateDetails command) =>
-            Handle(ApplicationService, command);
+            ApplicationService.HandleCommand(command);
 
-        [HttpPut("events/publish")]
+        [HttpPut("publish")]
         public Task<IActionResult> PublishEvent(Publish command) =>
-            Handle(ApplicationService, command);
+            ApplicationService.HandleCommand(command);
 
-        [HttpPut("events/cancel")]
+        [HttpPut("cancel")]
         public Task<IActionResult> CancelEvent(Cancel command) =>
-            Handle(ApplicationService, command);
+            ApplicationService.HandleCommand(command);
     }
 }
