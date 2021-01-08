@@ -3,32 +3,23 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using static Meetup.Scheduling.Application.Commands.V1;
+using static Meetup.Scheduling.Application.AttendantList.Commands.V1;
 
-namespace Meetup.Scheduling.Application
+namespace Meetup.Scheduling.Application.AttendantList
 {
     [Route("/api/meetup/{group}/events")]
     [ApiController]
-    public class MeetupEventCommandApi : ControllerBase
+    public class AttendantListCommandApi : ControllerBase
     {
-        readonly MeetupEventApplicationService ApplicationService;
-        readonly MeetupEventsOptions           Options;
+        readonly AttendantListApplicationService ApplicationService;
 
-        public MeetupEventCommandApi(
-            MeetupEventApplicationService applicationService,
-            IOptions<MeetupEventsOptions> options)
+        public AttendantListCommandApi(AttendantListApplicationService applicationService)
         {
             ApplicationService = applicationService;
-            Options            = options.Value;
         }
 
-        [HttpPost]
-        public Task<IActionResult> Post(Create command) =>
-            Handle(command.Capacity == 0 ? command with {Capacity = Options.DefaultCapacity} : command);
-
-        [HttpPut("{eventId:guid}/details")]
-        public Task<IActionResult> UpdateDetails(UpdateDetails command) =>
+        [HttpPost("{eventId:guid}/attendants")]
+        public Task<IActionResult> Post(CreateAttendantList command) =>
             Handle(command);
 
         [HttpPut("{eventId:guid}/capacity/increase")]
@@ -39,19 +30,11 @@ namespace Meetup.Scheduling.Application
         public Task<IActionResult> ReduceCapacity(ReduceCapacity command) =>
             Handle(command);
 
-        [HttpPut("{eventId:guid}/publish")]
-        public Task<IActionResult> PublishEvent(Publish command) =>
-            Handle(command);
-
-        [HttpPut("{eventId:guid}/cancel")]
-        public Task<IActionResult> CancelEvent(Cancel command) =>
-            Handle(command);
-
-        [HttpPut("{eventId:guid}/invitations/accept")]
+        [HttpPut("{eventId:guid}/attendants/accept")]
         public Task<IActionResult> Accept(AcceptInvitation command) =>
             Handle(command);
 
-        [HttpPut("{eventId:guid}/invitations/decline")]
+        [HttpPut("{eventId:guid}/attendants/decline")]
         public Task<IActionResult> Decline(DeclineInvitation command) =>
             Handle(command);
 
@@ -66,18 +49,10 @@ namespace Meetup.Scheduling.Application
             {
                 return BadRequest(e.Message);
             }
-
             catch (DbUpdateConcurrencyException e)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
-    }
-
-    public record CommandResult(Guid EventId);
-
-    public record MeetupEventsOptions
-    {
-        public int DefaultCapacity { get; init; }
     }
 }

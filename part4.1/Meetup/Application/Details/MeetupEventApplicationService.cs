@@ -7,17 +7,17 @@ using Polly;
 using Polly.Retry;
 using Meetup.Scheduling.Domain;
 using Meetup.Scheduling.Infrastructure;
-using static Meetup.Scheduling.Application.Commands.V1;
+using static Meetup.Scheduling.Application.Details.Commands.V1;
 
-namespace Meetup.Scheduling.Application
+namespace Meetup.Scheduling.Application.Details
 {
-    public class MeetupEventApplicationService
+    public class MeetupEventDetailsApplicationService: IApplicationService
     {
-        readonly IRepository                            MeetupEventRepository;
-        readonly ILogger<MeetupEventApplicationService> Logger;
+        readonly MeetupEventDetailsRepository                  MeetupEventRepository;
+        readonly ILogger<MeetupEventDetailsApplicationService> Logger;
 
-        public MeetupEventApplicationService(IRepository meetupEventRepository,
-            ILogger<MeetupEventApplicationService> logger)
+        public MeetupEventDetailsApplicationService(MeetupEventDetailsRepository meetupEventRepository,
+            ILogger<MeetupEventDetailsApplicationService> logger)
         {
             MeetupEventRepository = meetupEventRepository;
             Logger                = logger;
@@ -28,8 +28,7 @@ namespace Meetup.Scheduling.Application
                 command switch
                 {
                     Create cmd
-                        => MeetupEventRepository.Save(new MeetupEvent(Guid.NewGuid(), cmd.Group, cmd.Title,
-                            cmd.Capacity)),
+                        => MeetupEventRepository.Save(new MeetupEventDetails(Guid.NewGuid(), cmd.Group, cmd.Title)),
                     UpdateDetails cmd
                         => Handle(
                             cmd.EventId,
@@ -45,31 +44,11 @@ namespace Meetup.Scheduling.Application
                             cmd.EventId,
                             entity => entity.Cancel()
                         ),
-                    IncreaseCapacity cmd
-                        => Handle(
-                            cmd.EventId,
-                            entity => entity.IncreaseCapacity(cmd.Capacity)
-                        ),
-                    ReduceCapacity cmd
-                        => Handle(
-                            cmd.EventId,
-                            entity => entity.ReduceCapacity(cmd.Capacity)
-                        ),
-                    AcceptInvitation cmd
-                        => Handle(
-                            cmd.EventId,
-                            entity => entity.AcceptInvitation(cmd.UserId, DateTimeOffset.Now)
-                        ),
-                    DeclineInvitation cmd
-                        => Handle(
-                            cmd.EventId,
-                            entity => entity.DeclineInvitation(cmd.UserId, DateTimeOffset.Now)
-                        ),
                     _
                         => throw new ApplicationException("command handler not found")
                 };
 
-        async Task<Guid> Handle(Guid id, Action<MeetupEvent> action)
+        async Task<Guid> Handle(Guid id, Action<MeetupEventDetails> action)
         {
             var entity = await MeetupEventRepository.Load(id);
             if (entity is null) throw new ApplicationException($"Entity not found {id}");
@@ -81,7 +60,7 @@ namespace Meetup.Scheduling.Application
             return id;
         }
 
-        Task<Guid> HandleWithRetry(Guid id, Action<MeetupEvent> action)
+        Task<Guid> HandleWithRetry(Guid id, Action<MeetupEventDetails> action)
         {
             return RetryConcurrentUpdate().ExecuteAsync(() => Handle(id, action));
 
@@ -95,7 +74,7 @@ namespace Meetup.Scheduling.Application
 
                         //https://docs.microsoft.com/en-us/ef/core/saving/concurrency
                         if (exception is not DbUpdateConcurrencyException ex) return;
-                        var entry = ex.Entries.FirstOrDefault(x => x.Entity is MeetupEvent);
+                        var entry = ex.Entries.FirstOrDefault(x => x.Entity is MeetupEventDetails);
                         entry?.OriginalValues.SetValues(entry.GetDatabaseValues());
                     });
         }

@@ -14,10 +14,10 @@ namespace Meetup.Scheduling.Application.Queries
 
         public MeetupEventQueries(InMemoryDatabase inMemoryDatabase) => Database = inMemoryDatabase;
 
-        public Domain.MeetupEvent? Get(Guid id)
+        public Domain.MeetupEventDetails? Get(Guid id)
             => Database.MeetupEvents.FirstOrDefault(x => x.Id == id);
 
-        public IEnumerable<Domain.MeetupEvent> GetByGroup(string group)
+        public IEnumerable<Domain.MeetupEventDetails> GetByGroup(string group)
             => Database.MeetupEvents.Where(x => x.Group == group);
     }
 

@@ -12,8 +12,10 @@ using Polly.Retry;
 using Xunit;
 using Xunit.Abstractions;
 using Meetup.Scheduling.Application;
+using Meetup.Scheduling.Application.Details;
 using Meetup.Scheduling.Application.Queries;
-using static Meetup.Scheduling.Application.Commands.V1;
+using static Meetup.Scheduling.Application.Details.Commands.V1;
+using static Meetup.Scheduling.Application.AttendantList.Commands.V1;
 using static Meetup.Scheduling.Test.MeetupSchedulingTestExtensions;
 
 namespace Meetup.Scheduling.Test
@@ -187,7 +189,7 @@ namespace Meetup.Scheduling.Test
 
         public static Task<HttpResponseMessage> CreateMeetup(this HttpClient client, string title = Title,
             int capacity = Capacity) =>
-            client.PostAsync(BaseUrl, Serialize(new Create(Group, title, capacity)));
+            client.PostAsync(BaseUrl, Serialize(new Commands.V1.Create(Group, title, capacity)));
 
         public static Task<HttpResponseMessage> UpdateTitle(this HttpClient client, Guid eventId, string title)
             => client.Put($"details", eventId, new UpdateDetails(eventId, title));

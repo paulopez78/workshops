@@ -13,7 +13,7 @@ namespace Meetup.Scheduling
             var host = CreateHostBuilder(args).Build();
             using var scope = host.Services.CreateScope();
             var services = scope.ServiceProvider;
-            var context = services.GetRequiredService<Infrastructure.MeetupDbContext>();
+            var context = services.GetRequiredService<Infrastructure.MeetupSchedulingDbContext>();
             if (!context.Database.EnsureCreated()) context.Database.Migrate();
 
             return host.RunAsync();

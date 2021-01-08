@@ -1,4 +1,6 @@
 using Meetup.Scheduling.Application;
+using Meetup.Scheduling.Application.AttendantList;
+using Meetup.Scheduling.Application.Details;
 using Meetup.Scheduling.Application.Queries;
 using Meetup.Scheduling.Infrastructure;
 using Microsoft.AspNetCore.Builder;
@@ -28,17 +30,21 @@ namespace Meetup.Scheduling
             // Configuration.GetSection("MeetupEvents").Bind(meetupOptions);
             // var meetupOptions = Configuration.GetSection("MeetupEvents").Get<MeetupEventsOptions>();
 
-            services.Configure<MeetupEventsOptions>(Configuration.GetSection("MeetupEvents"));
+            // services.Configure<MeetupEventsOptions>(Configuration.GetSection("MeetupEvents"));
             var connectionString = Configuration.GetConnectionString("MeetupEvents");
-            
+
             // services.AddEntityFrameworkNpgsql();
-            services.AddDbContext<MeetupDbContext>(options => options.UseNpgsql(connectionString));
+            services.AddDbContext<MeetupSchedulingDbContext>(options => options.UseNpgsql(connectionString));
 
             //services.AddSingleton(new InMemoryDatabase());
             //services.AddSingleton<MeetupEventRepository>();
-            
-            services.AddScoped<IRepository, MeetupEventPostgresRepository>();
-            services.AddScoped<MeetupEventApplicationService>();
+
+            services.AddScoped<MeetupEventDetailsRepository>();
+            services.AddScoped<MeetupEventDetailsApplicationService>();
+
+            services.AddScoped<AttendantListRepository>();
+            services.AddScoped<AttendantListApplicationService>();
+
             services.AddScoped<MeetupEventPostgresQueries>();
             services.AddSwaggerGen(c =>
             {
@@ -54,7 +60,7 @@ namespace Meetup.Scheduling
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "meetupevents v1"));
             }
-            
+
             app.UseRouting();
 
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });

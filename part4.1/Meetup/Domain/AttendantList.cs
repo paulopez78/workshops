@@ -4,55 +4,29 @@ using System.Linq;
 
 namespace Meetup.Scheduling.Domain
 {
-    public class MeetupEvent
+    public class AttendantList : Aggregate
     {
-        public Guid   Id       { get; }
-        public string Group    { get; }
-        public string Title    { get; private set; }
-        public int    Capacity { get; private set; }
-
-        public int Version { get; private set; } = -1;
-
-        public MeetupEventStatus Status { get; private set; } = MeetupEventStatus.Draft;
+        public Guid MeetupEventId { get; }
+        public int  Capacity      { get; private set; }
 
         readonly List<Attendant>                _attendants = new();
         public   IReadOnlyCollection<Attendant> Attendants => _attendants;
 
-        IReadOnlyList<Attendant> Going => Attendants.Where(x => x.Status == AttendantStatus.Going)
-            .OrderBy(x => x.ModifiedAt).ToList();
+        IReadOnlyList<Attendant> Going   => Where(AttendantStatus.Going);
+        IReadOnlyList<Attendant> Waiting => Where(AttendantStatus.Waiting);
 
-        IReadOnlyList<Attendant> Waiting => Attendants.Where(x => x.Status == AttendantStatus.Waiting)
-            .OrderBy(x => x.ModifiedAt).ToList();
+        IReadOnlyList<Attendant> Where(AttendantStatus status) =>
+            Attendants.Where(x => x.Status == status).OrderBy(x => x.ModifiedAt).ToList();
 
         int  FreeSpots    => Capacity - Going.Count;
+        int  MissingSpots => !HasFreeSpots ? Going.Count - Capacity : 0;
         bool HasFreeSpots => FreeSpots > 0;
 
-        public MeetupEvent(Guid id, string group, string title, int capacity)
+        public AttendantList(Guid id, Guid meetupEventId, int capacity)
         {
-            Id       = id;
-            Group    = group;
-            Title    = title;
-            Capacity = capacity;
-        }
-
-        public void IncreaseVersion() => Version += 1;
-
-        public void UpdateDetails(string title)
-        {
-            if (string.IsNullOrEmpty(title)) throw new ArgumentNullException(nameof(title));
-            Title = title;
-        }
-
-        public void Publish()
-        {
-            if (Status == MeetupEventStatus.Draft)
-                Status = MeetupEventStatus.Scheduled;
-        }
-
-        public void Cancel()
-        {
-            if (Status == MeetupEventStatus.Scheduled)
-                Status = MeetupEventStatus.Cancelled;
+            Id            = id;
+            MeetupEventId = meetupEventId;
+            Capacity      = capacity;
         }
 
         public void IncreaseCapacity(int increase)
@@ -70,8 +44,6 @@ namespace Meetup.Scheduling.Domain
 
         public void AcceptInvitation(Guid userId, DateTimeOffset acceptedAt)
         {
-            EnforceScheduledStatus();
-
             var invitation = GetOrAddInvitation(userId);
 
             if (HasFreeSpots)
@@ -82,8 +54,6 @@ namespace Meetup.Scheduling.Domain
 
         public void DeclineInvitation(Guid userId, DateTimeOffset declinedAt)
         {
-            EnforceScheduledStatus();
-
             var invitation = GetOrAddInvitation(userId);
             invitation.Decline(declinedAt);
 
@@ -93,20 +63,9 @@ namespace Meetup.Scheduling.Domain
         void UpdateAttendantsList()
         {
             if (HasFreeSpots)
-            {
                 Waiting.Take(FreeSpots).ToList().ForEach(x => x.Accept());
-            }
             else
-            {
-                var reducedCapacity = Going.Count - Capacity;
-                Going.TakeLast(reducedCapacity).ToList().ForEach(x => x.Wait());
-            }
-        }
-
-        void EnforceScheduledStatus()
-        {
-            if (Status is not MeetupEventStatus.Scheduled)
-                throw new ApplicationException("Meetup not scheduled");
+                Going.TakeLast(MissingSpots).ToList().ForEach(x => x.Wait());
         }
 
         Attendant GetOrAddInvitation(Guid userId)
@@ -121,22 +80,13 @@ namespace Meetup.Scheduling.Domain
         }
     }
 
-    public enum MeetupEventStatus
-    {
-        Draft,
-        Scheduled,
-        Cancelled
-    }
-
-    public class Attendant
+    public class Attendant : Entity
     {
         public Attendant(Guid userId)
         {
             UserId = userId;
             Status = AttendantStatus.Unknown;
         }
-
-        public Guid Id { get; }
 
         public Guid UserId { get; }
 

@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Meetup.Scheduling.Application
+namespace Meetup.Scheduling.Application.Details
 {
     public static class Commands
     {
@@ -14,14 +14,6 @@ namespace Meetup.Scheduling.Application
             public record Publish(Guid EventId);
 
             public record Cancel(Guid EventId);
-
-            public record AcceptInvitation(Guid EventId, Guid UserId);
-
-            public record DeclineInvitation(Guid EventId, Guid UserId);
-
-            public record IncreaseCapacity(Guid EventId, int Capacity);
-
-            public record ReduceCapacity(Guid EventId, int Capacity);
         }
     }
 }
