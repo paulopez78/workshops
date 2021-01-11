@@ -9,8 +9,13 @@ namespace Meetup.Scheduling.Application.AttendantList
     public class AttendantListApplicationService : IApplicationService
     {
         readonly AttendantListRepository Repository;
+        readonly UtcNow                  GetUtcNow;
 
-        public AttendantListApplicationService(AttendantListRepository repository) => Repository = repository;
+        public AttendantListApplicationService(AttendantListRepository repository, UtcNow getUtcNow)
+        {
+            Repository = repository;
+            GetUtcNow  = getUtcNow;
+        }
 
         public Task<CommandResult> Handle(object command)
             =>
@@ -31,12 +36,12 @@ namespace Meetup.Scheduling.Application.AttendantList
                     AcceptInvitation cmd
                         => Handle(
                             cmd.MeetupEventId,
-                            entity => entity.AcceptInvitation(cmd.UserId, DateTimeOffset.Now)
+                            entity => entity.AcceptInvitation(cmd.UserId, GetUtcNow())
                         ),
                     DeclineInvitation cmd
                         => Handle(
                             cmd.MeetupEventId,
-                            entity => entity.DeclineInvitation(cmd.UserId, DateTimeOffset.Now)
+                            entity => entity.DeclineInvitation(cmd.UserId, GetUtcNow())
                         ),
                     _
                         => throw new ApplicationException("command handler not found")

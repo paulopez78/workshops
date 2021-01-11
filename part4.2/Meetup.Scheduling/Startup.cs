@@ -1,3 +1,4 @@
+using System;
 using Meetup.Scheduling.Application;
 using Meetup.Scheduling.Application.AttendantList;
 using Meetup.Scheduling.Application.Details;
@@ -26,6 +27,9 @@ namespace Meetup.Scheduling
 
             var connectionString = Configuration.GetConnectionString("MeetupEvents");
             services.AddDbContext<MeetupSchedulingDbContext>(options => options.UseNpgsql(connectionString));
+
+            services.AddSingleton<IDateTimeProvider>(new DateTimeProvider());
+            services.AddSingleton<UtcNow>(() => DateTimeOffset.UtcNow);
 
             services.AddScoped<MeetupEventDetailsRepository>();
             services.AddScoped<MeetupEventDetailsApplicationService>();

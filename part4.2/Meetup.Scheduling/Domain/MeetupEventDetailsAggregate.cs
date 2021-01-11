@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 
 namespace Meetup.Scheduling.Domain
 {
@@ -7,7 +8,7 @@ namespace Meetup.Scheduling.Domain
         public GroupSlug         Group        { get; }
         public Details           Details      { get; private set; }
         public Location?         Location     { get; private set; }
-        public DateTimeRange?    ScheduleTime { get; private set; }
+        public ScheduleDateTime?    ScheduleTime { get; private set; }
         public MeetupEventStatus Status       { get; private set; } = MeetupEventStatus.Draft;
 
         MeetupEventDetailsAggregate()
@@ -49,13 +50,14 @@ namespace Meetup.Scheduling.Domain
             Location = newLocation;
         }
 
-        public void Schedule(DateTimeRange dateTimeRange)
+        public void Schedule(ScheduleDateTime scheduleTime)
         {
             // idempotent
-            if (ScheduleTime == dateTimeRange)
+            if (ScheduleTime == scheduleTime)
                 throw new ApplicationException("Same scheduled time");
-
-            ScheduleTime = dateTimeRange;
+           
+            ScheduleTime = scheduleTime;
+            
             if (Status == MeetupEventStatus.Published)
             {
                 // notify attendants
@@ -65,28 +67,25 @@ namespace Meetup.Scheduling.Domain
 
         public void Publish()
         {
-            // idempotent
-            if (Status == MeetupEventStatus.Published)
-                throw new ApplicationException("Already published");
+            Status = (Status, ScheduleTime, Location) switch
+            {
+                (MeetupEventStatus.Published, _, _) => throw new ApplicationException("Already published"),
+                (MeetupEventStatus.Cancelled, _, _) => throw new ApplicationException("Already cancelled"),
 
-            if (Status == MeetupEventStatus.Cancelled)
-                throw new ApplicationException("Can not publish a cancelled event");
-
-            if (ScheduleTime is null)
-                throw new ApplicationException("Can not publish without scheduled time");
-
-            if (Location is null)
-                throw new ApplicationException("Can not publish without location");
+                (_, null, _) => throw new ApplicationException("Can not publish without scheduled time"),
+                (_, _, null) => throw new ApplicationException("Can not publish without location"),
+                _            => MeetupEventStatus.Published
+            };
         }
 
         public void Cancel()
         {
-            // idempotent
-            if (Status == MeetupEventStatus.Cancelled)
-                throw new ApplicationException("Already cancelled");
-
-            if (Status == MeetupEventStatus.Published)
-                Status = MeetupEventStatus.Cancelled;
+            Status = Status switch
+            {
+                MeetupEventStatus.Cancelled => throw new ApplicationException("Already cancelled"),
+                MeetupEventStatus.Published => MeetupEventStatus.Cancelled,
+                _                           => Status
+            };
         }
     }
 

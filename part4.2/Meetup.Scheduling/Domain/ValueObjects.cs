@@ -62,30 +62,29 @@ namespace Meetup.Scheduling.Domain
         public static Location Online(Uri url) => new(true, url, null);
     }
 
-    public record DateTimeRange
+    public record ScheduleDateTime
     {
         public DateTimeOffset Start { get; init; }
         public DateTimeOffset End   { get; init; }
+        
+        ScheduleDateTime(){}
 
-        DateTimeRange(DateTimeOffset start, DateTimeOffset end)
+        ScheduleDateTime(DateTimeOffset now, DateTimeOffset start, DateTimeOffset end)
         {
+            if (now > start)
+                throw new ArgumentException("Incorrect schedule time, start date must be after now");
+            
             if (start > end)
-                throw new ArgumentException("Incorrect date time range, end date must be after start date");
+                throw new ArgumentException("Incorrect schedule time, end date must be after start date");
 
             Start = start;
             End   = end;
         }
 
-        DateTimeRange(DateTimeOffset start, PositiveNumber durationinHours)
-        {
-            Start = start;
-            End   = start.AddHours(durationinHours);
-        }
+        public static ScheduleDateTime From(DateTimeOffset now, DateTimeOffset start, DateTimeOffset end) => new(now, start, end);
 
-        public static DateTimeRange From(DateTimeOffset start, DateTimeOffset end) => new(start, end);
-
-        public static DateTimeRange From(DateTimeOffset start, PositiveNumber durationInHours) =>
-            new(start, durationInHours);
+        public static ScheduleDateTime From(DateTimeOffset now, DateTimeOffset start, PositiveNumber durationInHours) =>
+            new(now, start, start.AddHours(durationInHours));
     }
 
     public record GroupSlug
@@ -99,7 +98,7 @@ namespace Meetup.Scheduling.Domain
 
             Regex regex = new(@"^[a-z\d](?:[a-z\d_-]*[a-z\d])?$");
             if (!regex.IsMatch(value))
-                throw new ArgumentException($"{nameof(value)} invalid");
+                throw new ArgumentException("Invalid group name");
 
             Value = value;
         }

@@ -84,22 +84,34 @@ namespace Meetup.Scheduling.Test
         }
 
         [Fact]
-        public void Should_Create_DateTimeRange()
+        public void Should_Create_ScheduleTime()
         {
-            var start = DateTimeOffset.Now;
+            var now   = DateTimeOffset.UtcNow;
+            var start = now.AddDays(7);
             var end   = start.AddHours(1);
-            var sut   = DateTimeRange.From(start, end);
+            var sut   = ScheduleDateTime.From(now, start, end);
 
             Assert.Equal(start, sut.Start);
             Assert.Equal(end, sut.End);
         }
 
         [Fact]
-        public void Should_Not_Create_DateTimeRange()
+        public void Should_Not_Create_ScheduleTime()
         {
-            var start = DateTimeOffset.Now;
+            var now   = DateTimeOffset.UtcNow;
+            var start = now.AddDays(7);
 
-            void CreateDateTimeRange() => DateTimeRange.From(start, start.AddHours(-1));
+            void CreateDateTimeRange() => ScheduleDateTime.From(now, start, start.AddHours(-1));
+            Assert.ThrowsAny<ArgumentException>(CreateDateTimeRange);
+        }
+
+        [Fact]
+        public void Should_Not_Create_Past_ScheduleTime()
+        {
+            var now   = DateTimeOffset.UtcNow;
+            var start = now.AddDays(-7);
+
+            void CreateDateTimeRange() => ScheduleDateTime.From(now, start, 2);
             Assert.ThrowsAny<ArgumentException>(CreateDateTimeRange);
         }
     }

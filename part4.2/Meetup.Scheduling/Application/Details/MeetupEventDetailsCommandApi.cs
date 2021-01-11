@@ -22,6 +22,14 @@ namespace Meetup.Scheduling.Application.Details
         [HttpPut("details")]
         public Task<IActionResult> UpdateDetails(UpdateDetails command) =>
             ApplicationService.HandleCommand(command);
+        
+        [HttpPut("schedule")]
+        public Task<IActionResult> Schedule(Schedule command) =>
+            ApplicationService.HandleCommand(command);
+        
+        [HttpPut("makeonline")]
+        public Task<IActionResult> MakeOnline(MakeOnline command) =>
+            ApplicationService.HandleCommand(command);
 
         [HttpPut("publish")]
         public Task<IActionResult> PublishEvent(Publish command) =>

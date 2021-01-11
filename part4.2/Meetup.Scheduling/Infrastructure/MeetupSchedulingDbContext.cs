@@ -1,5 +1,6 @@
 using Meetup.Scheduling.Domain;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -21,10 +22,25 @@ namespace Meetup.Scheduling.Infrastructure
             {
                 b.ToTable("MeetupEvent");
                 b.HasKey(p => p.Id);
-                b.OwnsOne(p => p.Details);
-                b.OwnsOne(p => p.Group);
-                b.OwnsOne(p => p.Location, ca => ca.OwnsOne(p => p.Address));
-                b.OwnsOne(p => p.ScheduleTime);
+                b.OwnsOne(p => p.Details, d =>
+                {
+                    d.Property(p => p.Title).HasColumnName("Title");
+                    d.Property(p => p.Description).HasColumnName("Description");
+                });
+                b.OwnsOne(p => p.Group, g => g.Property(p => p.Value).HasColumnName("Group"));
+                b.OwnsOne(p => p.Location,
+                    l =>
+                    {
+                        l.Property(p => p.Url).HasColumnName("Url");
+                        l.Property(p => p.IsOnline).HasColumnName("IsOnline");
+                        l.OwnsOne(p => p.Address, a => a.Property(p => p.Value).HasColumnName("Address"));
+                    });
+
+                b.OwnsOne(p => p.ScheduleTime, st =>
+                {
+                    st.Property(p => p.Start).HasColumnName("Start");
+                    st.Property(p => p.End).HasColumnName("End");
+                });
                 b.Property(p => p.Status).HasConversion(new EnumToStringConverter<MeetupEventStatus>());
                 b.Property(p => p.Version).IsConcurrencyToken();
             });
@@ -39,15 +55,18 @@ namespace Meetup.Scheduling.Infrastructure
                 b.OwnsOne(p => p.AttendantList, a =>
                 {
                     a.WithOwner();
-                    a.OwnsOne(p => p.Capacity);
+                    a.OwnsOne(p => p.Capacity,
+                        c => c.Property(p => p.Value).HasColumnName("Capacity")
+                    );
 
                     //https://docs.microsoft.com/en-us/ef/core/modeling/owned-entities#collections-of-owned-types
                     a.OwnsMany(p => p.Attendants, at =>
                     {
+                        at.WithOwner().HasForeignKey("AttendantListId");
                         at.Property(p => p.UserId);
                         at.Property(p => p.Status).HasConversion(new EnumToStringConverter<AttendantStatus>());
                         at.Property(p => p.ModifiedAt);
-                        // at.HasIndex("UserId", "AttendantListAggregateId").IsUnique();
+                        at.HasIndex("UserId", "AttendantListId").IsUnique();
                     });
                 });
                 b.Property(p => p.Version).IsConcurrencyToken();

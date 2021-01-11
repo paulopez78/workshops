@@ -17,7 +17,7 @@ namespace Meetup.Scheduling.Application.Queries
             "SELECT M.\"Id\", M.\"Title\", M.\"Group\", AL.\"Capacity\", M.\"Status\", A.\"Id\", A.\"UserId\", A.\"Status\", A.\"ModifiedAt\" " +
             "FROM \"MeetupEvent\" M " +
             "LEFT JOIN \"AttendantList\" AL on M.\"Id\" = AL.\"Id\" " +
-            "LEFT JOIN \"Attendant\" A on AL.\"Id\" = A.\"AttendantListAggregateId\"";
+            "LEFT JOIN \"Attendant\" A on AL.\"Id\" = A.\"AttendantListId\"";
 
         public async Task<MeetupEvent?> Handle(V1.GetById query)
         {

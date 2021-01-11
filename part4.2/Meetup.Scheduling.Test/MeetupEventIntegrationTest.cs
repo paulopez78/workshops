@@ -49,13 +49,16 @@ namespace Meetup.Scheduling.Test
         {
             // arrange
             var eventId = await Client.CreateMeetup().ThenOk();
+            var start   = DateTimeOffset.UtcNow.AddDays(7);
+            await Client.Schedule(eventId,start, start.AddHours(2)).ThenOk();
+            await Client.MakeOnline(eventId,"https://zoom.us/netcorebcn").ThenOk();
 
             // act
             await Client.Publish(eventId).ThenOk();
 
             // assert
             var meetupEvent = await Client.Get(eventId);
-            Assert.Equal("Scheduled", meetupEvent.Status);
+            Assert.Equal("Published", meetupEvent.Status);
         }
 
         [Fact]
@@ -203,6 +206,12 @@ namespace Meetup.Scheduling.Test
         public static Task<HttpResponseMessage> UpdateTitle(this HttpClient client, Guid eventId, string title,
             string description)
             => client.Put($"events/details", new UpdateDetails(eventId, title, description));
+        
+        public static Task<HttpResponseMessage> Schedule(this HttpClient client, Guid eventId, DateTimeOffset start, DateTimeOffset end)
+            => client.Put($"events/schedule", new Schedule(eventId, start, end));
+        
+        public static Task<HttpResponseMessage> MakeOnline(this HttpClient client, Guid eventId, string url)
+            => client.Put($"events/makeonline", new MakeOnline(eventId, url));
 
         public static Task<HttpResponseMessage> Publish(this HttpClient client, Guid eventId)
             => client.Put($"events/publish", new Publish(eventId));

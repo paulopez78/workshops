@@ -9,9 +9,16 @@ namespace Meetup.Scheduling.Application.Details
     public class MeetupEventDetailsApplicationService : IApplicationService
     {
         readonly MeetupEventDetailsRepository MeetupEventRepository;
+        readonly IDateTimeProvider DateTimeProvider;
 
-        public MeetupEventDetailsApplicationService(MeetupEventDetailsRepository meetupEventRepository)
-            => MeetupEventRepository = meetupEventRepository;
+        public MeetupEventDetailsApplicationService(MeetupEventDetailsRepository meetupEventRepository,
+            IDateTimeProvider dateTimeProvider)
+        {
+            
+            MeetupEventRepository = meetupEventRepository;
+            DateTimeProvider      = dateTimeProvider;
+        }
+        
 
         public Task<CommandResult> Handle(object command)
             =>
@@ -41,7 +48,7 @@ namespace Meetup.Scheduling.Application.Details
                     Schedule cmd
                         => Handle(
                             cmd.EventId,
-                            entity => entity.Schedule(DateTimeRange.From(cmd.StartTime, cmd.EndTime))
+                            entity => entity.Schedule(ScheduleDateTime.From(DateTimeProvider.UtcNow(), cmd.StartTime, cmd.EndTime))
                         ),
                     Publish cmd
                         => Handle(
