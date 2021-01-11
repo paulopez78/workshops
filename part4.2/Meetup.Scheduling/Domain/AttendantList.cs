@@ -52,6 +52,9 @@ namespace Meetup.Scheduling.Domain
             Capacity = Capacity - number;
             UpdateAttendantsStatus();
         }
+        
+        public AttendantStatus? Status(Guid userId) =>
+            Attendants.FirstOrDefault(x => x.UserId == userId)?.Status;
 
         IReadOnlyList<Attendant> Going   => Where(AttendantStatus.Going);
         IReadOnlyList<Attendant> Waiting => Where(AttendantStatus.Waiting);
@@ -115,17 +118,5 @@ namespace Meetup.Scheduling.Domain
         Going,
         NotGoing,
         Waiting
-    }
-
-    public record PositiveNumber
-    {
-        public int Value { get; }
-
-        PositiveNumber(int value) => Value = value > 0 ? value : 0;
-
-        static PositiveNumber From(int value) => new(value);
-
-        public static implicit operator int(PositiveNumber number) => number.Value;
-        public static implicit operator PositiveNumber(int number) => From(number);
     }
 }

@@ -30,7 +30,10 @@ namespace Meetup.Scheduling.Application
             {
                 return new BadRequestObjectResult(e.Message);
             }
-
+            catch (ArgumentException e)
+            {
+                return new BadRequestObjectResult(e.Message);
+            }
             catch (DbUpdateConcurrencyException e)
             {
                 return new ObjectResult(e.Message)
@@ -40,7 +43,6 @@ namespace Meetup.Scheduling.Application
             }
         }
     }
-
 
     public class ExceptionHandlingLoggerMiddleware : IApplicationService
     {

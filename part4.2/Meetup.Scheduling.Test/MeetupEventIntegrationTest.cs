@@ -62,7 +62,7 @@ namespace Meetup.Scheduling.Test
         public async Task Should_Accept_Invitation()
         {
             // arrange
-            var eventId         = await Client.CreateMeetup().ThenOk();
+            var eventId = await Client.CreateMeetup().ThenOk();
             await Client.CreateAttendantList(eventId).ThenOk();
 
             // act
@@ -89,7 +89,7 @@ namespace Meetup.Scheduling.Test
         public async Task Should_Decline_Invitation()
         {
             // arrange
-            var eventId         = await Client.CreateMeetup().ThenOk();
+            var eventId = await Client.CreateMeetup().ThenOk();
             await Client.CreateAttendantList(eventId).ThenOk();
 
             // act
@@ -104,7 +104,7 @@ namespace Meetup.Scheduling.Test
         public async Task Should_Joe_Wait()
         {
             // arrange
-            var eventId         = await Client.CreateMeetup().ThenOk();
+            var eventId = await Client.CreateMeetup().ThenOk();
             await Client.CreateAttendantList(eventId).ThenOk();
 
             // act
@@ -126,7 +126,7 @@ namespace Meetup.Scheduling.Test
         public async Task Should_Retry_When_Concurrency_Conflict_Detected()
         {
             // arrange
-            var eventId         = await Client.CreateMeetup().ThenOk();
+            var eventId = await Client.CreateMeetup().ThenOk();
             await Client.CreateAttendantList(eventId).ThenOk();
 
             await Task.WhenAll(
@@ -148,13 +148,15 @@ namespace Meetup.Scheduling.Test
         public async Task Should_Throw_When_Concurrency_Conflict_Detected()
         {
             // arrange
-            var expectedTitle   = "Microservices successful case study";
-            var eventId         = await Client.CreateMeetup().ThenOk();
+            var expectedTitle       = "Microservices successful case study";
+            var expectedDescription = "Microservices successful case study description";
+
+            var eventId = await Client.CreateMeetup().ThenOk();
             await Client.CreateAttendantList(eventId).ThenOk();
 
             await Task.WhenAll(
                 Accept(carla),
-                UpdateTitle(expectedTitle)
+                UpdateTitle()
             );
 
             // assert
@@ -165,8 +167,8 @@ namespace Meetup.Scheduling.Test
             Task Accept(Guid userId) =>
                 RandomJitter(() => Client.AcceptInvitation(eventId, userId), 0);
 
-            Task UpdateTitle(string title) =>
-                RandomJitter(() => Client.UpdateTitle(eventId, title), 0);
+            Task UpdateTitle() =>
+                RandomJitter(() => Client.UpdateTitle(eventId, expectedTitle, expectedDescription), 0);
         }
 
         async Task RandomJitter(Func<Task> action, int max = 1000)
@@ -183,22 +185,24 @@ namespace Meetup.Scheduling.Test
 
     public static class MeetupSchedulingTestExtensions
     {
-        public const string Group    = "netcorebcn";
-        public const string Title    = "Microservices failures";
-        public const int    Capacity = 2;
+        public const string Group       = "netcorebcn";
+        public const string Title       = "Microservices failures";
+        public const string Description = "Microservices failures description";
+        public const int    Capacity    = 2;
 
         const  string BaseUrl      = "/api/meetup";
         static string QueryBaseUrl = $"{BaseUrl}/{Group}/events";
 
-        public static Task<HttpResponseMessage> CreateMeetup(this HttpClient client, string title = Title)
-            => client.Post("events/details", new Create(Group, title));
+        public static Task<HttpResponseMessage> CreateMeetup(this HttpClient client)
+            => client.Post("events/details", new Create(Group, Title, Description));
 
         public static Task<HttpResponseMessage> CreateAttendantList(this HttpClient client, Guid eventId,
             int capacity = Capacity)
             => client.Post("attendants", new CreateAttendantList(eventId, capacity));
 
-        public static Task<HttpResponseMessage> UpdateTitle(this HttpClient client, Guid eventId, string title)
-            => client.Put($"events/details", new UpdateDetails(eventId, title));
+        public static Task<HttpResponseMessage> UpdateTitle(this HttpClient client, Guid eventId, string title,
+            string description)
+            => client.Put($"events/details", new UpdateDetails(eventId, title, description));
 
         public static Task<HttpResponseMessage> Publish(this HttpClient client, Guid eventId)
             => client.Put($"events/publish", new Publish(eventId));

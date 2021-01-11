@@ -18,11 +18,30 @@ namespace Meetup.Scheduling.Application.Details
                 command switch
                 {
                     Create cmd
-                        => Handle(new MeetupEventDetailsAggregate(Guid.NewGuid(), cmd.Group, cmd.Title)),
+                        => Handle(new MeetupEventDetailsAggregate(
+                            Guid.NewGuid(),
+                            GroupSlug.From(cmd.Group),
+                            Domain.Details.From(cmd.Title, cmd.Description))
+                        ),
                     UpdateDetails cmd
                         => Handle(
                             cmd.EventId,
-                            entity => entity.UpdateDetails(cmd.Title)
+                            entity => entity.UpdateDetails(Domain.Details.From(cmd.Title, cmd.Description))
+                        ),
+                    MakeOnline cmd
+                        => Handle(
+                            cmd.EventId,
+                            entity => entity.MakeOnlineEvent(new Uri(cmd.Url))
+                        ),
+                    MakeOnsite cmd
+                        => Handle(
+                            cmd.EventId,
+                            entity => entity.MakeOnSiteEvent(Address.From(cmd.Address))
+                        ),
+                    Schedule cmd
+                        => Handle(
+                            cmd.EventId,
+                            entity => entity.Schedule(DateTimeRange.From(cmd.StartTime, cmd.EndTime))
                         ),
                     Publish cmd
                         => Handle(

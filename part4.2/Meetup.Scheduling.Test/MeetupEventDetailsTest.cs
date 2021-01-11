@@ -16,7 +16,7 @@ namespace Meetup.Scheduling.Test
             entity.Publish();
 
             // assert
-            Assert.Equal(MeetupEventStatus.Scheduled, entity.Status);
+            Assert.Equal(MeetupEventStatus.Published, entity.Status);
         }
 
         [Fact]
@@ -49,6 +49,6 @@ namespace Meetup.Scheduling.Test
         }
 
         static MeetupEventDetailsAggregate CreateMeetupEvent()
-            => new(NewGuid(), "netcorebcn", "microservices failures");
+            => new(NewGuid(), GroupSlug.From("netcorebcn"), Details.From("microservices failures", "This is a talk about main microservices pitfalls.."));
     }
 }

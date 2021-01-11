@@ -21,8 +21,10 @@ namespace Meetup.Scheduling.Infrastructure
             {
                 b.ToTable("MeetupEvent");
                 b.HasKey(p => p.Id);
-                b.Property(p => p.Title);
-                b.Property(p => p.Group);
+                b.OwnsOne(p => p.Details);
+                b.OwnsOne(p => p.Group);
+                b.OwnsOne(p => p.Location, ca => ca.OwnsOne(p => p.Address));
+                b.OwnsOne(p => p.ScheduleTime);
                 b.Property(p => p.Status).HasConversion(new EnumToStringConverter<MeetupEventStatus>());
                 b.Property(p => p.Version).IsConcurrencyToken();
             });
@@ -37,15 +39,15 @@ namespace Meetup.Scheduling.Infrastructure
                 b.OwnsOne(p => p.AttendantList, a =>
                 {
                     a.WithOwner();
-                    a.OwnsOne(p => p.Capacity, c => c.Property(p => p.Value).HasColumnName("Capacity"));
-                    
-                    //https: //docs.microsoft.com/en-us/ef/core/modeling/owned-entities#collections-of-owned-types
+                    a.OwnsOne(p => p.Capacity);
+
+                    //https://docs.microsoft.com/en-us/ef/core/modeling/owned-entities#collections-of-owned-types
                     a.OwnsMany(p => p.Attendants, at =>
                     {
                         at.Property(p => p.UserId);
                         at.Property(p => p.Status).HasConversion(new EnumToStringConverter<AttendantStatus>());
                         at.Property(p => p.ModifiedAt);
-                        at.HasIndex("UserId", "AttendantListAggregateId").IsUnique();
+                        // at.HasIndex("UserId", "AttendantListAggregateId").IsUnique();
                     });
                 });
                 b.Property(p => p.Version).IsConcurrencyToken();

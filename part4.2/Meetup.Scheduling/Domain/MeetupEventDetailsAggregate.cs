@@ -4,32 +4,88 @@ namespace Meetup.Scheduling.Domain
 {
     public class MeetupEventDetailsAggregate : Aggregate
     {
-        public string            Group  { get; }
-        public string            Title  { get; private set; }
-        public MeetupEventStatus Status { get; private set; } = MeetupEventStatus.Draft;
+        public GroupSlug         Group        { get; }
+        public Details           Details      { get; private set; }
+        public Location?         Location     { get; private set; }
+        public DateTimeRange?    ScheduleTime { get; private set; }
+        public MeetupEventStatus Status       { get; private set; } = MeetupEventStatus.Draft;
 
-        public MeetupEventDetailsAggregate(Guid id, string group, string title)
+        MeetupEventDetailsAggregate()
         {
-            Id    = id;
-            Group = group;
-            Title = title;
         }
 
-        public void UpdateDetails(string title)
+        public MeetupEventDetailsAggregate(Guid id, GroupSlug group, Details details)
         {
-            if (string.IsNullOrEmpty(title)) throw new ArgumentNullException(nameof(title));
-            Title = title;
+            Id      = id;
+            Group   = group;
+            Details = details;
+        }
+
+        public void UpdateDetails(Details details)
+        {
+            if (Details == details)
+                throw new ApplicationException("Same details");
+
+            Details = details;
+        }
+
+        public void MakeOnlineEvent(Uri url)
+        {
+            var newLocation = Location.Online(url);
+
+            if (Location == newLocation)
+                throw new ApplicationException("Same location");
+
+            Location = newLocation;
+        }
+
+        public void MakeOnSiteEvent(Address address)
+        {
+            var newLocation = Location.OnSite(address);
+
+            if (Location == newLocation)
+                throw new ApplicationException("Same location");
+
+            Location = newLocation;
+        }
+
+        public void Schedule(DateTimeRange dateTimeRange)
+        {
+            // idempotent
+            if (ScheduleTime == dateTimeRange)
+                throw new ApplicationException("Same scheduled time");
+
+            ScheduleTime = dateTimeRange;
+            if (Status == MeetupEventStatus.Published)
+            {
+                // notify attendants
+                // ScheduleChanged
+            }
         }
 
         public void Publish()
         {
-            if (Status == MeetupEventStatus.Draft)
-                Status = MeetupEventStatus.Scheduled;
+            // idempotent
+            if (Status == MeetupEventStatus.Published)
+                throw new ApplicationException("Already published");
+
+            if (Status == MeetupEventStatus.Cancelled)
+                throw new ApplicationException("Can not publish a cancelled event");
+
+            if (ScheduleTime is null)
+                throw new ApplicationException("Can not publish without scheduled time");
+
+            if (Location is null)
+                throw new ApplicationException("Can not publish without location");
         }
 
         public void Cancel()
         {
-            if (Status == MeetupEventStatus.Scheduled)
+            // idempotent
+            if (Status == MeetupEventStatus.Cancelled)
+                throw new ApplicationException("Already cancelled");
+
+            if (Status == MeetupEventStatus.Published)
                 Status = MeetupEventStatus.Cancelled;
         }
     }
@@ -37,7 +93,7 @@ namespace Meetup.Scheduling.Domain
     public enum MeetupEventStatus
     {
         Draft,
-        Scheduled,
+        Published,
         Cancelled
     }
 }
