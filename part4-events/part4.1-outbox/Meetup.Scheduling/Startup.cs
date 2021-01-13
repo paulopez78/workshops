@@ -6,7 +6,6 @@ using Meetup.Scheduling.Domain;
 using Meetup.Scheduling.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,13 +34,13 @@ namespace Meetup.Scheduling
             services.AddScoped<MeetupRepository<MeetupEventDetailsAggregate>>();
             services.AddScoped<MeetupEventDetailsApplicationService>();
 
-
             services.AddScoped<MeetupRepository<AttendantListAggregate>>();
             services.AddScoped<AttendantListApplicationService>();
 
             services.AddScoped<MeetupEventPostgresQueries>();
 
             services.AddDomainEventsDispatcher(typeof(MeetupCreatedDomainEventHandler));
+            services.AddHostedService<OutboxProcessor>();
 
             services.AddSwaggerGen(c =>
             {

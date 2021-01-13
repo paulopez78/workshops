@@ -189,7 +189,12 @@ namespace Meetup.Scheduling.Test
             await client.Schedule(eventId, start, start.AddHours(2)).ThenOk();
             await client.MakeOnline(eventId, "https://zoom.us/netcorebcn").ThenOk();
 
-            return await client.Publish(eventId);
+            var result = await client.Publish(eventId);
+
+            // hack to wait for eventual consistency, should query retrying till value is either consistent or a failure
+            await Task.Delay(1000);
+
+            return result;
         }
 
         public static Task<HttpResponseMessage> UpdateTitle(this HttpClient client, Guid eventId, string title,

@@ -12,6 +12,8 @@ namespace Meetup.Scheduling.Infrastructure
         {
         }
 
+        public DbSet<Outbox> Outbox { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<MeetupEventDetailsAggregate>(b =>

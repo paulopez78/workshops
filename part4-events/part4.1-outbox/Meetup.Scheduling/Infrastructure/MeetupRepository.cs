@@ -3,18 +3,17 @@ using System.Linq;
 using System.Threading.Tasks;
 using Meetup.Scheduling.Domain;
 using Microsoft.EntityFrameworkCore;
+using static Meetup.Scheduling.Infrastructure.Outbox;
 
 namespace Meetup.Scheduling.Infrastructure
 {
     public class MeetupRepository<T> where T : Aggregate
     {
         readonly MeetupSchedulingDbContext DbContext;
-        readonly DomainEventsDispatcher    Dispatcher;
 
-        public MeetupRepository(MeetupSchedulingDbContext dbContext, DomainEventsDispatcher dispatcher)
+        public MeetupRepository(MeetupSchedulingDbContext dbContext)
         {
-            DbContext  = dbContext;
-            Dispatcher = dispatcher;
+            DbContext = dbContext;
         }
 
         public Task<T?> Load(Guid id)
@@ -31,15 +30,18 @@ namespace Meetup.Scheduling.Infrastructure
                 aggregate.IncreaseVersion();
 
             // dispatch domain events before transaction commit
-            // all handlers run inside same transaction, only for persistence with ACID support
-            // too many handlers will make transaction bigger
-            
+            // await Task.WhenAll(aggregate.Changes.Select(Dispatcher.Publish));
+
+            // Save domain events as part of the transaction
+            await DbContext.Set<Outbox>().AddRangeAsync(
+                aggregate.Changes.Select(Map)
+            );
+            await DbContext.SaveChangesAsync();
+
+            // dispatch domain after transaction commit
             //await Task.WhenAll(aggregate.Changes.Select(Dispatcher.Publish));
 
-            await DbContext.SaveChangesAsync();
-            
-            // dispatch domain after transaction commit
-            await Task.WhenAll(aggregate.Changes.Select(Dispatcher.Publish));
+            aggregate.ClearChanges();
             return aggregate.Id;
         }
     }

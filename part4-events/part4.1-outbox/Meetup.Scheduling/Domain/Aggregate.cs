@@ -12,6 +12,8 @@ namespace Meetup.Scheduling.Domain
 
         public IReadOnlyList<object> Changes => Events;
         public void IncreaseVersion() => Version += 1;
+
+        public void ClearChanges() => Events.Clear();
     }
 
     public abstract class Entity

@@ -15,7 +15,6 @@ namespace Meetup.Scheduling.Infrastructure
             var registry = new DomainEventHandlerRegistry();
             RegisterHandlers(type.Assembly);
 
-            serviceCollection.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             serviceCollection.AddSingleton(registry);
             serviceCollection.AddScoped<DomainEventsDispatcher>();
             return serviceCollection;
@@ -49,20 +48,18 @@ namespace Meetup.Scheduling.Infrastructure
 
     public class DomainEventsDispatcher
     {
-        readonly IServiceProvider           ServiceProvider;
         readonly DomainEventHandlerRegistry Registry;
 
-        public DomainEventsDispatcher(IHttpContextAccessor httpContextAccessor, DomainEventHandlerRegistry registry)
+        public DomainEventsDispatcher(DomainEventHandlerRegistry registry)
         {
-            ServiceProvider = httpContextAccessor.HttpContext.RequestServices;
-            Registry        = registry;
+            Registry = registry;
         }
 
-        public async Task Publish(object domainEvent)
+        public async Task Publish(IServiceProvider serviceProvider, object domainEvent)
         {
             if (Registry.TryGetValue(domainEvent.GetType(), out var handlers))
             {
-                foreach (var handler in handlers.Select(handlerType => ServiceProvider.GetRequiredService(handlerType)))
+                foreach (var handler in handlers.Select(serviceProvider.GetRequiredService))
                 {
                     await ((dynamic) handler).Handle((dynamic) domainEvent);
                 }

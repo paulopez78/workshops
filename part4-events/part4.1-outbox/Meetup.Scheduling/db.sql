@@ -1,7 +1,9 @@
 ﻿DROP DATABASE "meetup";
-CREATE DATABASE "meetup";
+DROP USER "meetup";
 
+CREATE DATABASE "meetup";
 CREATE SCHEMA scheduling;
+
 CREATE USER meetup WITH PASSWORD 'password';
 
 GRANT ALL PRIVILEGES ON DATABASE "meetup" to meetup;
@@ -13,6 +15,8 @@ FROM meetup.scheduling."MeetupEvent" M
          LEFT JOIN meetup.scheduling."AttendantList" AL on M."Id" = AL."Id"
          LEFT JOIN meetup.scheduling."Attendant" A on AL."Id" = A."AttendantListId"
 
+SELECT * FROM meetup.scheduling."Outbox"
 
 DELETE FROM meetup.scheduling."AttendantList";
 DELETE FROM meetup.scheduling."MeetupEvent";
+DELETE FROM meetup.scheduling."Outbox";

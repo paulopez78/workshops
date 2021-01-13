@@ -24,12 +24,12 @@ namespace Meetup.Scheduling.Test
             return builder;
         }
 
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
-        {
-            builder.ConfigureTestServices((services) =>
-            {
-                services.RemoveAll(typeof(IHostedService));
-            });
-        }
+        // protected override void ConfigureWebHost(IWebHostBuilder builder)
+        // {
+        //     builder.ConfigureTestServices((services) =>
+        //     {
+        //         services.RemoveAll(typeof(IHostedService));
+        //     });
+        // }
     }
 }

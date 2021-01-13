@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Meetup.Scheduling.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using static Meetup.Scheduling.Application.Details.Commands.V1;
@@ -12,8 +11,9 @@ namespace Meetup.Scheduling.Application.Details
     {
         readonly IApplicationService ApplicationService;
 
-        public MeetupEventDetailsCommandApi(MeetupEventDetailsApplicationService applicationService, ILogger<MeetupEventDetailsCommandApi> logger, MeetupSchedulingDbContext dbContext)
-            => ApplicationService = applicationService.Build(dbContext, logger);
+        public MeetupEventDetailsCommandApi(MeetupEventDetailsApplicationService applicationService,
+            ILogger<MeetupEventDetailsCommandApi> logger)
+            => ApplicationService = applicationService.Build(logger);
 
         [HttpPost("details")]
         public Task<IActionResult> Post(Create command) =>
@@ -22,11 +22,11 @@ namespace Meetup.Scheduling.Application.Details
         [HttpPut("details")]
         public Task<IActionResult> UpdateDetails(UpdateDetails command) =>
             ApplicationService.HandleCommand(command);
-        
+
         [HttpPut("schedule")]
         public Task<IActionResult> Schedule(Schedule command) =>
             ApplicationService.HandleCommand(command);
-        
+
         [HttpPut("makeonline")]
         public Task<IActionResult> MakeOnline(MakeOnline command) =>
             ApplicationService.HandleCommand(command);

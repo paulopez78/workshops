@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Meetup.Scheduling.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,10 +16,8 @@ namespace Meetup.Scheduling.Application
 
     public static class ApplicationServiceExtensions
     {
-        public static IApplicationService Build(this IApplicationService applicationService,
-            MeetupSchedulingDbContext dbContext, ILogger logger) =>
+        public static IApplicationService Build(this IApplicationService applicationService, ILogger logger) =>
             new ExceptionHandlingLoggerMiddleware(applicationService, logger);
-            // new ExceptionHandlingLoggerMiddleware(TransactionMiddleware(applicationService, dbContext), logger);
 
         public static async Task<IActionResult> HandleCommand(this IApplicationService applicationService,
             object command)
@@ -76,27 +73,4 @@ namespace Meetup.Scheduling.Application
             }
         }
     }
-
-    // public class TransactionMiddleware : IApplicationService
-    // {
-    //     readonly IApplicationService       ApplicationService;
-    //     readonly MeetupSchedulingDbContext DbContext;
-    //
-    //     public TransactionMiddleware(IApplicationService applicationService, MeetupSchedulingDbContext dbContext)
-    //     {
-    //         ApplicationService = applicationService;
-    //         DbContext          = dbContext;
-    //     }
-    //
-    //     public async Task<CommandResult> Handle(object command)
-    //     {
-    //         await using var transaction = await DbContext.Database.BeginTransactionAsync();
-    //
-    //         var result = await ApplicationService.Handle(command);
-    //
-    //         await DbContext.Database.CommitTransactionAsync();
-    //
-    //         return result;
-    //     }
-    // }
 }

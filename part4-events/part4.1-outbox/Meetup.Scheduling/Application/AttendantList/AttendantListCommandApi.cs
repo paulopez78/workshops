@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Meetup.Scheduling.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using static Meetup.Scheduling.Application.AttendantList.Commands.V1;
@@ -13,8 +12,8 @@ namespace Meetup.Scheduling.Application.AttendantList
         readonly IApplicationService ApplicationService;
 
         public AttendantListCommandApi(AttendantListApplicationService applicationService,
-            ILogger<AttendantListCommandApi> logger, MeetupSchedulingDbContext dbContext)
-            => ApplicationService = applicationService.Build(dbContext, logger);
+            ILogger<AttendantListCommandApi> logger)
+            => ApplicationService = applicationService.Build(logger);
 
         [HttpPost()]
         public Task<IActionResult> Post(CreateAttendantList command) =>
