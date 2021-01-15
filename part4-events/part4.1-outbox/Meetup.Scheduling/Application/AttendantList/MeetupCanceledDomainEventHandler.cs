@@ -1,22 +1,29 @@
 ﻿using System.Threading.Tasks;
+using MassTransit;
 using Meetup.Scheduling.Domain;
 using Meetup.Scheduling.Infrastructure;
 
 namespace Meetup.Scheduling.Application.AttendantList
 {
-    public class MeetupCanceledDomainEventHandler : IDomainEventHandler<Events.V1.MeetupEvent.Cancelled>
+    public class MeetupCanceledMassTransitDomainEventHandler : IConsumer<Events.V1.MeetupEvent.Cancelled>
     {
-        readonly IApplicationService ApplicationService;
+        readonly AttendantListApplicationService ApplicationService;
 
-        public MeetupCanceledDomainEventHandler(AttendantListApplicationService applicationService)
+        public MeetupCanceledMassTransitDomainEventHandler(AttendantListApplicationService applicationService)
         {
             ApplicationService = applicationService;
         }
 
-        public async Task Handle(Events.V1.MeetupEvent.Cancelled @event)
+        public async Task Consume(ConsumeContext<Events.V1.MeetupEvent.Cancelled> context)
         {
             // map event to a command
-            await ApplicationService.Handle(new Commands.V1.Close(@event.Id));
+            var cancelledEvent = context.Message;
+
+            await ApplicationService.HandleCommand(
+                cancelledEvent.Id,
+                new Commands.V1.Close(cancelledEvent.Id),
+                context
+            );
         }
     }
 }

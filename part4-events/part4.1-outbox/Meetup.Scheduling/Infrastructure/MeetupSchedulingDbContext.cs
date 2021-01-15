@@ -12,7 +12,7 @@ namespace Meetup.Scheduling.Infrastructure
         {
         }
 
-        public DbSet<Outbox> Outbox { get; set; }
+        public DbSet<OutBox> Outbox { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -68,6 +68,14 @@ namespace Meetup.Scheduling.Infrastructure
                     });
                 });
                 b.Property(p => p.Version).IsConcurrencyToken();
+            });
+
+            modelBuilder.Entity<OutBox>(b =>
+            {
+                b.Property<int>("Id")
+                    .HasColumnType("int")
+                    .ValueGeneratedOnAdd();
+                b.HasKey("Id");
             });
         }
     }

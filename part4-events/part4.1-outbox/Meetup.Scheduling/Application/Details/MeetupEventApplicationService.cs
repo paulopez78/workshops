@@ -3,91 +3,70 @@ using System.Threading.Tasks;
 using Meetup.Scheduling.Domain;
 using Meetup.Scheduling.Infrastructure;
 using static Meetup.Scheduling.Application.Details.Commands.V1;
-using static System.Guid;
 
 namespace Meetup.Scheduling.Application.Details
 {
-    public class MeetupEventDetailsApplicationService : IApplicationService
+    public class MeetupEventDetailsApplicationService : ApplicationService<MeetupEventDetailsAggregate>
     {
-        readonly MeetupRepository<MeetupEventDetailsAggregate> MeetupEventRepository;
-        readonly IDateTimeProvider                             DateTimeProvider;
+        readonly IDateTimeProvider DateTimeProvider;
 
-        public MeetupEventDetailsApplicationService(
-            MeetupRepository<MeetupEventDetailsAggregate> meetupEventRepository,
-            IDateTimeProvider dateTimeProvider)
-        {
-            MeetupEventRepository = meetupEventRepository;
-            DateTimeProvider      = dateTimeProvider;
-        }
+        public MeetupEventDetailsApplicationService(MeetupRepository<MeetupEventDetailsAggregate> meetupEventRepository,
+            IDateTimeProvider dateTimeProvider) : base(meetupEventRepository) =>
+            DateTimeProvider = dateTimeProvider;
 
-        public Task<CommandResult> Handle(object command)
+        public override Task<CommandResult> Handle(Guid aggregateId, object command, CommandContext context)
         {
             return command switch
             {
                 Create cmd
-                    => HandleCreate(cmd),
+                    => HandleCreate(
+                        new MeetupEventDetailsAggregate(
+                            cmd.EventId,
+                            GroupSlug.From(cmd.Group),
+                            Domain.Details.From(cmd.Title, cmd.Description),
+                            cmd.Capacity),
+                        context
+                    ),
                 UpdateDetails cmd
                     => Handle(
-                        cmd.EventId,
-                        entity => entity.UpdateDetails(Domain.Details.From(cmd.Title, cmd.Description))
+                        aggregateId,
+                        entity => entity.UpdateDetails(Domain.Details.From(cmd.Title, cmd.Description)),
+                        context
                     ),
                 MakeOnline cmd
                     => Handle(
-                        cmd.EventId,
-                        entity => entity.MakeOnlineEvent(new Uri(cmd.Url))
+                        aggregateId,
+                        entity => entity.MakeOnlineEvent(new Uri(cmd.Url)),
+                        context
                     ),
                 MakeOnsite cmd
                     => Handle(
-                        cmd.EventId,
-                        entity => entity.MakeOnSiteEvent(Address.From(cmd.Address))
+                        aggregateId,
+                        entity => entity.MakeOnSiteEvent(Address.From(cmd.Address)),
+                        context
                     ),
                 Schedule cmd
                     => Handle(
-                        cmd.EventId,
+                        aggregateId,
                         entity => entity.Schedule(ScheduleDateTime.From(DateTimeProvider.UtcNow(), cmd.StartTime,
-                            cmd.EndTime))
+                            cmd.EndTime)),
+                        context
                     ),
-                Publish cmd
+                Publish _
                     => Handle(
-                        cmd.EventId,
-                        meetup => meetup.Publish()
+                        aggregateId,
+                        meetup => meetup.Publish(),
+                        context
                     ),
                 Cancel cmd
                     => Handle(
-                        cmd.EventId,
-                        meetup => meetup.Cancel(cmd.Reason)
+                        aggregateId,
+                        meetup => meetup.Cancel(cmd.Reason),
+                        context
                     ),
                 _
                     => throw new ApplicationException("command handler not found")
             };
-        }
-
-        async Task<CommandResult> HandleCreate(Create cmd)
-        {
-            var meetupEventId = NewGuid();
-
-            var meetupDetails = new MeetupEventDetailsAggregate(
-                meetupEventId,
-                GroupSlug.From(cmd.Group),
-                Domain.Details.From(cmd.Title, cmd.Description),
-                cmd.Capacity
-            );
-
-            await MeetupEventRepository.Save(meetupDetails);
-
-            return new(meetupEventId);
-        }
-
-        async Task<CommandResult> Handle(Guid id, Action<MeetupEventDetailsAggregate> action)
-        {
-            var meetupEventAggregate = await MeetupEventRepository.Load(id);
-            if (meetupEventAggregate is null) throw new ApplicationException($"Entity not found {id}");
-
-            action(meetupEventAggregate);
-
-            await MeetupEventRepository.Save(meetupEventAggregate);
-
-            return new(id);
         }
     }
 }

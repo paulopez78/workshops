@@ -1,9 +1,8 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
+using MassTransit;
 using Meetup.Scheduling.Domain;
 using Microsoft.EntityFrameworkCore;
-using static Meetup.Scheduling.Infrastructure.Outbox;
 
 namespace Meetup.Scheduling.Infrastructure
 {
@@ -19,7 +18,7 @@ namespace Meetup.Scheduling.Infrastructure
         public Task<T?> Load(Guid id)
             => DbContext.Set<T>().SingleOrDefaultAsync(x => x.Id == id)!;
 
-        public async Task<Guid> Save(T aggregate)
+        public async Task Save(T aggregate)
         {
             var loadedAggregate = await Load(aggregate.Id);
 
@@ -29,20 +28,21 @@ namespace Meetup.Scheduling.Infrastructure
             if (DbContext.ChangeTracker.HasChanges())
                 aggregate.IncreaseVersion();
 
-            // dispatch domain events before transaction commit
+            // BEFORE: dispatch domain events before transaction commit
             // await Task.WhenAll(aggregate.Changes.Select(Dispatcher.Publish));
 
             // Save domain events as part of the transaction
-            await DbContext.Set<Outbox>().AddRangeAsync(
-                aggregate.Changes.Select(Map)
-            );
+            // await DbContext.Set<OutBox>().AddRangeAsync(
+            //     aggregate.Changes.Select(x => Outbox.From(aggregate.Id, x))
+            // );
+
             await DbContext.SaveChangesAsync();
 
-            // dispatch domain after transaction commit
+            // AFTER: dispatch domain after transaction commit
             //await Task.WhenAll(aggregate.Changes.Select(Dispatcher.Publish));
 
-            aggregate.ClearChanges();
-            return aggregate.Id;
+            // Dispatch straight to message broker
+            // await Task.WhenAll(aggregate.Changes.Select(x => PublishEndpoint.Publish(x)));
         }
     }
 }

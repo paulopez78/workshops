@@ -6,13 +6,14 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Meetup.Scheduling.Application;
 using Polly;
 using Polly.Extensions.Http;
 using Polly.Retry;
 using Xunit;
 using Xunit.Abstractions;
 using Meetup.Scheduling.Application.Queries;
+using Meetup.Scheduling.Infrastructure;
+using static System.Guid;
 using static Meetup.Scheduling.Application.Details.Commands.V1;
 using static Meetup.Scheduling.Application.AttendantList.Commands.V1;
 using static Meetup.Scheduling.Test.MeetupSchedulingTestExtensions;
@@ -164,9 +165,9 @@ namespace Meetup.Scheduling.Test
             await action();
         }
 
-        static Guid joe   = Guid.NewGuid();
-        static Guid carla = Guid.NewGuid();
-        static Guid alice = Guid.NewGuid();
+        static Guid joe   = NewGuid();
+        static Guid carla = NewGuid();
+        static Guid alice = NewGuid();
     }
 
     public static class MeetupSchedulingTestExtensions
@@ -179,8 +180,15 @@ namespace Meetup.Scheduling.Test
         const  string BaseUrl      = "/api/meetup";
         static string QueryBaseUrl = $"{BaseUrl}/{Group}/events";
 
-        public static Task<HttpResponseMessage> CreateMeetup(this HttpClient client)
-            => client.Post("events/details", new Create(Group, Title, Description, Capacity));
+        public static async Task<HttpResponseMessage> CreateMeetup(this HttpClient client)
+        {
+            var result = await client.Post("events/details",
+                new Create(NewGuid(), Group, Title, Description, Capacity));
+
+            // eventual consistency hack, better to poll (query) checking consistency with a timeout
+            await Task.Delay(5_000);
+            return result;
+        }
 
         public static async Task<HttpResponseMessage> CreatePublishedMeetup(this HttpClient client)
         {
@@ -191,8 +199,8 @@ namespace Meetup.Scheduling.Test
 
             var result = await client.Publish(eventId);
 
-            // hack to wait for eventual consistency, should query retrying till value is either consistent or a failure
-            await Task.Delay(1000);
+            // eventual consistency hack, better to poll (query) checking consistency with a timeout
+            await Task.Delay(5_000);
 
             return result;
         }
@@ -225,7 +233,7 @@ namespace Meetup.Scheduling.Test
             Assert.True(result.IsSuccessStatusCode);
 
             var commandResult = await result.Content.ReadFromJsonAsync<CommandResult>();
-            return commandResult.EventId;
+            return commandResult!.AggregateId;
         }
 
         public static async Task ThenBadRequest(this Task<HttpResponseMessage> httpResponseMessage)
@@ -244,10 +252,30 @@ namespace Meetup.Scheduling.Test
         }
 
         static Task<HttpResponseMessage> Put(this HttpClient client, string url, object command)
-            => Retry().ExecuteAsync(() => client.PutAsync($"{BaseUrl}/{url}", Serialize(command)));
+        {
+            var messageId = NewGuid();
+            return Retry().ExecuteAsync(() =>
+            {
+                client.AddIdempotencyKey(messageId);
+                return client.PutAsync($"{BaseUrl}/{url}", Serialize(command));
+            });
+        }
 
         static Task<HttpResponseMessage> Post(this HttpClient client, string url, object command)
-            => Retry().ExecuteAsync(() => client.PostAsync($"{BaseUrl}/{url}", Serialize(command)));
+        {
+            var messageId = NewGuid();
+            return Retry().ExecuteAsync(() =>
+            {
+                client.AddIdempotencyKey(messageId);
+                return client.PostAsync($"{BaseUrl}/{url}", Serialize(command));
+            });
+        }
+
+        static void AddIdempotencyKey(this HttpClient client, Guid id)
+        {
+            client.DefaultRequestHeaders.Remove("Idempotency-Key");
+            client.DefaultRequestHeaders.Add("Idempotency-Key", id.ToString());
+        }
 
         static StringContent Serialize(object command)
             => new(JsonSerializer.Serialize(command), Encoding.UTF8, "application/json");

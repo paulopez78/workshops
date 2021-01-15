@@ -6,73 +6,59 @@ using static Meetup.Scheduling.Application.AttendantList.Commands.V1;
 
 namespace Meetup.Scheduling.Application.AttendantList
 {
-    public class AttendantListApplicationService : IApplicationService
+    public class AttendantListApplicationService : ApplicationService<AttendantListAggregate>
     {
-        readonly MeetupRepository<AttendantListAggregate> Repository;
-        readonly UtcNow                                   GetUtcNow;
+        readonly UtcNow GetUtcNow;
 
-        public AttendantListApplicationService(MeetupRepository<AttendantListAggregate> repository, UtcNow getUtcNow)
-        {
-            Repository = repository;
-            GetUtcNow  = getUtcNow;
-        }
+        public AttendantListApplicationService(MeetupRepository<AttendantListAggregate> repository, UtcNow getUtcNow) :
+            base(repository) => GetUtcNow = getUtcNow;
 
-        public Task<CommandResult> Handle(object command)
+        public override Task<CommandResult> Handle(Guid aggregateId, object command, CommandContext context)
             =>
                 command switch
                 {
                     CreateAttendantList cmd
-                        => Handle(new AttendantListAggregate(cmd.MeetupEventId, cmd.Capacity)),
-                    Open cmd
-                        => Handle(
-                            cmd.MeetupEventId,
-                            entity => entity.Open()
+                        => HandleCreate(
+                            new AttendantListAggregate(cmd.MeetupEventId, cmd.Capacity), context
                         ),
-                    Close cmd
+                    Open _
                         => Handle(
-                            cmd.MeetupEventId,
-                            entity => entity.Open()
+                            aggregateId,
+                            entity => entity.Open(),
+                            context
+                        ),
+                    Close _
+                        => Handle(
+                            aggregateId,
+                            entity => entity.Open(),
+                            context
                         ),
                     IncreaseCapacity cmd
                         => Handle(
-                            cmd.MeetupEventId,
-                            entity => entity.IncreaseCapacity(cmd.Capacity)
+                            aggregateId,
+                            entity => entity.IncreaseCapacity(cmd.Capacity),
+                            context
                         ),
                     ReduceCapacity cmd
                         => Handle(
-                            cmd.MeetupEventId,
-                            entity => entity.ReduceCapacity(cmd.Capacity)
+                            aggregateId,
+                            entity => entity.ReduceCapacity(cmd.Capacity),
+                            context
                         ),
                     AcceptInvitation cmd
                         => Handle(
-                            cmd.MeetupEventId,
-                            entity => entity.AcceptInvitation(cmd.UserId, GetUtcNow())
+                            aggregateId,
+                            entity => entity.AcceptInvitation(cmd.UserId, GetUtcNow()),
+                            context
                         ),
                     DeclineInvitation cmd
                         => Handle(
-                            cmd.MeetupEventId,
-                            entity => entity.DeclineInvitation(cmd.UserId, GetUtcNow())
+                            aggregateId,
+                            entity => entity.DeclineInvitation(cmd.UserId, GetUtcNow()),
+                            context
                         ),
                     _
                         => throw new ApplicationException("command handler not found")
                 };
-
-        async Task<CommandResult> Handle(AttendantListAggregate aggregate)
-        {
-            var id = await Repository.Save(aggregate);
-            return new(id);
-        }
-
-        async Task<CommandResult> Handle(Guid id, Action<AttendantListAggregate> action)
-        {
-            var aggregate = await Repository.Load(id);
-            if (aggregate is null) throw new ApplicationException($"Aggregate not found {id}");
-
-            action(aggregate);
-
-            await Repository.Save(aggregate);
-
-            return new(id);
-        }
     }
 }
