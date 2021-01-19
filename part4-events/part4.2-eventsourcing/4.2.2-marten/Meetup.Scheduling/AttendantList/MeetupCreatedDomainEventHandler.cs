@@ -1,32 +1,34 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using MassTransit;
+using Meetup.Scheduling.Framework;
 using Microsoft.Extensions.Logging;
-using Meetup.Scheduling.Infrastructure;
 
 namespace Meetup.Scheduling.AttendantList
 {
     public class MeetupCreatedMassTransitDomainEventHandler : IConsumer<MeetupDetails.Events.V1.Created>
     {
-        readonly IApplicationService ApplicationService;
+        readonly HandleCommand<AttendantListAggregate> Handle;
 
         readonly ILogger<MeetupCreatedMassTransitDomainEventHandler> Logger;
 
-        public MeetupCreatedMassTransitDomainEventHandler(AttendantListApplicationService applicationService,
+        public MeetupCreatedMassTransitDomainEventHandler(HandleCommand<AttendantListAggregate> handle,
             ILogger<MeetupCreatedMassTransitDomainEventHandler> logger)
         {
-            ApplicationService = applicationService;
-            Logger             = logger;
+            Handle = handle;
+            Logger = logger;
         }
 
         public async Task Consume(ConsumeContext<MeetupDetails.Events.V1.Created> context)
         {
             Logger.LogInformation("Executing meetup created handler");
 
-            var domainEvent = context.Message;
+            var meetupCreated = context.Message;
+            var id          = Guid.NewGuid();
 
-            await ApplicationService.HandleCommand(domainEvent.Id,
-                new Commands.V1.CreateAttendantList(domainEvent.Id, domainEvent.Capacity),
-                context);
+            await Handle
+                .WithContext(context)
+                .Invoke(id, new Commands.V1.Create(id, meetupCreated.Id, meetupCreated.Capacity));
         }
     }
 }

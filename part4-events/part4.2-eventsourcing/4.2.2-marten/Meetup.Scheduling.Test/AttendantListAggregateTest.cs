@@ -29,6 +29,7 @@ namespace Meetup.Scheduling.Test
             var sut = CreateOpenedAttendantList();
 
             // act
+            sut.Add(joe);
             sut.Remove(joe);
 
             // assert
@@ -96,7 +97,7 @@ namespace Meetup.Scheduling.Test
         static AttendantListAggregate CreateAttendantList(int capacity = 42)
         {
             var attendantList = new AttendantListAggregate {Id = NewGuid()};
-            attendantList.Create(capacity);
+            attendantList.Create(NewGuid(), capacity);
             return attendantList;
         }
 
@@ -121,14 +122,5 @@ namespace Meetup.Scheduling.Test
             var userAcceptedAt = DateTimeOffset.UtcNow;
             sut.Remove(user, userAcceptedAt);
         }
-
-        public static bool Going(this AttendantListAggregate sut, Guid userId)
-            => sut.Attendants.Any(x => x.UserId == userId && !x.Waiting);
-
-        public static bool Waiting(this AttendantListAggregate sut, Guid userId)
-            => sut.Attendants.Any(x => x.UserId == userId && x.Waiting);
-
-        public static bool NotGoing(this AttendantListAggregate sut, Guid userId)
-            => sut.Attendants.All(x => x.UserId != userId);
     }
 }

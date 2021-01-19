@@ -6,7 +6,7 @@ namespace Meetup.Scheduling.AttendantList
     {
         public static class V1
         {
-            public record Created (Guid Id, int Capacity);
+            public record AttendantListCreated (Guid Id, Guid MeeupEventId, int Capacity);
 
             public record Opened(Guid Id);
 

@@ -1,9 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using Marten;
-using MassTransit;
+using Meetup.Scheduling.Framework;
 using Microsoft.AspNetCore.Mvc;
-using Meetup.Scheduling.Infrastructure;
 using static Meetup.Scheduling.AttendantList.Commands.V1;
 
 namespace Meetup.Scheduling.AttendantList
@@ -12,33 +10,32 @@ namespace Meetup.Scheduling.AttendantList
     [ApiController]
     public class AttendantListCommandApi : ControllerBase
     {
-        readonly IApplicationService ApplicationService;
+        readonly HandleCommand<AttendantListAggregate> HandleCommand;
 
-        public AttendantListCommandApi(AttendantListApplicationService applicationService, IDocumentStore eventStore, IPublishEndpoint publishEndpoint, UtcNow getUtcNow) 
-            => ApplicationService = applicationService.Build(eventStore, publishEndpoint, getUtcNow);
+        public AttendantListCommandApi(HandleCommand<AttendantListAggregate> handle)
+            => HandleCommand = handle;
 
         [HttpPost()]
-        public Task<IActionResult> Post(CreateAttendantList command) =>
-            HandleCommand(command.MeetupEventId, command);
+        public Task<IActionResult> Post(Create command) =>
+            Handle(command.Id, command);
 
         [HttpPut("capacity/increase")]
         public Task<IActionResult> IncreaseCapacity(IncreaseCapacity command) =>
-            HandleCommand(command.MeetupEventId, command);
+            Handle(command.Id, command);
 
         [HttpPut("capacity/reduce")]
         public Task<IActionResult> ReduceCapacity(ReduceCapacity command) =>
-            HandleCommand(command.MeetupEventId, command);
+            Handle(command.Id, command);
 
         [HttpPut("add")]
         public Task<IActionResult> Attend(Attend command) =>
-            HandleCommand(command.MeetupEventId, command);
+            Handle(command.Id, command);
 
         [HttpPut("remove")]
         public Task<IActionResult> DontAttend(DontAttend command) =>
-            HandleCommand(command.MeetupEventId, command);
+            Handle(command.Id, command);
 
-
-        Task<IActionResult> HandleCommand(Guid aggregateId, object command) =>
-            ApplicationService.HandleCommand(aggregateId, command, HttpContext.Request.Headers);
+        Task<IActionResult> Handle(Guid id, object command)
+            => HandleCommand.WithContext(HttpContext.Request.Headers)(id, command);
     }
 }

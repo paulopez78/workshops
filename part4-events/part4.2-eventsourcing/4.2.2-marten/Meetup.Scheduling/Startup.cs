@@ -10,8 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Meetup.Scheduling.MeetupDetails;
 using Meetup.Scheduling.AttendantList;
-using Meetup.Scheduling.Infrastructure;
-using Meetup.Scheduling.Queries;
+using Meetup.Scheduling.Framework;
 
 namespace Meetup.Scheduling
 {
@@ -27,26 +26,19 @@ namespace Meetup.Scheduling
             services.AddControllers();
 
             var connectionString = Configuration.GetConnectionString("MeetupEvents");
+            AddEventStore();
 
-            services.AddMarten(cfg =>
-            {
-                cfg.Connection(connectionString);
-                cfg.AutoCreateSchemaObjects   = AutoCreate.All;
-                cfg.DatabaseSchemaName        = "scheduling";
-                cfg.Events.DatabaseSchemaName = "scheduling";
-                cfg.RegisterDocumentType<MeetupEvent>();
-                cfg.RegisterDocumentType<OutBox>();
-            });
-
-            services.AddSingleton<IDateTimeProvider>(new DateTimeProvider());
             services.AddSingleton<UtcNow>(() => DateTimeOffset.UtcNow);
 
-            services.AddScoped<MeetupEventDetailsApplicationService>();
-            services.AddScoped<AttendantListApplicationService>();
-            services.AddScoped<MeetupEventPostgresQueries>();
+            services.AddScoped(sp =>
+                sp.AddApplicationService<MeetupEventDetailsAggregate, MeetupDetailsEventProjection.MeetupDetailsEvent>(
+                    MeetupDetailsEventProjection.When
+                ).Handle(sp.GetRequiredService<UtcNow>()));
 
-            // services.AddDomainEventsDispatcher(typeof(MeetupCreatedDomainEventHandler));
-            // services.AddHostedService<OutboxProcessor>();
+            services.AddScoped(sp =>
+                sp.AddApplicationService<AttendantListAggregate, AttendantListProjection.AttendantList>(
+                    AttendantListProjection.When
+                ).Handle(sp.GetRequiredService<UtcNow>()));
 
             services.AddScoped<MeetupCreatedMassTransitDomainEventHandler>();
             services.AddScoped<MeetupCanceledMassTransitDomainEventHandler>();
@@ -90,7 +82,26 @@ namespace Meetup.Scheduling
             {
                 c.SwaggerDoc("v1", new OpenApiInfo {Title = "meetupevents", Version = "v1"});
             });
+
+            void AddEventStore() =>
+                services.AddMarten(cfg =>
+                {
+                    cfg.Connection(connectionString);
+                    cfg.AutoCreateSchemaObjects   = AutoCreate.All;
+                    cfg.DatabaseSchemaName        = "scheduling";
+                    cfg.Events.DatabaseSchemaName = "scheduling";
+
+                    cfg.Schema.For<MeetupDetailsEventProjection.MeetupDetailsEvent>()
+                        .Index(x => x.Group, x => x.IndexName = "mt_doc_meetupdetailsevent_idx_group");
+
+                    cfg.Schema.For<AttendantListProjection.AttendantList>()
+                        .UniqueIndex("mt_doc_attendantlist_uidx_meetup_event_id", x => x.MeetupEventId);
+
+                    cfg.Schema.For<OutBox>()
+                        .Index(x => new {x.MessageId, x.AggregateId});
+                });
         }
+
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {

@@ -6,12 +6,13 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Meetup.Scheduling.Framework;
 using Polly;
 using Polly.Extensions.Http;
 using Polly.Retry;
 using Xunit;
 using Xunit.Abstractions;
-using Meetup.Scheduling.Infrastructure;
+using Meetup.Scheduling.MeetupDetails;
 using Meetup.Scheduling.Queries;
 using static System.Guid;
 using static Meetup.Scheduling.MeetupDetails.Commands.V1;
@@ -72,8 +73,8 @@ namespace Meetup.Scheduling.Test
             await Client.Attend(eventId, joe).ThenOk();
 
             // assert
-            var meetupEvent = await Client.Get(eventId);
-            meetupEvent.Going(joe).Should().BeTrue();
+            var meetup = await Client.Get(eventId);
+            meetup.Going(joe).Should().BeTrue();
         }
 
         [Fact]
@@ -83,6 +84,7 @@ namespace Meetup.Scheduling.Test
             var eventId = await Client.CreatePublishedMeetup().ThenOk();
 
             // act
+            await Client.Attend(eventId, joe).ThenOk();
             await Client.DontAttend(eventId, joe).ThenOk();
 
             // assert
@@ -91,7 +93,7 @@ namespace Meetup.Scheduling.Test
         }
 
         [Fact]
-        public async Task Should_Joe_Wait()
+        public async Task Should_One_Attendant_Wait()
         {
             // arrange
             var eventId = await Client.CreatePublishedMeetup().ThenOk();
@@ -126,15 +128,15 @@ namespace Meetup.Scheduling.Test
 
             // assert
             var meetupEvent = await Client.Get(eventId);
-            Assert.Equal(3, meetupEvent.Attendants?.Count);
-            Assert.Equal(1, meetupEvent.Attendants?.Count(x => x.Waiting));
+            meetupEvent.Attendants?.Should().HaveCount(3);
+            meetupEvent.Attendants?.Where(x => x.Waiting).Should().HaveCount(1);
 
             Task Accept(Guid userId) =>
-                RandomJitter(() => Client.Attend(eventId, userId), 0);
+                RandomJitter(() => Fixture.CreateClient().Attend(eventId, userId), 0);
         }
 
         [Fact]
-        public async Task Should_Throw_When_Concurrency_Conflict_Detected()
+        public async Task Should_Not_Throw_Concurrency_Conflict_Detected()
         {
             // arrange
             var expectedTitle       = "Microservices successful case study";
@@ -149,8 +151,8 @@ namespace Meetup.Scheduling.Test
 
             // assert
             var meetupEvent = await Client.Get(eventId);
-            Assert.True(meetupEvent.Going(carla));
-            Assert.Equal(expectedTitle, meetupEvent.Title);
+            meetupEvent.Going(carla).Should().BeTrue();
+            meetupEvent.Title.Should().Be(expectedTitle);
 
             Task Accept(Guid userId) =>
                 RandomJitter(() => Client.Attend(eventId, userId), 0);
@@ -184,10 +186,10 @@ namespace Meetup.Scheduling.Test
         public static async Task<HttpResponseMessage> CreateMeetup(this HttpClient client)
         {
             var result = await client.Post("events/details",
-                new Create(NewGuid(), Group, Title, Description, Capacity));
+                new Commands.V1.Create(NewGuid(), Group, Title, Description, Capacity));
 
             // eventual consistency hack, better to poll (query) checking consistency with a timeout
-            await Task.Delay(5_000);
+            await Task.Delay(100);
             return result;
         }
 
@@ -201,7 +203,7 @@ namespace Meetup.Scheduling.Test
             var result = await client.Publish(eventId);
 
             // eventual consistency hack, better to poll (query) checking consistency with a timeout
-            await Task.Delay(5_000);
+            await Task.Delay(100);
 
             return result;
         }
@@ -220,13 +222,17 @@ namespace Meetup.Scheduling.Test
         public static Task<HttpResponseMessage> Publish(this HttpClient client, Guid eventId)
             => client.Put($"events/publish", new Publish(eventId));
 
-        public static Task<HttpResponseMessage> Attend(this HttpClient client, Guid eventId,
-            Guid userId)
-            => client.Put($"attendants/add", new Attend(eventId, userId));
+        public static async Task<HttpResponseMessage> Attend(this HttpClient client, Guid eventId, Guid userId)
+        {
+            var meetup = await client.Get(eventId);
+            return await client.Put($"attendants/add", new Attend(meetup.AttendantListId.Value, userId));
+        }
 
-        public static Task<HttpResponseMessage> DontAttend(this HttpClient client, Guid eventId,
-            Guid userId)
-            => client.Put($"attendants/remove", new DontAttend(eventId, userId));
+        public static async Task<HttpResponseMessage> DontAttend(this HttpClient client, Guid eventId, Guid userId)
+        {
+            var meetup = await client.Get(eventId);
+            return await client.Put($"attendants/remove", new DontAttend(meetup.AttendantListId.Value, userId));
+        }
 
         public static async Task<Guid> ThenOk(this Task<HttpResponseMessage> httpResponseMessage)
         {
@@ -254,28 +260,21 @@ namespace Meetup.Scheduling.Test
 
         static Task<HttpResponseMessage> Put(this HttpClient client, string url, object command)
         {
-            var messageId = NewGuid();
-            return Retry().ExecuteAsync(() =>
-            {
-                client.AddIdempotencyKey(messageId);
-                return client.PutAsync($"{BaseUrl}/{url}", Serialize(command));
-            });
+            client.AddIdempotencyKey();
+            return Retry().ExecuteAsync(() => client.PutAsync($"{BaseUrl}/{url}", Serialize(command)));
         }
 
         static Task<HttpResponseMessage> Post(this HttpClient client, string url, object command)
         {
-            var messageId = NewGuid();
-            return Retry().ExecuteAsync(() =>
-            {
-                client.AddIdempotencyKey(messageId);
-                return client.PostAsync($"{BaseUrl}/{url}", Serialize(command));
-            });
+            client.AddIdempotencyKey();
+            return Retry().ExecuteAsync(() => client.PostAsync($"{BaseUrl}/{url}", Serialize(command)));
         }
 
-        static void AddIdempotencyKey(this HttpClient client, Guid id)
+        static void AddIdempotencyKey(this HttpClient client)
         {
-            client.DefaultRequestHeaders.Remove("Idempotency-Key");
-            client.DefaultRequestHeaders.Add("Idempotency-Key", id.ToString());
+            var requestKey = "Idempotency-Key";
+            client.DefaultRequestHeaders.Remove(requestKey);
+            client.DefaultRequestHeaders.Add(requestKey, NewGuid().ToString());
         }
 
         static StringContent Serialize(object command)

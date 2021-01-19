@@ -1,72 +1,65 @@
 using System;
-using System.Threading.Tasks;
-using Marten;
-using Meetup.Scheduling.Infrastructure;
+using Meetup.Scheduling.Framework;
 using static Meetup.Scheduling.MeetupDetails.Commands.V1;
 
 namespace Meetup.Scheduling.MeetupDetails
 {
-    public class MeetupEventDetailsApplicationService : ApplicationService<MeetupEventDetailsAggregate>
+    public static class MeetupEventDetailsApplicationService
     {
-        readonly IDateTimeProvider DateTimeProvider;
-
-        public MeetupEventDetailsApplicationService(IDocumentStore eventStore, IDateTimeProvider dateTimeProvider) :
-            base(eventStore) =>
-            DateTimeProvider = dateTimeProvider;
-
-        public override Task<CommandResult> Handle(Guid aggregateId, object command, CommandContext context)
-        {
-            return command switch
+        public static HandleCommand<MeetupEventDetailsAggregate> Handle(
+            this Handle<MeetupEventDetailsAggregate> handle, UtcNow getUtcNow)
+            => (aggregateId, command, context) =>
             {
-                Create cmd
-                    => Handle(
-                        aggregateId,
-                        entity => entity.Create(
-                            GroupSlug.From(cmd.Group),
-                            Details.From(cmd.Title, cmd.Description),
-                            cmd.Capacity),
-                        context
-                    ),
-                UpdateDetails cmd
-                    => Handle(
-                        aggregateId,
-                        entity => entity.UpdateDetails(Details.From(cmd.Title, cmd.Description)),
-                        context
-                    ),
-                MakeOnline cmd
-                    => Handle(
-                        aggregateId,
-                        entity => entity.MakeOnlineEvent(new Uri(cmd.Url)),
-                        context
-                    ),
-                MakeOnsite cmd
-                    => Handle(
-                        aggregateId,
-                        entity => entity.MakeOnSiteEvent(Address.From(cmd.Address)),
-                        context
-                    ),
-                Schedule cmd
-                    => Handle(
-                        aggregateId,
-                        entity => entity.Schedule(ScheduleDateTime.From(DateTimeProvider.UtcNow(), cmd.StartTime,
-                            cmd.EndTime)),
-                        context
-                    ),
-                Publish _
-                    => Handle(
-                        aggregateId,
-                        meetup => meetup.Publish(),
-                        context
-                    ),
-                Cancel cmd
-                    => Handle(
-                        aggregateId,
-                        meetup => meetup.Cancel(cmd.Reason),
-                        context
-                    ),
-                _
-                    => throw new ApplicationException("command handler not found")
+                return command switch
+                {
+                    Create cmd
+                        => handle(
+                            aggregateId,
+                            entity => entity.Create(
+                                GroupSlug.From(cmd.Group),
+                                Details.From(cmd.Title, cmd.Description),
+                                cmd.Capacity),
+                            context
+                        ),
+                    UpdateDetails cmd
+                        => handle(
+                            aggregateId,
+                            entity => entity.UpdateDetails(Details.From(cmd.Title, cmd.Description)),
+                            context
+                        ),
+                    MakeOnline cmd
+                        => handle(
+                            aggregateId,
+                            entity => entity.MakeOnlineEvent(new Uri(cmd.Url)),
+                            context
+                        ),
+                    MakeOnsite cmd
+                        => handle(
+                            aggregateId,
+                            entity => entity.MakeOnSiteEvent(Address.From(cmd.Address)),
+                            context
+                        ),
+                    Schedule cmd
+                        => handle(
+                            aggregateId,
+                            entity => entity.Schedule(ScheduleDateTime.From(getUtcNow(), cmd.StartTime, cmd.EndTime)),
+                            context
+                        ),
+                    Publish _
+                        => handle(
+                            aggregateId,
+                            meetup => meetup.Publish(),
+                            context
+                        ),
+                    Cancel cmd
+                        => handle(
+                            aggregateId,
+                            meetup => meetup.Cancel(cmd.Reason),
+                            context
+                        ),
+                    _
+                        => throw new ApplicationException("command handler not found")
+                };
             };
-        }
     }
 }

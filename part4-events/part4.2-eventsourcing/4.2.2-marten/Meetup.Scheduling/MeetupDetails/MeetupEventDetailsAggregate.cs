@@ -1,4 +1,5 @@
 using System;
+using Meetup.Scheduling.Framework;
 using Meetup.Scheduling.Shared;
 using static Meetup.Scheduling.MeetupDetails.Events.V1;
 
@@ -12,19 +13,15 @@ namespace Meetup.Scheduling.MeetupDetails
         public ScheduleDateTime? ScheduleTime { get; private set; } = ScheduleDateTime.None;
         public MeetupEventStatus Status       { get; private set; } = MeetupEventStatus.Draft;
 
-        public MeetupEventDetailsAggregate()
-        {
-        }
-
         public void Create(GroupSlug group, Details details, PositiveNumber capacity)
-            => Apply(new Created(Id, @group, details.Title, details.Description, capacity));
+            => Apply(new Created(Id, group, details.Title, details.Description, capacity));
 
         public void UpdateDetails(Details details)
         {
             if (Details == details)
                 throw new ApplicationException("Same details");
 
-            Apply(new Events.V1.DetailsUpdated(Id, details.Title, details.Description));
+            Apply(new DetailsUpdated(Id, details.Title, details.Description));
         }
 
         public void MakeOnlineEvent(Uri url)
@@ -32,7 +29,7 @@ namespace Meetup.Scheduling.MeetupDetails
             if (Location == Location.Online(url))
                 throw new ApplicationException("Same location");
 
-            Apply(new Events.V1.MadeOnline(Id, url.ToString()));
+            Apply(new MadeOnline(Id, url.ToString()));
         }
 
         public void MakeOnSiteEvent(Address address)
@@ -40,7 +37,7 @@ namespace Meetup.Scheduling.MeetupDetails
             if (Location == Location.OnSite(address))
                 throw new ApplicationException("Same location");
 
-            Apply(new Events.V1.MadeOnsite(Id, address));
+            Apply(new MadeOnsite(Id, address));
         }
 
         public void Schedule(ScheduleDateTime scheduleTime)
@@ -48,7 +45,7 @@ namespace Meetup.Scheduling.MeetupDetails
             if (ScheduleTime == scheduleTime)
                 throw new ApplicationException("Same scheduled time");
 
-            Apply(new Events.V1.Scheduled(Id, scheduleTime.Start, scheduleTime.End));
+            Apply(new Scheduled(Id, scheduleTime.Start, scheduleTime.End));
         }
 
         public void Publish()
@@ -65,7 +62,7 @@ namespace Meetup.Scheduling.MeetupDetails
             if (Location == Location.None)
                 throw new ApplicationException("Meetup can not be published without location");
 
-            Apply(new Events.V1.Published(Id));
+            Apply(new Published(Id));
         }
 
         public void Cancel(string reason)
@@ -73,7 +70,7 @@ namespace Meetup.Scheduling.MeetupDetails
             if (Status == MeetupEventStatus.Cancelled)
                 throw new ApplicationException("Already cancelled");
 
-            Apply(new Events.V1.Cancelled(Id, reason));
+            Apply(new Cancelled(Id, reason));
         }
 
         public void Start()
@@ -81,7 +78,7 @@ namespace Meetup.Scheduling.MeetupDetails
             if (Status == MeetupEventStatus.Started)
                 throw new ApplicationException("Already started");
 
-            Apply(new Events.V1.Started(Id));
+            Apply(new Started(Id));
         }
 
         public void Finish()
@@ -89,7 +86,7 @@ namespace Meetup.Scheduling.MeetupDetails
             if (Status == MeetupEventStatus.Finished)
                 throw new ApplicationException("Already started");
 
-            Apply(new Events.V1.Finished(Id));
+            Apply(new Finished(Id));
         }
 
         public override void When(object domainEvent)
@@ -100,28 +97,28 @@ namespace Meetup.Scheduling.MeetupDetails
                     Group   = GroupSlug.From(created.Group);
                     Details = Details.From(created.Title, created.Description);
                     break;
-                case Events.V1.DetailsUpdated details:
+                case DetailsUpdated details:
                     Details = Details.From(details.Title, details.Description);
                     break;
-                case Events.V1.Scheduled schedule:
+                case Scheduled schedule:
                     ScheduleTime = ScheduleDateTime.FromUnsafe(schedule.Start, schedule.End);
                     break;
-                case Events.V1.MadeOnline online:
+                case MadeOnline online:
                     Location = Location.Online(new Uri(online.Url));
                     break;
-                case Events.V1.MadeOnsite onsite:
+                case MadeOnsite onsite:
                     Location = Location.OnSite(onsite.Address);
                     break;
-                case Events.V1.Published _:
+                case Published _:
                     Status = MeetupEventStatus.Published;
                     break;
-                case Events.V1.Cancelled _:
+                case Cancelled _:
                     Status = MeetupEventStatus.Cancelled;
                     break;
-                case Events.V1.Started _:
+                case Started _:
                     Status = MeetupEventStatus.Started;
                     break;
-                case Events.V1.Finished _:
+                case Finished _:
                     Status = MeetupEventStatus.Finished;
                     break;
             }

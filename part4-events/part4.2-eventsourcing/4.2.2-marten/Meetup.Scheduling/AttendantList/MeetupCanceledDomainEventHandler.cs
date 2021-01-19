@@ -1,28 +1,34 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using Marten;
 using MassTransit;
-using Meetup.Scheduling.Infrastructure;
+using Meetup.Scheduling.Framework;
+using Meetup.Scheduling.Queries;
 
 namespace Meetup.Scheduling.AttendantList
 {
     public class MeetupCanceledMassTransitDomainEventHandler : IConsumer<MeetupDetails.Events.V1.Cancelled>
     {
-        readonly AttendantListApplicationService ApplicationService;
+        readonly HandleCommand<AttendantListAggregate> Handle;
+        readonly IDocumentStore                        Store;
 
-        public MeetupCanceledMassTransitDomainEventHandler(AttendantListApplicationService applicationService)
+        public MeetupCanceledMassTransitDomainEventHandler(
+            HandleCommand<AttendantListAggregate> handle,
+            IDocumentStore store)
         {
-            ApplicationService = applicationService;
+            Handle = handle;
+            Store  = store;
         }
 
         public async Task Consume(ConsumeContext<MeetupDetails.Events.V1.Cancelled> context)
         {
-            // map event to a command
-            var cancelledEvent = context.Message;
+            var id = await Store.GetAttendantListId(context.Message.Id);
+            if (id is null)
+                throw new InvalidOperationException("AttendantList Id not found");
 
-            await ApplicationService.HandleCommand(
-                cancelledEvent.Id,
-                new Commands.V1.Close(cancelledEvent.Id),
-                context
-            );
+            await Handle
+                .WithContext(context)
+                .Invoke(id.Value, new Commands.V1.Close(id.Value));
         }
     }
 }

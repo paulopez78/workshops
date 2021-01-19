@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MassTransit.Contracts.Conductor;
+using Meetup.Scheduling.Framework;
 using Meetup.Scheduling.Shared;
 using static Meetup.Scheduling.AttendantList.Events.V1;
 
@@ -9,23 +9,19 @@ namespace Meetup.Scheduling.AttendantList
 {
     public class AttendantListAggregate : Aggregate
     {
-        public List<Attendant>     Attendants { get; } = new();
-        public PositiveNumber      Capacity;
-        public AttendantListStatus Status { get; private set; }
+        readonly List<Attendant> Attendants = new();
+        PositiveNumber           Capacity;
+        AttendantListStatus      Status;
 
-        public AttendantListAggregate()
-        {
-        }
-
-        public void Create(PositiveNumber capacity)
-            => Apply(new Created(Id, capacity));
+        public void Create(Guid meetupEventId, PositiveNumber capacity)
+            => Apply(new AttendantListCreated(Id, meetupEventId, capacity));
 
         public void Open()
         {
             EnforceNotArchived();
 
             if (Status == AttendantListStatus.Opened)
-                return;
+                throw new ApplicationException($"AttendantList {Id} already opened");
 
             Apply(new Opened(Id));
         }
@@ -35,7 +31,7 @@ namespace Meetup.Scheduling.AttendantList
             EnforceOpened();
 
             if (Status == AttendantListStatus.Closed)
-                return;
+                throw new ApplicationException($"AttendantList {Id} already closed");
 
             Apply(new Closed(Id));
         }
@@ -86,7 +82,7 @@ namespace Meetup.Scheduling.AttendantList
             EnforceOpened();
 
             if (Attendants.Any(x => x.UserId == userId))
-                return;
+                throw new ApplicationException($"Attendant {userId} already added");
 
             if (FreeSpots > 0)
                 Apply(new AttendantAdded(Id, userId, addedAt));
@@ -99,7 +95,7 @@ namespace Meetup.Scheduling.AttendantList
             EnforceOpened();
 
             if (Attendants.All(x => x.UserId != userId))
-                return;
+                throw new ApplicationException($"Attendant {userId} already removed");
 
             Apply(new AttendantRemoved(Id, userId, removedAt));
 
@@ -112,6 +108,15 @@ namespace Meetup.Scheduling.AttendantList
                     Apply(new AttendantsRemovedFromWaitingList(Id, removedAt, shouldAttend.UserId));
             }
         }
+
+        public bool Going(Guid userId)
+            => Attendants.Any(x => x.UserId == userId && !x.Waiting);
+
+        public bool Waiting(Guid userId)
+            => Attendants.Any(x => x.UserId == userId && x.Waiting);
+
+        public bool NotGoing(Guid userId)
+            => Attendants.All(x => x.UserId != userId);
 
         void EnforceOpened()
         {
@@ -129,7 +134,7 @@ namespace Meetup.Scheduling.AttendantList
         {
             switch (domainEvent)
             {
-                case Created created:
+                case AttendantListCreated created:
                     Capacity = created.Capacity;
                     Status   = AttendantListStatus.Closed;
                     break;
@@ -182,6 +187,8 @@ namespace Meetup.Scheduling.AttendantList
             OrderedAttendants.Where(x => x.Waiting == waiting).Select(x => x.UserId);
 
         PositiveNumber FreeSpots => Capacity - OrderedAttendants.Count(x => !x.Waiting);
+
+        public record Attendant(Guid UserId, DateTimeOffset AddedAt, bool Waiting);
     }
 
     public enum AttendantListStatus
@@ -190,6 +197,4 @@ namespace Meetup.Scheduling.AttendantList
         Opened,
         Archived
     }
-
-    public record Attendant(Guid UserId, DateTimeOffset AddedAt, bool Waiting);
 }

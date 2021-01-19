@@ -1,65 +1,55 @@
 using System;
-using System.Threading.Tasks;
-using Marten;
-using Meetup.Scheduling.Infrastructure;
+using Meetup.Scheduling.Framework;
 using static Meetup.Scheduling.AttendantList.Commands.V1;
 
 namespace Meetup.Scheduling.AttendantList
 {
-    public class AttendantListApplicationService : ApplicationService<AttendantListAggregate>
+    public static class AttendantListApplicationService
     {
-        readonly UtcNow GetUtcNow;
-
-        public AttendantListApplicationService(IDocumentStore eventStore, UtcNow getUtcNow) :
-            base(eventStore)
-        {
-            GetUtcNow = getUtcNow;
-        }
-
-        public override Task<CommandResult> Handle(Guid aggregateId, object command, CommandContext context)
-            =>
+        public static HandleCommand<AttendantListAggregate> Handle(this Handle<AttendantListAggregate> handle,  UtcNow getUtcNow)
+            => (id, command, context) =>
                 command switch
                 {
-                    CreateAttendantList cmd
-                        => Handle(
-                            aggregateId,
-                            aggregate => aggregate.Create(cmd.Capacity),
+                    Create cmd
+                        => handle(
+                            id,
+                            aggregate => aggregate.Create(cmd.MeetupEventId, cmd.Capacity),
                             context
                         ),
                     Open _
-                        => Handle(
-                            aggregateId,
+                        => handle(
+                            id,
                             aggregate => aggregate.Open(),
                             context
                         ),
                     Close _
-                        => Handle(
-                            aggregateId,
+                        => handle(
+                            id,
                             aggregate => aggregate.Open(),
                             context
                         ),
                     IncreaseCapacity cmd
-                        => Handle(
-                            aggregateId,
-                            aggregate => aggregate.IncreaseCapacity(cmd.Capacity, GetUtcNow()),
+                        => handle(
+                            id,
+                            aggregate => aggregate.IncreaseCapacity(cmd.Capacity, getUtcNow()),
                             context
                         ),
                     ReduceCapacity cmd
-                        => Handle(
-                            aggregateId,
-                            aggregate => aggregate.ReduceCapacity(cmd.Capacity, GetUtcNow()),
+                        => handle(
+                            id,
+                            aggregate => aggregate.ReduceCapacity(cmd.Capacity, getUtcNow()),
                             context
                         ),
                     Attend cmd
-                        => Handle(
-                            aggregateId,
-                            aggregate => aggregate.Add(cmd.UserId, GetUtcNow()),
+                        => handle(
+                            id,
+                            aggregate => aggregate.Add(cmd.UserId, getUtcNow()),
                             context
                         ),
                     DontAttend cmd
-                        => Handle(
-                            aggregateId,
-                            aggregate => aggregate.Remove(cmd.UserId, GetUtcNow()),
+                        => handle(
+                            id,
+                            aggregate => aggregate.Remove(cmd.UserId, getUtcNow()),
                             context
                         ),
                     _

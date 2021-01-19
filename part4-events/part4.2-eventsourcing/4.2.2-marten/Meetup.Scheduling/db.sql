@@ -9,14 +9,15 @@ CREATE USER meetup WITH PASSWORD 'password';
 GRANT ALL PRIVILEGES ON DATABASE "meetup" to meetup;
 GRANT ALL PRIVILEGES ON SCHEMA "scheduling" to meetup;
 
+SELECT * FROM meetup.scheduling.mt_streams;
+SELECT * FROM meetup.scheduling.mt_events;
+SELECT * FROM meetup.scheduling.mt_doc_meetupevent;
+SELECT * FROM meetup.scheduling.mt_doc_attendantlist;
+SELECT * FROM meetup.scheduling.mt_doc_outbox;
 
-SELECT M."Id", M."Title", M."Description", M."Group", M."Status", M."Start", M."End", M."IsOnline", M."Url", M."Address", M."Version", AL."Capacity", AL."Version",A."Id", A."UserId", A."Status" , A."ModifiedAt"
-FROM meetup.scheduling."MeetupEvent" M
-         LEFT JOIN meetup.scheduling."AttendantList" AL on M."Id" = AL."Id"
-         LEFT JOIN meetup.scheduling."Attendant" A on AL."Id" = A."AttendantListId"
 
-SELECT * FROM meetup.scheduling."Outbox"
-
-DELETE FROM meetup.scheduling."AttendantList";
-DELETE FROM meetup.scheduling."MeetupEvent";
-DELETE FROM meetup.scheduling."Outbox";
+DELETE FROM meetup.scheduling.mt_streams;
+DELETE FROM meetup.scheduling.mt_events;
+DELETE FROM meetup.scheduling.mt_doc_meetupevent;
+DELETE FROM meetup.scheduling.mt_doc_attendantlist;
+DELETE FROM meetup.scheduling.mt_doc_outbox;

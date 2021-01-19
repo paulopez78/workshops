@@ -1,30 +1,40 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using Marten;
 using MassTransit;
-using Meetup.Scheduling.Infrastructure;
 using Microsoft.Extensions.Logging;
+using Meetup.Scheduling.Framework;
+using Meetup.Scheduling.Queries;
 
 namespace Meetup.Scheduling.AttendantList
 {
     public class MeetupPublishedMassTransitDomainEventHandler : IConsumer<MeetupDetails.Events.V1.Published>
     {
-        readonly IApplicationService ApplicationService;
+        readonly HandleCommand<AttendantListAggregate> Handle;
 
-        readonly ILogger<MeetupPublishedMassTransitDomainEventHandler> Logger;
+        readonly IDocumentStore Store;
 
-        public MeetupPublishedMassTransitDomainEventHandler(AttendantListApplicationService applicationService,
-            ILogger<MeetupPublishedMassTransitDomainEventHandler> logger)
+        readonly ILogger<MeetupCreatedMassTransitDomainEventHandler> Logger;
+
+        public MeetupPublishedMassTransitDomainEventHandler(
+            HandleCommand<AttendantListAggregate> handle,
+            IDocumentStore store,
+            ILogger<MeetupCreatedMassTransitDomainEventHandler> logger
+        )
         {
-            ApplicationService = applicationService;
+            Handle = handle;
+            Store  = store;
             Logger = logger;
         }
 
         public async Task Consume(ConsumeContext<MeetupDetails.Events.V1.Published> context)
         {
-            Logger.LogInformation("Executing meetup published handler");
+            var id = await Store.GetAttendantListId(context.Message.Id);
+            if (id is null)
+                throw new InvalidOperationException("AttendantList Id not found");
 
-            var message = context.Message;
-
-            await ApplicationService.HandleCommand(message.Id, new Commands.V1.Open(message.Id), context);
+            await Handle.WithContext(context)
+                .Invoke(id.Value, new Commands.V1.Open(id.Value));
         }
     }
 }
