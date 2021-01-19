@@ -21,10 +21,10 @@ namespace Meetup.Scheduling.Framework
                 if (loadedOutbox.Any())
                 {
                     await Dispatch(loadedOutbox);
-                    return new CommandResult(id, new List<object>());
+                    return new CommandResult(id, new());
                 }
 
-                var (result, savedOutbox) = await SaveOutbox();
+                var (result, savedOutbox) = await ExecuteOutboxTransaction();
                 await Dispatch(savedOutbox);
                 return result;
 
@@ -68,7 +68,7 @@ namespace Meetup.Scheduling.Framework
                     return result.ToList();
                 }
 
-                async Task<(CommandResult, List<OutBox>)> SaveOutbox()
+                async Task<(CommandResult, List<OutBox>)> ExecuteOutboxTransaction()
                 {
                     using var session = eventStore.OpenSession();
                     context.TransactionalSession = session;
