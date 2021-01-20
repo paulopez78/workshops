@@ -12,6 +12,7 @@ namespace Meetup.Scheduling.AttendantList
         readonly List<Attendant> Attendants = new();
         PositiveNumber           Capacity;
         AttendantListStatus      Status;
+        Guid                     MeetupEventId;
 
         public void Create(Guid meetupEventId, PositiveNumber capacity)
             => Apply(new AttendantListCreated(Id, meetupEventId, capacity));
@@ -23,7 +24,7 @@ namespace Meetup.Scheduling.AttendantList
             if (Status == AttendantListStatus.Opened)
                 throw new ApplicationException($"AttendantList {Id} already opened");
 
-            Apply(new Opened(Id));
+            Apply(new Opened(Id, MeetupEventId));
         }
 
         public void Close()
@@ -33,14 +34,14 @@ namespace Meetup.Scheduling.AttendantList
             if (Status == AttendantListStatus.Closed)
                 throw new ApplicationException($"AttendantList {Id} already closed");
 
-            Apply(new Closed(Id));
+            Apply(new Closed(Id, MeetupEventId));
         }
 
         public void IncreaseCapacity(PositiveNumber number, DateTimeOffset increasedAt)
         {
             EnforceNotArchived();
 
-            Apply(new CapacityIncreased(Id, number));
+            Apply(new CapacityIncreased(Id, MeetupEventId, number));
 
             TryRemoveFromWaitingList();
 
@@ -49,7 +50,7 @@ namespace Meetup.Scheduling.AttendantList
                 var shouldAttend = Waiting().Take(FreeSpots).ToArray();
 
                 if (shouldAttend.Any())
-                    Apply(new AttendantsRemovedFromWaitingList(Id, increasedAt, shouldAttend));
+                    Apply(new AttendantsRemovedFromWaitingList(Id, MeetupEventId, increasedAt, shouldAttend));
 
                 IEnumerable<Guid> Waiting() => UserIds(waiting: true);
             }
@@ -60,7 +61,7 @@ namespace Meetup.Scheduling.AttendantList
         {
             EnforceNotArchived();
 
-            Apply(new CapacityReduced(Id, number));
+            Apply(new CapacityReduced(Id, MeetupEventId, number));
 
             TryAddToWaitingList();
 
@@ -69,7 +70,7 @@ namespace Meetup.Scheduling.AttendantList
                 var shouldWait = Going().TakeLast(MissingSpots()).ToArray();
 
                 if (shouldWait.Any())
-                    Apply(new AttendantsAddedToWaitingList(Id, reducedAt, shouldWait));
+                    Apply(new AttendantsAddedToWaitingList(Id, MeetupEventId, reducedAt, shouldWait));
 
                 int MissingSpots() => Going().Count() - Capacity;
 
@@ -85,9 +86,9 @@ namespace Meetup.Scheduling.AttendantList
                 throw new ApplicationException($"Attendant {userId} already added");
 
             if (FreeSpots > 0)
-                Apply(new AttendantAdded(Id, userId, addedAt));
+                Apply(new AttendantAdded(Id, MeetupEventId, userId, addedAt));
             else
-                Apply(new AttendantWaitingAdded(Id, userId, addedAt));
+                Apply(new AttendantWaitingAdded(Id, MeetupEventId, userId, addedAt));
         }
 
         public void Remove(Guid userId, DateTimeOffset removedAt)
@@ -97,7 +98,7 @@ namespace Meetup.Scheduling.AttendantList
             if (Attendants.All(x => x.UserId != userId))
                 throw new ApplicationException($"Attendant {userId} already removed");
 
-            Apply(new AttendantRemoved(Id, userId, removedAt));
+            Apply(new AttendantRemoved(Id, MeetupEventId, userId, removedAt));
 
             TryRemoveFromWaitingList();
 
@@ -105,7 +106,7 @@ namespace Meetup.Scheduling.AttendantList
             {
                 var shouldAttend = OrderedAttendants.FirstOrDefault(x => x.Waiting);
                 if (shouldAttend is not null)
-                    Apply(new AttendantsRemovedFromWaitingList(Id, removedAt, shouldAttend.UserId));
+                    Apply(new AttendantsRemovedFromWaitingList(Id, MeetupEventId, removedAt, shouldAttend.UserId));
             }
         }
 
@@ -135,8 +136,9 @@ namespace Meetup.Scheduling.AttendantList
             switch (domainEvent)
             {
                 case AttendantListCreated created:
-                    Capacity = created.Capacity;
-                    Status   = AttendantListStatus.Closed;
+                    MeetupEventId = created.MeeupEventId;
+                    Capacity      = created.Capacity;
+                    Status        = AttendantListStatus.Closed;
                     break;
                 case Opened _:
                     Status = AttendantListStatus.Opened;

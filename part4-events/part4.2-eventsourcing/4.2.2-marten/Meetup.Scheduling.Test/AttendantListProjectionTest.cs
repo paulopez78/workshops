@@ -28,16 +28,16 @@ namespace Meetup.Scheduling.Test
             var events = new List<object>
             {
                 new AttendantListEvents.AttendantListCreated(id, meetupId, 2),
-                new AttendantListEvents.Opened(id),
-                new AttendantListEvents.AttendantAdded(id, joe, now.AddSeconds(1)),
-                new AttendantListEvents.AttendantAdded(id, alice, now.AddSeconds(2)),
-                new AttendantListEvents.AttendantWaitingAdded(id, carla, now.AddSeconds(3)),
-                new AttendantListEvents.CapacityIncreased(id, 1),
-                new AttendantListEvents.AttendantsRemovedFromWaitingList(id, now.AddSeconds(4), carla),
-                new AttendantListEvents.CapacityReduced(id, 1),
-                new AttendantListEvents.AttendantsAddedToWaitingList(id, now.AddSeconds(5), carla),
-                new AttendantListEvents.AttendantRemoved(id, alice, now.AddSeconds(2)),
-                new AttendantListEvents.AttendantsRemovedFromWaitingList(id, now.AddSeconds(6), carla),
+                new AttendantListEvents.Opened(id, meetupId),
+                new AttendantListEvents.AttendantAdded(id, meetupId, joe, now.AddSeconds(1)),
+                new AttendantListEvents.AttendantAdded(id, meetupId, alice, now.AddSeconds(2)),
+                new AttendantListEvents.AttendantWaitingAdded(id, meetupId, carla, now.AddSeconds(3)),
+                new AttendantListEvents.CapacityIncreased(id, meetupId, 1),
+                new AttendantListEvents.AttendantsRemovedFromWaitingList(id, meetupId, now.AddSeconds(4), carla),
+                new AttendantListEvents.CapacityReduced(id, meetupId, 1),
+                new AttendantListEvents.AttendantsAddedToWaitingList(id, meetupId, now.AddSeconds(5), carla),
+                new AttendantListEvents.AttendantRemoved(id, meetupId, alice, now.AddSeconds(2)),
+                new AttendantListEvents.AttendantsRemovedFromWaitingList(id, meetupId, now.AddSeconds(6), carla),
             };
 
             // act

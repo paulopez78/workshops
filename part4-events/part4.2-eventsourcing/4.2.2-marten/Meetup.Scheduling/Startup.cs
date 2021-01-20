@@ -11,6 +11,7 @@ using Microsoft.OpenApi.Models;
 using Meetup.Scheduling.MeetupDetails;
 using Meetup.Scheduling.AttendantList;
 using Meetup.Scheduling.Framework;
+using Meetup.Scheduling.Queries;
 
 namespace Meetup.Scheduling
 {
@@ -83,13 +84,15 @@ namespace Meetup.Scheduling
                 c.SwaggerDoc("v1", new OpenApiInfo {Title = "meetupevents", Version = "v1"});
             });
 
-            void AddEventStore() =>
+            void AddEventStore()
+            {
                 services.AddMarten(cfg =>
                 {
                     cfg.Connection(connectionString);
                     cfg.AutoCreateSchemaObjects   = AutoCreate.All;
                     cfg.DatabaseSchemaName        = "scheduling";
                     cfg.Events.DatabaseSchemaName = "scheduling";
+                    cfg.Events.AsyncProjections.Add(new MeetupEventProjection());
 
                     cfg.Schema.For<MeetupDetailsEventProjection.MeetupDetailsEvent>()
                         .Index(x => x.Group, x => x.IndexName = "mt_doc_meetupdetailsevent_idx_group");
@@ -100,8 +103,9 @@ namespace Meetup.Scheduling
                     cfg.Schema.For<OutBox>()
                         .Index(x => new {x.MessageId, x.AggregateId});
                 });
+                services.AddHostedService<AsyncProjections>();
+            }
         }
-
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
@@ -115,6 +119,7 @@ namespace Meetup.Scheduling
             app.UseRouting();
 
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+            
         }
     }
 }

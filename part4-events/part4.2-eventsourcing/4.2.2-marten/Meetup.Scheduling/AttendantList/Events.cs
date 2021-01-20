@@ -8,23 +8,25 @@ namespace Meetup.Scheduling.AttendantList
         {
             public record AttendantListCreated (Guid Id, Guid MeeupEventId, int Capacity);
 
-            public record Opened(Guid Id);
+            public record Opened(Guid Id, Guid MeeupEventId);
 
-            public record Closed(Guid Id);
+            public record Closed(Guid Id, Guid MeeupEventId);
 
-            public record CapacityReduced(Guid Id, int ByNumber);
+            public record CapacityReduced(Guid Id, Guid MeeupEventId, int ByNumber);
 
-            public record CapacityIncreased(Guid Id, int ByNumber);
+            public record CapacityIncreased(Guid Id, Guid MeeupEventId, int ByNumber);
 
-            public record AttendantRemoved(Guid EventId, Guid UserId, DateTimeOffset RemovedAt);
+            public record AttendantRemoved(Guid Id, Guid MeetupEventId, Guid UserId, DateTimeOffset RemovedAt);
 
-            public record AttendantAdded(Guid EventId, Guid UserId, DateTimeOffset AddedAt);
+            public record AttendantAdded(Guid Id, Guid MeetupEventId, Guid UserId, DateTimeOffset AddedAt);
 
-            public record AttendantWaitingAdded(Guid EventId, Guid UserId, DateTimeOffset AddedAt);
+            public record AttendantWaitingAdded(Guid Id, Guid MeetupEventId, Guid UserId, DateTimeOffset AddedAt);
 
-            public record AttendantsRemovedFromWaitingList(Guid EventId, DateTimeOffset RemovedAt, params Guid[] Attendants);
+            public record AttendantsRemovedFromWaitingList(Guid Id, Guid MeetupEventId, DateTimeOffset RemovedAt,
+                params Guid[] Attendants);
 
-            public record AttendantsAddedToWaitingList(Guid EventId, DateTimeOffset AddedAt, params Guid[] Attendants);
+            public record AttendantsAddedToWaitingList(Guid Id, Guid MeetupEventId, DateTimeOffset AddedAt,
+                params Guid[] Attendants);
         }
     }
 }

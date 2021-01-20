@@ -19,7 +19,8 @@ namespace Meetup.Scheduling.Queries
         [HttpGet("{eventId:guid}")]
         public async Task<IActionResult> GetById([FromRoute] V1.GetById query)
         {
-            var meetupEvent = await Store.Handle(query);
+            //var meetupEvent = await Store.Handle(query);
+            var meetupEvent = await Store.HandleWithProjection(query);
 
             return meetupEvent is null
                 ? NotFound($"MeetupEvent {query.EventId} not found")

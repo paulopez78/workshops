@@ -251,6 +251,8 @@ namespace Meetup.Scheduling.Test
 
         public static async Task<MeetupEvent> Get(this HttpClient client, Guid eventId)
         {
+            // eventual consistency hack, better to poll (query) checking consistency with a timeout
+            await Task.Delay(2000);
             var queryResponse = await client.GetAsync($"{QueryBaseUrl}/{eventId}");
             queryResponse.EnsureSuccessStatusCode();
 

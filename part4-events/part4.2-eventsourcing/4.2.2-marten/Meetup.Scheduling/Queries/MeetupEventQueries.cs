@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Marten;
@@ -22,6 +23,14 @@ namespace Meetup.Scheduling.Queries
             return Map(meetupEvent, attendantList);
         }
 
+        public static async Task<MeetupEvent?> HandleWithProjection(this IDocumentStore store, V1.GetById query)
+        {
+            using var session = store.QuerySession();
+
+            var result = await session.LoadAsync<MeetupEvent>(query.EventId);
+            return result;
+        }
+
         public static async Task<IEnumerable<MeetupEvent>> Handle(this IDocumentStore store, V1.GetByGroup query)
         {
             using var session = store.QuerySession();
@@ -38,7 +47,6 @@ namespace Meetup.Scheduling.Queries
             );
         }
 
-
         public static async Task<Guid?> GetAttendantListId(this IDocumentStore store, Guid meetupId)
         {
             using var session = store.QuerySession();
@@ -50,22 +58,26 @@ namespace Meetup.Scheduling.Queries
         static MeetupEvent Map(
             MeetupDetailsEventProjection.MeetupDetailsEvent details,
             AttendantListProjection.AttendantList? attendants) =>
-            new(
-                details.Id,
-                details.Title,
-                details.Description,
-                details.Group,
-                details.Capacity,
-                details.Status,
-                details.Start,
-                details.End,
-                details.Location,
-                details.Online,
-                attendants?.Id,
-                attendants?.Attendants.Select(Map).ToList()
-            );
+            new()
+            {
+                Id              = details.Id,
+                Title           = details.Title,
+                Description     = details.Description,
+                Group           = details.Group,
+                Capacity        = details.Capacity,
+                Status          = details.Status,
+                Start           = details.Start,
+                End             = details.End,
+                Location        = details.Location,
+                Online          = details.Online,
+                AttendantListId = attendants?.Id,
+                Attendants      = attendants?.Attendants.Select(Map).ToImmutableList()
+            };
 
         static Attendant Map(AttendantListProjection.AttendantList.Attendant attendant) =>
-            new(attendant.UserId, attendant.Waiting, attendant.AddedAt);
+            new()
+            {
+                UserId = attendant.UserId, Waiting = attendant.Waiting, AddedAt = attendant.AddedAt
+            };
     }
 }
