@@ -25,6 +25,4 @@ namespace Meetup.Scheduling.Queries
         public bool           Waiting { get; set; }
         public DateTimeOffset AddedAt { get; set; }
     }
-
-    public record MeetupGroupEvents (string Group, ImmutableList<MeetupEvent>? MeetupEvents);
 }

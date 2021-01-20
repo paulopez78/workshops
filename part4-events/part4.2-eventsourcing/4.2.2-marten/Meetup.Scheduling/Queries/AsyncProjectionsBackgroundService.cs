@@ -6,12 +6,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Meetup.Scheduling.Queries
 {
-    public class AsyncProjections : BackgroundService
+    public class AsyncProjectionsBackgroundService : BackgroundService
     {
         private readonly IDocumentStore            Store;
-        private readonly ILogger<AsyncProjections> Logger;
+        private readonly ILogger<AsyncProjectionsBackgroundService> Logger;
 
-        public AsyncProjections(IDocumentStore store, ILogger<AsyncProjections> logger)
+        public AsyncProjectionsBackgroundService(IDocumentStore store, ILogger<AsyncProjectionsBackgroundService> logger)
         {
             Store  = store;
             Logger = logger;

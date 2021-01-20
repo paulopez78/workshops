@@ -12,7 +12,6 @@ using Polly.Extensions.Http;
 using Polly.Retry;
 using Xunit;
 using Xunit.Abstractions;
-using Meetup.Scheduling.MeetupDetails;
 using Meetup.Scheduling.Queries;
 using static System.Guid;
 using static Meetup.Scheduling.MeetupDetails.Commands.V1;
@@ -186,7 +185,7 @@ namespace Meetup.Scheduling.Test
         public static async Task<HttpResponseMessage> CreateMeetup(this HttpClient client)
         {
             var result = await client.Post("events/details",
-                new Commands.V1.Create(NewGuid(), Group, Title, Description, Capacity));
+                new Create(NewGuid(), Group, Title, Description, Capacity));
 
             // eventual consistency hack, better to poll (query) checking consistency with a timeout
             await Task.Delay(100);
@@ -249,10 +248,10 @@ namespace Meetup.Scheduling.Test
             Assert.False(result.IsSuccessStatusCode);
         }
 
-        public static async Task<MeetupEvent> Get(this HttpClient client, Guid eventId)
+        public static async Task<MeetupEvent> Get(this HttpClient client, Guid eventId, int delay = 2000)
         {
             // eventual consistency hack, better to poll (query) checking consistency with a timeout
-            await Task.Delay(2000);
+            await Task.Delay(delay);
             var queryResponse = await client.GetAsync($"{QueryBaseUrl}/{eventId}");
             queryResponse.EnsureSuccessStatusCode();
 

@@ -16,7 +16,7 @@ namespace Meetup.Scheduling.AttendantList
             => HandleCommand = handle;
 
         [HttpPost()]
-        public Task<IActionResult> Post(Create command) =>
+        public Task<IActionResult> Post(CreateAttendantList command) =>
             Handle(command.Id, command);
 
         [HttpPut("capacity/increase")]

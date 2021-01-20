@@ -1,6 +1,7 @@
 using System;
 using GreenPipes;
 using Marten;
+using Marten.Linq.SoftDeletes;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -100,10 +101,13 @@ namespace Meetup.Scheduling
                     cfg.Schema.For<AttendantListProjection.AttendantList>()
                         .UniqueIndex("mt_doc_attendantlist_uidx_meetup_event_id", x => x.MeetupEventId);
 
+                    cfg.Schema.For<MeetupEvent>().Index(x => x.Group);
+                    cfg.Schema.For<MeetupEvent>().UniqueIndex(x => x.AttendantListId);
+
                     cfg.Schema.For<OutBox>()
                         .Index(x => new {x.MessageId, x.AggregateId});
                 });
-                services.AddHostedService<AsyncProjections>();
+                services.AddHostedService<AsyncProjectionsBackgroundService>();
             }
         }
 
@@ -119,7 +123,6 @@ namespace Meetup.Scheduling
             app.UseRouting();
 
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
-            
         }
     }
 }

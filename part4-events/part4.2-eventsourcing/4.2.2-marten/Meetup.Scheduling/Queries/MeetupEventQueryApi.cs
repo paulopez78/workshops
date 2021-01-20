@@ -14,13 +14,13 @@ namespace Meetup.Scheduling.Queries
 
         [HttpGet]
         public async Task<IActionResult> GetByGroup([FromRoute] V1.GetByGroup query)
-            => Ok(await Store.Handle(query));
+            => Ok(await Store.HandleWithAsyncProjection(query));
 
         [HttpGet("{eventId:guid}")]
         public async Task<IActionResult> GetById([FromRoute] V1.GetById query)
         {
             //var meetupEvent = await Store.Handle(query);
-            var meetupEvent = await Store.HandleWithProjection(query);
+            var meetupEvent = await Store.HandleWithAsyncProjection(query);
 
             return meetupEvent is null
                 ? NotFound($"MeetupEvent {query.EventId} not found")

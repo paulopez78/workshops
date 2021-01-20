@@ -28,7 +28,7 @@ namespace Meetup.Scheduling.AttendantList
 
             await Handle
                 .WithContext(context)
-                .Invoke(id, new Commands.V1.Create(id, meetupCreated.Id, meetupCreated.Capacity));
+                .Invoke(id, new Commands.V1.CreateAttendantList(id, meetupCreated.Id, meetupCreated.Capacity));
         }
     }
 }

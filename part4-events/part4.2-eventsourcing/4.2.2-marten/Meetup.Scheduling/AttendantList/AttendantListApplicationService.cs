@@ -10,7 +10,7 @@ namespace Meetup.Scheduling.AttendantList
             => (id, command, context) =>
                 command switch
                 {
-                    Create cmd
+                    CreateAttendantList cmd
                         => handle(
                             id,
                             aggregate => aggregate.Create(cmd.MeetupEventId, cmd.Capacity),

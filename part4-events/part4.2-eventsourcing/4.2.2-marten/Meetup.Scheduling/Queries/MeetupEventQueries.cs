@@ -11,6 +11,22 @@ namespace Meetup.Scheduling.Queries
 {
     public static class MeetupSchedulingQueries
     {
+        public static async Task<MeetupEvent?> HandleWithAsyncProjection(this IDocumentStore store, V1.GetById query)
+        {
+            using var session = store.QuerySession();
+
+            var result = await session.LoadAsync<MeetupEvent>(query.EventId);
+            return result;
+        }
+
+        public static async Task<IEnumerable<MeetupEvent>> HandleWithAsyncProjection(this IDocumentStore store,
+            V1.GetByGroup query)
+        {
+            using var session = store.QuerySession();
+            var       result  = await session.Query<MeetupEvent>().Where(x => x.Group == query.Group).ToListAsync();
+            return result;
+        }
+
         public static async Task<MeetupEvent?> Handle(this IDocumentStore store, V1.GetById query)
         {
             using var session = store.QuerySession();
@@ -21,14 +37,6 @@ namespace Meetup.Scheduling.Queries
                     .FirstOrDefaultAsync(x => x.MeetupEventId == query.EventId);
 
             return Map(meetupEvent, attendantList);
-        }
-
-        public static async Task<MeetupEvent?> HandleWithProjection(this IDocumentStore store, V1.GetById query)
-        {
-            using var session = store.QuerySession();
-
-            var result = await session.LoadAsync<MeetupEvent>(query.EventId);
-            return result;
         }
 
         public static async Task<IEnumerable<MeetupEvent>> Handle(this IDocumentStore store, V1.GetByGroup query)
