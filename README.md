@@ -9,6 +9,7 @@
 * [Docker](https://www.docker.com/products/docker-desktop) 
 * [Git](https://git-scm.com/downloads)
 * [MongoDB Compass](https://www.mongodb.com/try/download/compass/)
+* [BloomRpc](https://github.com/uw-labs/bloomrpc)
 
 ## Only Windows 10
 * [Visual Studio](https://visualstudio.microsoft.com/downloads/)
