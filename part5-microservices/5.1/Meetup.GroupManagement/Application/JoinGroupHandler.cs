@@ -39,7 +39,7 @@ namespace Meetup.GroupManagement.Application
             await DbContext.SaveChangesAsync(cancellationToken);
 
             // notify event
-            await Mediator.Publish(new MemberJoined(member.GroupId, member.UserId), cancellationToken);
+            await Mediator.Publish(new MemberJoined(member.GroupId, member.UserId, member.JoinedAt), cancellationToken);
 
             return new CommandResult(member.GroupId, "");
         }
@@ -47,7 +47,7 @@ namespace Meetup.GroupManagement.Application
 
     public record JoinRequest(Guid GroupId, Guid UserId) : IRequest<CommandResult>;
 
-    public record MemberJoined(Guid GroupId, Guid UserId) : INotification;
+    public record MemberJoined(Guid GroupId, Guid UserId, DateTimeOffset JoinedAt) : INotification;
     
     public class JoinRequestValidator : AbstractValidator<JoinRequest>
     {

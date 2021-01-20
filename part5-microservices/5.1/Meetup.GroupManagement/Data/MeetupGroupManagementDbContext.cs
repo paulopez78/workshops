@@ -1,3 +1,4 @@
+using Meetup.GroupManagement.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -11,7 +12,7 @@ namespace Meetup.GroupManagement.Data
         }
 
         public DbSet<MeetupGroup> MeetupGroups { get; set; }
-        public DbSet<GroupMember>      Members      { get; set; }
+        public DbSet<GroupMember> Members      { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -28,6 +29,14 @@ namespace Meetup.GroupManagement.Data
                 b.UseXminAsConcurrencyToken();
                 b.HasIndex(p => p.GroupId);
                 b.HasIndex(p => new {p.GroupId, p.UserId}).IsUnique();
+            });
+
+            modelBuilder.Entity<Outbox>(b =>
+            {
+                b.Property<int>("Id")
+                    .HasColumnType("int")
+                    .ValueGeneratedOnAdd();
+                b.HasKey("Id");
             });
         }
     }

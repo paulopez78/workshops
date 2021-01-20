@@ -12,7 +12,7 @@ namespace Meetup.GroupManagement.Queries
     public class GetGroupByIdHandler : IRequestHandler<GetGroupById, Group>, IRequestHandler<GetGroupBySlug, Group>
     {
         const string BaseQuery =
-            "SELECT G.\"Id\", g.\"Title\", G.\"Slug\", G.\"Description\", G.\"Location\", G.\"OrganizerId\", M.\"Id\", M.\"UserId\",  M.\"JoinedAt\"  " +
+            "SELECT G.\"Id\", g.\"Title\", G.\"Slug\", G.\"Description\", G.\"Location\", G.\"OrganizerId\", G.\"FoundedAt\", M.\"Id\", M.\"UserId\",  M.\"JoinedAt\"  " +
             "FROM \"MeetupGroups\" G  LEFT JOIN \"Members\" M on M.\"GroupId\" = G.\"Id\" ";
 
         readonly Func<IDbConnection> GetConnection;
@@ -61,7 +61,7 @@ namespace Meetup.GroupManagement.Queries
 
     public record GetGroupBySlug(string Slug) : IRequest<Group>;
 
-    public record Group(Guid Id, string Title, string Slug, string Description, string Location, Guid OrganizerId)
+    public record Group(Guid Id, string Title, string Slug, string Description, string Location, Guid OrganizerId, DateTime FoundedAt)
     {
         public List<Member> Members { get; set; } = new();
     }

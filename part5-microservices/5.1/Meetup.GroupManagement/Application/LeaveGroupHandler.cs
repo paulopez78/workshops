@@ -35,7 +35,7 @@ namespace Meetup.GroupManagement.Application
             await DbContext.SaveChangesAsync(cancellationToken);
 
             // notify event
-            await Mediator.Publish(new MemberLeft(member.GroupId, member.UserId), cancellationToken);
+            await Mediator.Publish(new MemberLeft(member.GroupId, member.UserId, DateTimeOffset.Now), cancellationToken);
 
             return new CommandResult(member.GroupId, "");
         }
@@ -43,7 +43,7 @@ namespace Meetup.GroupManagement.Application
 
     public record LeaveRequest(Guid GroupId, Guid UserId, string Reason) : IRequest<CommandResult>;
 
-    public record MemberLeft(Guid GroupId, Guid UserId) : INotification;
+    public record MemberLeft(Guid GroupId, Guid UserId, DateTimeOffset LeftAt) : INotification;
     
     public class LeaveRequestValidator : AbstractValidator<LeaveRequest>
     {

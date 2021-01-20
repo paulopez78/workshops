@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using FluentValidation;
+using GreenPipes;
 using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -13,7 +14,6 @@ using Microsoft.Extensions.Hosting;
 using Meetup.GroupManagement.Data;
 using Meetup.GroupManagement.Middleware;
 using Npgsql;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Query;
 
 namespace Meetup.GroupManagement
 {
@@ -34,7 +34,10 @@ namespace Meetup.GroupManagement
             services.AddMediatR(typeof(Startup));
 
             services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+            services.AddScoped(typeof(IPipelineBehavior<,>), typeof(OutboxBehavior<,>));
             services.AddValidatorsFromAssemblies(new[] {typeof(Startup).Assembly});
+
+            services.AddScoped<DomainEventsHandler>();
 
             services.AddGrpc();
 
@@ -47,6 +50,17 @@ namespace Meetup.GroupManagement
                         h.Username("guest");
                         h.Password("guest");
                     });
+
+                    // https://masstransit-project.com/usage/exceptions.html
+                    cfg.UseMessageRetry(r =>
+                    {
+                        r.Interval(3, TimeSpan.FromMilliseconds(100));
+                        r.Handle<NpgsqlException>();
+                        r.Ignore<ArgumentException>();
+                    });
+
+                    cfg.ReceiveEndpoint("dispatch-integration-events",
+                        e => { e.Consumer<DomainEventsHandler>(context); });
                 });
             });
             services.AddMassTransitHostedService();
