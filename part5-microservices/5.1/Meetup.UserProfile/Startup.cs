@@ -12,6 +12,7 @@ namespace Meetup.UserProfile
 {
     public class Startup
     {
+        const string ApplicationKey = "meetup_user_profiles";
         public Startup(IConfiguration configuration)
             => Configuration = configuration;
 
@@ -66,7 +67,7 @@ namespace Meetup.UserProfile
         static IMongoDatabase CreateMongoDb(string connectionString)
         {
             var client = new MongoClient(connectionString);
-            return client.GetDatabase("meetup");
+            return client.GetDatabase(ApplicationKey);
         }
     }
 }

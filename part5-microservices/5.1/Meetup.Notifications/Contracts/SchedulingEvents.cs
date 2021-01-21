@@ -12,7 +12,7 @@ namespace Meetup.Scheduling.Contracts
 
             public record MeetupAttendantsAddedToWaitingList(Guid MeetupEventId, Guid[] Attendants);
 
-            public record MeetupPublished(Guid MeetupId);
+            public record MeetupPublished(Guid MeetupId, string GroupSlug);
 
             public record MeetupCancelled(Guid MeetupId, string Reason);
         }

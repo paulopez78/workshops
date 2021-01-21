@@ -16,7 +16,7 @@ namespace Meetup.Scheduling
     {
         public Task Consume(ConsumeContext<MeetupDetailsEvents.Published> context)
             => context.Publish(
-                new MeetupPublished(context.Message.Id)
+                new MeetupPublished(context.Message.Id, context.Message.GroupSlug)
             );
 
         public Task Consume(ConsumeContext<MeetupDetailsEvents.Cancelled> context)

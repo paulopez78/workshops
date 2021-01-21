@@ -8,7 +8,7 @@ namespace Meetup.Scheduling.MeetupDetails
         {
             public record Created (Guid Id, string Group, string Title, string Description, int Capacity);
 
-            public record Published(Guid Id);
+            public record Published(Guid Id, string GroupSlug);
 
             public record Cancelled(Guid Id, string Reason);
 

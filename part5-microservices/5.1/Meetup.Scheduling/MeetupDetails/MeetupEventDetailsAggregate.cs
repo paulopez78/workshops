@@ -62,7 +62,7 @@ namespace Meetup.Scheduling.MeetupDetails
             if (Location == Location.None)
                 throw new ApplicationException("Meetup can not be published without location");
 
-            Apply(new Published(Id));
+            Apply(new Published(Id, Group));
         }
 
         public void Cancel(string reason)

@@ -54,7 +54,7 @@ namespace Meetup.Notifications
                     static IMongoDatabase CreateMongoDb(string connectionString)
                     {
                         var client = new MongoClient(connectionString);
-                        return client.GetDatabase("meetup-notifications");
+                        return client.GetDatabase(ApplicationKey);
                     }
                 });
     }
