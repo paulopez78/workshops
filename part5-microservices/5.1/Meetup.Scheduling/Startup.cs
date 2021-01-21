@@ -17,6 +17,8 @@ namespace Meetup.Scheduling
 {
     public class Startup
     {
+        const string ApplicationKey = "meetup_scheduling";
+
         public Startup(IConfiguration configuration)
             => Configuration = configuration;
 
@@ -41,12 +43,15 @@ namespace Meetup.Scheduling
                     AttendantListProjection.When
                 ).Handle(sp.GetRequiredService<UtcNow>()));
 
-            services.AddScoped<MeetupCreatedMassTransitDomainEventHandler>();
-            services.AddScoped<MeetupCanceledMassTransitDomainEventHandler>();
-            services.AddScoped<MeetupPublishedMassTransitDomainEventHandler>();
 
             services.AddMassTransit(x =>
             {
+                x.AddConsumer<MeetupCreatedDomainEventHandler>();
+                x.AddConsumer<MeetupCanceledDomainEventHandler>();
+                x.AddConsumer<MeetupPublishedDomainEventHandler>();
+                x.AddConsumer<GroupMemberLeftEventHandler>();
+                x.AddConsumer<IntegrationEventsPublisher>();
+
                 x.UsingRabbitMq((context, cfg) =>
                 {
                     cfg.Host("localhost", "/", h =>
@@ -63,14 +68,20 @@ namespace Meetup.Scheduling
                         r.Ignore<ArgumentException>();
                     });
 
-                    cfg.ReceiveEndpoint("create-attendant-list",
-                        e => { e.Consumer<MeetupCreatedMassTransitDomainEventHandler>(context); });
+                    cfg.ReceiveEndpoint($"{ApplicationKey}-create-attendant-list",
+                        e => { e.Consumer<MeetupCreatedDomainEventHandler>(context); });
 
-                    cfg.ReceiveEndpoint("open-attendant-list",
-                        e => { e.Consumer<MeetupPublishedMassTransitDomainEventHandler>(context); });
+                    cfg.ReceiveEndpoint($"{ApplicationKey}-open-attendant-list",
+                        e => { e.Consumer<MeetupPublishedDomainEventHandler>(context); });
 
-                    cfg.ReceiveEndpoint("close-attendant-list",
-                        e => { e.Consumer<MeetupCanceledMassTransitDomainEventHandler>(context); });
+                    cfg.ReceiveEndpoint($"{ApplicationKey}-close-attendant-list",
+                        e => { e.Consumer<MeetupCanceledDomainEventHandler>(context); });
+
+                    cfg.ReceiveEndpoint($"{ApplicationKey}-remove-member-from-attendant-lists",
+                        e => { e.Consumer<GroupMemberLeftEventHandler>(context); });
+
+                    cfg.ReceiveEndpoint($"{ApplicationKey}-publish-integration-event",
+                        e => { e.Consumer<GroupMemberLeftEventHandler>(context); });
                 });
             });
             services.AddMassTransitHostedService();

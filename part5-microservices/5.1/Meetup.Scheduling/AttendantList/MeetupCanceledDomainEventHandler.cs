@@ -7,12 +7,12 @@ using Meetup.Scheduling.Queries;
 
 namespace Meetup.Scheduling.AttendantList
 {
-    public class MeetupCanceledMassTransitDomainEventHandler : IConsumer<MeetupDetails.Events.V1.Cancelled>
+    public class MeetupCanceledDomainEventHandler : IConsumer<MeetupDetails.Events.V1.Cancelled>
     {
         readonly HandleCommand<AttendantListAggregate> Handle;
         readonly IDocumentStore                        Store;
 
-        public MeetupCanceledMassTransitDomainEventHandler(
+        public MeetupCanceledDomainEventHandler(
             HandleCommand<AttendantListAggregate> handle,
             IDocumentStore store)
         {

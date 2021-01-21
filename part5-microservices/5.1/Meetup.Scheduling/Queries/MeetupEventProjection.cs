@@ -63,7 +63,7 @@ namespace Meetup.Scheduling.Queries
                     );
                 });
 
-            ProjectEvent<AttendantWaitingAdded>(e => e.MeetupEventId,
+            ProjectEvent<AttendantAddedToWaitingList>(e => e.MeetupEventId,
                 (state, added) =>
                 {
                     state.Attendants = state.Attendants.Add(

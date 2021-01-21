@@ -88,7 +88,7 @@ namespace Meetup.Scheduling.AttendantList
             if (FreeSpots > 0)
                 Apply(new AttendantAdded(Id, MeetupEventId, userId, addedAt));
             else
-                Apply(new AttendantWaitingAdded(Id, MeetupEventId, userId, addedAt));
+                Apply(new AttendantAddedToWaitingList(Id, MeetupEventId, userId, addedAt));
         }
 
         public void Remove(Guid userId, DateTimeOffset removedAt)
@@ -155,7 +155,7 @@ namespace Meetup.Scheduling.AttendantList
                 case AttendantAdded added:
                     Attendants.Add(new Attendant(added.UserId, added.AddedAt, Waiting: false));
                     break;
-                case AttendantWaitingAdded waitingAdded:
+                case AttendantAddedToWaitingList waitingAdded:
                     Attendants.Add(new Attendant(waitingAdded.UserId, waitingAdded.AddedAt, Waiting: true));
                     break;
                 case AttendantRemoved removed:

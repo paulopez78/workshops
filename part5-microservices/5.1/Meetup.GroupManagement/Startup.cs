@@ -19,6 +19,7 @@ namespace Meetup.GroupManagement
 {
     public class Startup
     {
+        const string ApplicationKey = "meetup_group";
         public Startup(IConfiguration configuration)
             => Configuration = configuration;
 
@@ -37,7 +38,7 @@ namespace Meetup.GroupManagement
             services.AddScoped(typeof(IPipelineBehavior<,>), typeof(OutboxBehavior<,>));
             services.AddValidatorsFromAssemblies(new[] {typeof(Startup).Assembly});
 
-            services.AddScoped<DomainEventsHandler>();
+            services.AddScoped<IntegrationEventsPublisher>();
 
             services.AddGrpc();
 
@@ -59,8 +60,8 @@ namespace Meetup.GroupManagement
                         r.Ignore<ArgumentException>();
                     });
 
-                    cfg.ReceiveEndpoint("dispatch-integration-events",
-                        e => { e.Consumer<DomainEventsHandler>(context); });
+                    cfg.ReceiveEndpoint($"{ApplicationKey}-publish-integration-events",
+                        e => { e.Consumer<IntegrationEventsPublisher>(context); });
                 });
             });
             services.AddMassTransitHostedService();

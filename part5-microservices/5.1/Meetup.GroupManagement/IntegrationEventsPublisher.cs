@@ -4,13 +4,13 @@ using MediatR;
 using Meetup.GroupManagement.Application;
 using Meetup.GroupManagement.Contracts;
 
-namespace Meetup.GroupManagement.Middleware
+namespace Meetup.GroupManagement
 {
-    public class DomainEventsHandler : IConsumer<GroupCreated>, IConsumer<MemberJoined>, IConsumer<MemberLeft>
+    public class IntegrationEventsPublisher : IConsumer<GroupCreated>, IConsumer<MemberJoined>, IConsumer<MemberLeft>
     {
         private readonly IMediator Mediator;
 
-        public DomainEventsHandler(IMediator mediator)
+        public IntegrationEventsPublisher(IMediator mediator)
         {
             Mediator = mediator;
         }

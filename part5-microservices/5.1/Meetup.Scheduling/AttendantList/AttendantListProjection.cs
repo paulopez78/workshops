@@ -33,7 +33,7 @@ namespace Meetup.Scheduling.AttendantList
                     {
                         Attendants = state.Attendants.RemoveAll(x => x.UserId == removed.UserId)
                     },
-                AttendantWaitingAdded waiting
+                AttendantAddedToWaitingList waiting
                     => state with
                     {
                         Attendants =

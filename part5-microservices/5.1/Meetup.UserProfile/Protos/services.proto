@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option csharp_namespace = "Meetup.UserProfile.Contracts";
+
+package meetup.userprofile;
+
+service UserProfile{
+  rpc Create(CreateRequest) returns (CreateRequest.CreateReply);
+  rpc Get(GetRequest) returns (GetRequest.GetReply);
+}
+
+message CreateRequest{
+  string first_name= 1;
+  string surname= 2;
+  repeated string interests = 3;
+  message CreateReply{
+    string user_id = 1;
+  }
+}
+
+message GetRequest{
+  string user_id= 1;
+  message GetReply{
+    string user_id = 1;
+    string first_name= 2;
+    string surname= 3;
+  }
+}

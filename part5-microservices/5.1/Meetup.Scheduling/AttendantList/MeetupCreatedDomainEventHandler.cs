@@ -6,14 +6,14 @@ using Microsoft.Extensions.Logging;
 
 namespace Meetup.Scheduling.AttendantList
 {
-    public class MeetupCreatedMassTransitDomainEventHandler : IConsumer<MeetupDetails.Events.V1.Created>
+    public class MeetupCreatedDomainEventHandler : IConsumer<MeetupDetails.Events.V1.Created>
     {
         readonly HandleCommand<AttendantListAggregate> Handle;
 
-        readonly ILogger<MeetupCreatedMassTransitDomainEventHandler> Logger;
+        readonly ILogger<MeetupCreatedDomainEventHandler> Logger;
 
-        public MeetupCreatedMassTransitDomainEventHandler(HandleCommand<AttendantListAggregate> handle,
-            ILogger<MeetupCreatedMassTransitDomainEventHandler> logger)
+        public MeetupCreatedDomainEventHandler(HandleCommand<AttendantListAggregate> handle,
+            ILogger<MeetupCreatedDomainEventHandler> logger)
         {
             Handle = handle;
             Logger = logger;

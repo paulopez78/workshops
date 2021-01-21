@@ -1,13 +1,22 @@
 version: "3.7"
 
 services:
-  database:
+  postgres:
     container_name: postgres
     image: postgres
     ports:
       - 5432:5432
     environment:
       POSTGRES_PASSWORD: mysecretpassword
+
+  mongo:
+    container_name: mongo
+    image: mongo
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mysecretpassword
 
   rabbitmq:
     container_name: rabbitmq

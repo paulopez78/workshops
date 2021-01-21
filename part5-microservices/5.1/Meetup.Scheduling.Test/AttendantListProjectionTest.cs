@@ -31,7 +31,7 @@ namespace Meetup.Scheduling.Test
                 new AttendantListEvents.Opened(id, meetupId),
                 new AttendantListEvents.AttendantAdded(id, meetupId, joe, now.AddSeconds(1)),
                 new AttendantListEvents.AttendantAdded(id, meetupId, alice, now.AddSeconds(2)),
-                new AttendantListEvents.AttendantWaitingAdded(id, meetupId, carla, now.AddSeconds(3)),
+                new AttendantListEvents.AttendantAddedToWaitingList(id, meetupId, carla, now.AddSeconds(3)),
                 new AttendantListEvents.CapacityIncreased(id, meetupId, 1),
                 new AttendantListEvents.AttendantsRemovedFromWaitingList(id, meetupId, now.AddSeconds(4), carla),
                 new AttendantListEvents.CapacityReduced(id, meetupId, 1),

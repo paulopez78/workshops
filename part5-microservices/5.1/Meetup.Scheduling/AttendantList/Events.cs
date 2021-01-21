@@ -20,7 +20,7 @@ namespace Meetup.Scheduling.AttendantList
 
             public record AttendantAdded(Guid Id, Guid MeetupEventId, Guid UserId, DateTimeOffset AddedAt);
 
-            public record AttendantWaitingAdded(Guid Id, Guid MeetupEventId, Guid UserId, DateTimeOffset AddedAt);
+            public record AttendantAddedToWaitingList(Guid Id, Guid MeetupEventId, Guid UserId, DateTimeOffset AddedAt);
 
             public record AttendantsRemovedFromWaitingList(Guid Id, Guid MeetupEventId, DateTimeOffset RemovedAt,
                 params Guid[] Attendants);

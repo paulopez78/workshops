@@ -8,18 +8,18 @@ using Meetup.Scheduling.Queries;
 
 namespace Meetup.Scheduling.AttendantList
 {
-    public class MeetupPublishedMassTransitDomainEventHandler : IConsumer<MeetupDetails.Events.V1.Published>
+    public class MeetupPublishedDomainEventHandler : IConsumer<MeetupDetails.Events.V1.Published>
     {
         readonly HandleCommand<AttendantListAggregate> Handle;
 
         readonly IDocumentStore Store;
 
-        readonly ILogger<MeetupCreatedMassTransitDomainEventHandler> Logger;
+        readonly ILogger<MeetupCreatedDomainEventHandler> Logger;
 
-        public MeetupPublishedMassTransitDomainEventHandler(
+        public MeetupPublishedDomainEventHandler(
             HandleCommand<AttendantListAggregate> handle,
             IDocumentStore store,
-            ILogger<MeetupCreatedMassTransitDomainEventHandler> logger
+            ILogger<MeetupCreatedDomainEventHandler> logger
         )
         {
             Handle = handle;
