@@ -5,24 +5,36 @@ option csharp_namespace = "Meetup.UserProfile.Contracts";
 package meetup.userprofile;
 
 service UserProfile{
-  rpc Create(CreateRequest) returns (CreateRequest.CreateReply);
+  rpc CreateOrUpdate(CreateOrUpdateRequest) returns (CreateOrUpdateRequest.CreateOrUpdateReply);
+  rpc Delete(DeleteRequest) returns (DeleteRequest.DeleteReply);
   rpc Get(GetRequest) returns (GetRequest.GetReply);
 }
 
-message CreateRequest{
-  string first_name= 1;
-  string surname= 2;
-  repeated string interests = 3;
-  message CreateReply{
+message CreateOrUpdateRequest{
+  string user_id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string email = 4;
+  repeated string interests = 5;
+  message CreateOrUpdateReply{
+    string user_id = 1;
+  }
+}
+
+message DeleteRequest{
+  string user_id = 1;
+  message DeleteReply{
     string user_id = 1;
   }
 }
 
 message GetRequest{
-  string user_id= 1;
+  string user_id = 1;
   message GetReply{
     string user_id = 1;
-    string first_name= 2;
-    string surname= 3;
+    string first_name = 2;
+    string last_name = 3;
+    string email = 4;
+    repeated string interests = 5;
   }
 }

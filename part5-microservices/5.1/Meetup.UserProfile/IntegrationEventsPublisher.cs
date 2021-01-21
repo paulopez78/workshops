@@ -11,12 +11,12 @@ namespace Meetup.UserProfile
     public class IntegrationEventsPublisher : BackgroundService
     {
         readonly IMongoCollection<Data.UserProfile> DbCollection;
-        readonly IPublishEndpoint                   PublishEndpoint;
+        readonly IBus                               Bus;
 
-        public IntegrationEventsPublisher(IMongoDatabase database, IPublishEndpoint publishEndpoint)
+        public IntegrationEventsPublisher(IMongoDatabase database, IBus bus)
         {
-            DbCollection    = database.GetCollection<Data.UserProfile>(nameof(UserProfile));
-            PublishEndpoint = publishEndpoint;
+            DbCollection = database.GetCollection<Data.UserProfile>(nameof(UserProfile));
+            Bus          = bus;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -24,23 +24,22 @@ namespace Meetup.UserProfile
             var options = new ChangeStreamOptions {FullDocument = ChangeStreamFullDocumentOption.UpdateLookup};
             var pipeline =
                 new EmptyPipelineDefinition<ChangeStreamDocument<Data.UserProfile>>().Match(
-                    "{ operationType: { $in: [ 'insert', 'update, 'delete' ] } }");
+                    "{ operationType: { $in: [ 'insert', 'update', 'delete' ] } }");
 
-            using var changeStream = DbCollection.Watch(pipeline, options).ToEnumerable().GetEnumerator();
+            using var changeStream = DbCollection.Watch(pipeline, options);
 
-            while (changeStream.MoveNext())
+            await changeStream.ForEachAsync(async change =>
             {
-                var change      = changeStream.Current;
                 var userProfile = change?.FullDocument;
-
+                
                 object @event = (change?.OperationType) switch
                 {
                     ChangeStreamOperationType.Delete =>
                         new Events.V1.UserProfileDeleted(
-                            Guid.Parse(userProfile.Id)
+                            Guid.Parse(change.DocumentKey["_id"].ToString())
                         ),
                     ChangeStreamOperationType.Update or ChangeStreamOperationType.Insert =>
-                        new Events.V1.UserProfileUpdated(
+                        new Events.V1.UserProfileCreatedOrUpdated(
                             Guid.Parse(userProfile.Id), userProfile.FirstName, userProfile.LastName, userProfile.Email
                         ),
                     _ => null
@@ -48,8 +47,8 @@ namespace Meetup.UserProfile
 
                 // publish integration event
                 if (@event is not null)
-                    await PublishEndpoint.Publish(@event, stoppingToken);
-            }
+                    await Bus.Publish(@event, stoppingToken);
+            }, cancellationToken: stoppingToken);
         }
     }
 }

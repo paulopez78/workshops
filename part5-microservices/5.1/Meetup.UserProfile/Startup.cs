@@ -24,7 +24,6 @@ namespace Meetup.UserProfile
             MongoConventions.RegisterConventions();
 
             services.AddSingleton(mongoDb);
-            services.AddHostedService<IntegrationEventsPublisher>();
             services.AddGrpc();
 
             services.AddMassTransit(x =>
@@ -39,6 +38,7 @@ namespace Meetup.UserProfile
                 });
             });
             services.AddMassTransitHostedService();
+            services.AddHostedService<IntegrationEventsPublisher>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
