@@ -14,7 +14,7 @@ namespace Meetup.Scheduling.Contracts
 
             public record MeetupPublished(Guid MeetupId, string GroupSlug);
 
-            public record MeetupCancelled(Guid MeetupId, string Reason);
+            public record MeetupCancelled(Guid MeetupId, string GroupSlug, string Reason);
         }
     }
 }

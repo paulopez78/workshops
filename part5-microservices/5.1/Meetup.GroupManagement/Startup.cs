@@ -80,6 +80,7 @@ namespace Meetup.GroupManagement
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapGrpcService<MeetupGroupManagementService>();
+                endpoints.MapGrpcService<MeetupGroupQueriesService>();
 
                 endpoints.MapGet("/",
                     async context =>

@@ -26,7 +26,7 @@ namespace Meetup.Scheduling.Test
                 new Created(sut.Id, expectedGroup, expectedDetails.Title, expectedDetails.Description, 2),
                 new Scheduled(sut.Id, now, now.AddHours(2)),
                 new MadeOnline(sut.Id, expectedLocation.Url.ToString()),
-                new Published(sut.Id)
+                new Published(sut.Id, expectedGroup)
             };
 
             // act

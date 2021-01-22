@@ -81,7 +81,7 @@ namespace Meetup.Scheduling
                         e => { e.Consumer<GroupMemberLeftEventHandler>(context); });
 
                     cfg.ReceiveEndpoint($"{ApplicationKey}-publish-integration-event",
-                        e => { e.Consumer<GroupMemberLeftEventHandler>(context); });
+                        e => { e.Consumer<IntegrationEventsPublisher>(context); });
                 });
             });
             services.AddMassTransitHostedService();

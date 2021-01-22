@@ -70,7 +70,7 @@ namespace Meetup.Notifications.Application
                     break;
 
                 case Commands.V1.NotifyMeetupCancelled cancelled:
-                    var attendants = await GetMeetupAttendants(cancelled.MeetupId);
+                    var attendants = await GetMeetupAttendants(cancelled.MeetupId, cancelled.GroupSlug);
 
                     await DbCollection.InsertManyAsync(
                         attendants.Select(attendant =>

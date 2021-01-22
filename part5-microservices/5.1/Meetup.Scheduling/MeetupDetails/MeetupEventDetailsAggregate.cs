@@ -70,7 +70,7 @@ namespace Meetup.Scheduling.MeetupDetails
             if (Status == MeetupEventStatus.Cancelled)
                 throw new ApplicationException("Already cancelled");
 
-            Apply(new Cancelled(Id, reason));
+            Apply(new Cancelled(Id, Group, reason));
         }
 
         public void Start()

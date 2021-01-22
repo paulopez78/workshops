@@ -12,11 +12,13 @@ namespace Meetup.GroupManagement
         public static Task Main(string[] args)
         {
             var host = CreateHostBuilder(args).Build();
-            
+
             using var scope    = host.Services.CreateScope();
             var       services = scope.ServiceProvider;
             var       context  = services.GetRequiredService<MeetupGroupManagementDbContext>();
-            if (!context.Database.EnsureCreated()) context.Database.Migrate();
+
+            if (!context.Database.EnsureCreated())
+                context.Database.Migrate();
 
             return host.RunAsync();
         }
@@ -24,6 +26,5 @@ namespace Meetup.GroupManagement
         static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>());
-
     }
 }

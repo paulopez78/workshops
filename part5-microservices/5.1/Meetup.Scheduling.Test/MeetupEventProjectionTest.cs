@@ -29,7 +29,7 @@ namespace Meetup.Scheduling.Test
                 new MeetupEvents.Created(id, group, title, description, 2),
                 new MeetupEvents.Scheduled(id, now, now.AddHours(2)),
                 new MeetupEvents.MadeOnline(id, url),
-                new MeetupEvents.Published(id),
+                new MeetupEvents.Published(id, group),
             };
 
             // act

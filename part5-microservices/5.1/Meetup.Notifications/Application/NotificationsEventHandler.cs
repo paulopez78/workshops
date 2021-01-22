@@ -36,7 +36,7 @@ namespace Meetup.Notifications.Application
 
         public Task Consume(ConsumeContext<SchedulingEvents.MeetupCancelled> context)
             => ApplicationService.Handle(
-                new Commands.V1.NotifyMeetupCancelled(context.Message.MeetupId)
+                new Commands.V1.NotifyMeetupCancelled(context.Message.MeetupId, context.Message.GroupSlug)
             );
 
         public Task Consume(ConsumeContext<SchedulingEvents.MeetupAttendantAdded> context)
