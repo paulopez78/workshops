@@ -104,7 +104,7 @@ namespace Meetup.Scheduling.Test
         static AttendantListAggregate CreateOpenedAttendantList(int capacity = 42)
         {
             var sut = CreateAttendantList(capacity);
-            sut.Open();
+            sut.Open(DateTimeOffset.UtcNow);
             return sut;
         }
     }

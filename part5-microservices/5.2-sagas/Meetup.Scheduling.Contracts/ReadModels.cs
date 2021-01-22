@@ -22,6 +22,8 @@ namespace Meetup.Scheduling.Contracts
                 public bool                      Online          { get; set; }
                 public Guid?                     AttendantListId { get; set; }
                 public ImmutableList<Attendant>? Attendants      { get; set; }
+
+                public string AttendantListStatus { get; set; }
             }
 
             public record Attendant

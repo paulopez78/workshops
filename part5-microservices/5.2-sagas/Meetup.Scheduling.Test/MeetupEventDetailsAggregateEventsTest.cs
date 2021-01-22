@@ -15,7 +15,7 @@ namespace Meetup.Scheduling.Test
         {
             // arrange
             var now              = DateTimeOffset.Now;
-            var sut              = new MeetupEventDetailsAggregate {Id = NewGuid()};
+            var sut              = new MeetupDetailsAggregate {Id = NewGuid()};
             var expectedDetails  = Details.From("microservices failures", "This is a talk about ..");
             var expectedGroup    = GroupSlug.From("netcorebcn");
             var expectedSchedule = ScheduleDateTime.From(now, now, now.AddHours(2));

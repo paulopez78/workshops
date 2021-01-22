@@ -18,8 +18,9 @@ namespace Meetup.GroupManagement.Application
         {
             // load meetup group
             var meetupGroup =
-                await DbContext.MeetupGroups.SingleOrDefaultAsync(x => x.Id == request.Id,
-                    cancellationToken: cancellationToken);
+                await DbContext.MeetupGroups.SingleOrDefaultAsync(
+                    x => x.Id == request.Id, cancellationToken: cancellationToken
+                );
             if (meetupGroup is null)
                 throw new ApplicationException($"meetup group {request.Id} not found");
 

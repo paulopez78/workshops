@@ -7,7 +7,8 @@ namespace Meetup.Scheduling.Contracts
     {
         public static class V1
         {
-            public record CreateMeetup(Guid EventId, string Group, [Required] string Title, string Description, int Capacity);
+            public record CreateMeetup(Guid EventId, string Group, [Required] string Title, string Description,
+                int Capacity);
 
             public record UpdateDetails(Guid EventId, [Required] string Title, string Description);
 
@@ -20,26 +21,34 @@ namespace Meetup.Scheduling.Contracts
             public record Publish(Guid EventId);
 
             public record Cancel(Guid EventId, string Reason);
+
+            public record Start(Guid EventId);
+
+            public record Finish(Guid EventId);
         }
     }
-    
+
     public static class AttendantListCommands
     {
         public static class V1
         {
             public record CreateAttendantList(Guid Id, Guid MeetupEventId, int Capacity);
 
-            public record Open(Guid Id);
+            public record Open(Guid MeetupEventId);
 
-            public record Close (Guid Id);
+            public record Close (Guid MeetupEventId);
 
-            public record Attend(Guid Id, Guid UserId);
+            public record Archive (Guid MeetupEventId);
 
-            public record DontAttend(Guid Id, Guid UserId);
+            public record Attend(Guid MeetupEventId, Guid UserId);
 
-            public record IncreaseCapacity(Guid Id, int Capacity);
+            public record DontAttend(Guid MeetupEventId, Guid UserId);
 
-            public record ReduceCapacity(Guid Id, int Capacity);
+            public record IncreaseCapacity(Guid MeetupEventId, int Capacity);
+
+            public record ReduceCapacity(Guid MeetupEventId, int Capacity);
+
+            public record RemoveAttendantFromMeetups(Guid UserId, string GroupSlug);
         }
     }
 }

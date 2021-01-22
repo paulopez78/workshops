@@ -32,12 +32,15 @@ namespace Meetup.Scheduling
             services.AddSingleton<UtcNow>(() => DateTimeOffset.UtcNow);
 
             services.AddScoped(sp =>
-                sp.AddApplicationService<MeetupEventDetailsAggregate, MeetupDetailsEventReadModel>(When)
-                    .Handle(sp.GetRequiredService<UtcNow>()));
+                sp.AddApplicationService<MeetupDetailsAggregate, MeetupDetailsEventReadModel>(When)
+                    .Handle(sp.GetRequiredService<UtcNow>())
+            );
 
             services.AddScoped(sp =>
                 sp.AddApplicationService<AttendantListAggregate, AttendantListReadModel>(When)
-                    .Handle(sp.GetRequiredService<UtcNow>()));
+                    .Handle(sp.GetRequiredService<UtcNow>())
+                    .MappingId(sp.GetRequiredService<IDocumentStore>())
+            );
 
             services.AddMarten(cfg =>
             {
@@ -48,14 +51,13 @@ namespace Meetup.Scheduling
 
                 cfg.Schema.For<MeetupDetailsEventReadModel>().Index(x => x.Group);
                 cfg.Schema.For<AttendantListReadModel>().UniqueIndex(x => x.MeetupEventId);
-
-                cfg.Schema.For<OutBox>()
-                    .Index(x => new {x.MessageId, x.AggregateId});
+                cfg.Schema.For<OutBox>().Index(x => new {x.MessageId, x.AggregateId});
             });
 
             services.AddMassTransit(x =>
             {
                 x.AddConsumer<AttendantListCommandApiAsync>();
+                x.AddConsumer<MeetupDetailsCommandApiAsync>();
 
                 x.UsingRabbitMq((context, cfg) =>
                 {
@@ -74,15 +76,21 @@ namespace Meetup.Scheduling
                     });
 
                     cfg.ReceiveEndpoint($"{ApplicationKey}-attendant-list-commands",
-                        e => { e.Consumer<AttendantListCommandApiAsync>(context); });
+                        e =>
+                        {
+                            e.Consumer<AttendantListCommandApiAsync>(context);
+                            e.Consumer<AttendantListBatchCommandApiAsync>(context);
+                        });
+
+                    cfg.ReceiveEndpoint($"{ApplicationKey}-meetup-details-commands",
+                        e => { e.Consumer<MeetupDetailsCommandApiAsync>(context); });
                 });
             });
             services.AddMassTransitHostedService();
 
             services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo {Title = "meetup_scheduling_commands", Version = "v1"});
-            });
+                c.SwaggerDoc("v1", new OpenApiInfo {Title = "meetup_scheduling_commands", Version = "v1"})
+            );
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -95,7 +103,6 @@ namespace Meetup.Scheduling
             }
 
             app.UseRouting();
-
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
     }

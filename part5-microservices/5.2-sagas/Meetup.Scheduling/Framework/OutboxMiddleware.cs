@@ -39,9 +39,7 @@ namespace Meetup.Scheduling.Framework
                         outbox
                             .Where(x => x.DispatchedAt == null)
                             .Select(x =>
-                                publishEndpoint.Publish(
-                                    x.Change,
-                                    new CustomMessageId(x.OutMessageId))
+                                publishEndpoint.Publish(x.Change(), new CustomMessageId(x.OutMessageId))
                             )
                     );
 
@@ -50,9 +48,7 @@ namespace Meetup.Scheduling.Framework
                     using var session = eventStore.OpenSession();
 
                     foreach (var item in outbox)
-                    {
                         item.DispatchedAt = getUtcNow();
-                    }
 
                     session.Store(outbox);
                     await session.SaveChangesAsync();
@@ -77,7 +73,7 @@ namespace Meetup.Scheduling.Framework
                     var result = await @this(id, command, context);
 
                     var outboxMessages = result.Changes
-                        .Select(@event => OutBox.From(context.MessageId, id, @event, NewGuid()))
+                        .Select(@event => OutBox.From(context.MessageId, id, @event))
                         .ToList();
 
                     session.Store<OutBox>(outboxMessages);
@@ -107,10 +103,18 @@ namespace Meetup.Scheduling.Framework
         Guid OutMessageId)
     {
         public DateTimeOffset? DispatchedAt { get; set; }
-        public object?         Change       => JsonSerializer.Deserialize(Payload, Type.GetType(MessageType));
 
-        public static OutBox From(Guid messageId, Guid aggregateId, object @event, Guid outMessageId)
-            => new(NewGuid(), messageId, aggregateId, @event.GetType().ToString(), JsonSerializer.Serialize(@event),
-                outMessageId);
+        public static OutBox From(Guid messageId, Guid aggregateId, object @event)
+            => new(
+                NewGuid(),
+                messageId,
+                aggregateId,
+                $"{@event.GetType().FullName}, {@event.GetType().Assembly.FullName}",
+                JsonSerializer.Serialize(@event),
+                NewGuid()
+            );
+
+        public object? Change()
+            => JsonSerializer.Deserialize(Payload, Type.GetType(MessageType, throwOnError: true));
     }
 }

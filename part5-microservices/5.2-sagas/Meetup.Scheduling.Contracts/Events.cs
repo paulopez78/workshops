@@ -6,6 +6,8 @@ namespace Meetup.Scheduling.Contracts
     {
         public static class V1
         {
+            public record MeetupCreated(Guid MeetupEventId, string GroupSlug, int Capacity);
+
             public record MeetupAttendantAdded(Guid MeetupEventId, Guid AttendantId);
 
             public record MeetupAttendantsRemovedFromWaitingList(Guid MeetupEventId, params Guid[] Attendants);
@@ -14,19 +16,27 @@ namespace Meetup.Scheduling.Contracts
 
             public record MeetupPublished(Guid MeetupId, string GroupSlug);
 
+            public record MeetupScheduled(Guid MeetupId, DateTimeOffset Start, DateTimeOffset End);
+
             public record MeetupCancelled(Guid MeetupId, string GroupSlug, string Reason);
+
+            public record MeetupStarted(Guid MeetupId);
+
+            public record MeetupFinished(Guid MeetupId);
         }
     }
-    
+
     public static class AttendantListEvents
     {
         public static class V1
         {
             public record AttendantListCreated (Guid Id, Guid MeeupEventId, int Capacity);
 
-            public record Opened(Guid Id, Guid MeeupEventId);
+            public record Opened(Guid Id, Guid MeeupEventId, DateTimeOffset OpenedAt);
 
-            public record Closed(Guid Id, Guid MeeupEventId);
+            public record Closed(Guid Id, Guid MeeupEventId, DateTimeOffset ClosedAt);
+
+            public record Archived(Guid Id, Guid MeeupEventId, DateTimeOffset ArchivedAt);
 
             public record CapacityReduced(Guid Id, Guid MeeupEventId, int ByNumber);
 
@@ -45,7 +55,7 @@ namespace Meetup.Scheduling.Contracts
                 params Guid[] Attendants);
         }
     }
-    
+
     public static class MeetupDetailsEvents
     {
         public static class V1

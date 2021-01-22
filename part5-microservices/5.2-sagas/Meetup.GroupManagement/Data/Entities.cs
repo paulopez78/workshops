@@ -27,12 +27,19 @@ namespace Meetup.GroupManagement.Data
         public Guid           GroupId  { get; set; }
         public MemberStatus   Status   { get; set; } = MemberStatus.Active;
         public DateTimeOffset JoinedAt { get; set; }
+        public Role           Role     { get; set; } = Role.Member;
     }
 
     public enum MemberStatus
     {
         Active,
         WaitingForApproval
+    }
+
+    public enum Role
+    {
+        Organizer,
+        Member
     }
 
     public record CommandResult(Guid GroupId, string GroupSlug);

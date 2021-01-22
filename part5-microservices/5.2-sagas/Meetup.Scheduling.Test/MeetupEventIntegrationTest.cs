@@ -73,7 +73,7 @@ namespace Meetup.Scheduling.Test
             var eventId = await Client.CreatePublishedMeetup().ThenOk();
 
             // act
-            await Attend(eventId, joe).ThenOk();
+            await Client.Attend(eventId, joe).ThenOk();
 
             // assert
             var meetup = await DocumentStore.Get(eventId);
@@ -87,8 +87,8 @@ namespace Meetup.Scheduling.Test
             var eventId = await Client.CreatePublishedMeetup().ThenOk();
 
             // act
-            await Attend(eventId, joe).ThenOk();
-            await DontAttend(eventId, joe).ThenOk();
+            await Client.Attend(eventId, joe).ThenOk();
+            await Client.DontAttend(eventId, joe).ThenOk();
 
             // assert
             var meetupEvent = await DocumentStore.Get(eventId);
@@ -102,11 +102,11 @@ namespace Meetup.Scheduling.Test
             var eventId = await Client.CreatePublishedMeetup().ThenOk();
 
             // act
-            await Attend(eventId, carla).ThenOk();
-            await Attend(eventId, alice).ThenOk();
-            await Attend(eventId, joe).ThenOk();
-            await DontAttend(eventId, alice).ThenOk();
-            await Attend(eventId, alice).ThenOk();
+            await Client.Attend(eventId, carla).ThenOk();
+            await Client.Attend(eventId, alice).ThenOk();
+            await Client.Attend(eventId, joe).ThenOk();
+            await Client.DontAttend(eventId, alice).ThenOk();
+            await Client.Attend(eventId, alice).ThenOk();
 
             // assert
             var meetupEvent = await DocumentStore.Get(eventId);
@@ -135,7 +135,7 @@ namespace Meetup.Scheduling.Test
             meetupEvent.Attendants?.Where(x => x.Waiting).Should().HaveCount(1);
 
             Task Accept(Guid userId) =>
-                RandomJitter(() => Fixture.CreateClient().Attend(DocumentStore, eventId, userId), 0);
+                RandomJitter(() => Fixture.CreateClient().Attend(eventId, userId), 0);
         }
 
         [Fact]
@@ -158,7 +158,7 @@ namespace Meetup.Scheduling.Test
             meetupEvent.Title.Should().Be(expectedTitle);
 
             Task Accept(Guid userId) =>
-                RandomJitter(() => Attend(eventId, userId), 0);
+                RandomJitter(() => Client.Attend(eventId, userId), 0);
 
             Task UpdateTitle() =>
                 RandomJitter(() => Client.UpdateTitle(eventId, expectedTitle, expectedDescription), 0);
@@ -170,12 +170,6 @@ namespace Meetup.Scheduling.Test
             await Task.Delay(jitter);
             await action();
         }
-
-        Task<HttpResponseMessage> Attend(Guid eventId, Guid userId)
-            => Client.Attend(DocumentStore, eventId, userId);
-
-        Task<HttpResponseMessage> DontAttend(Guid eventId, Guid userId)
-            => Client.Attend(DocumentStore, eventId, userId);
 
         static Guid joe   = NewGuid();
         static Guid carla = NewGuid();
@@ -231,19 +225,11 @@ namespace Meetup.Scheduling.Test
         public static Task<HttpResponseMessage> Publish(this HttpClient client, Guid eventId)
             => client.Put($"events/publish", new Publish(eventId));
 
-        public static async Task<HttpResponseMessage> Attend(this HttpClient client, IDocumentStore store, Guid eventId,
-            Guid userId)
-        {
-            var meetup = await store.Get(eventId);
-            return await client.Put($"attendants/add", new Attend(meetup.AttendantListId.Value, userId));
-        }
+        public static Task<HttpResponseMessage> Attend(this HttpClient client, Guid eventId, Guid userId) =>
+            client.Put($"attendants/add", new Attend(eventId, userId));
 
-        public static async Task<HttpResponseMessage> DontAttend(this HttpClient client, IDocumentStore store,
-            Guid eventId, Guid userId)
-        {
-            var meetup = await store.Get(eventId);
-            return await client.Put($"attendants/remove", new DontAttend(meetup.AttendantListId.Value, userId));
-        }
+        public static Task<HttpResponseMessage> DontAttend(this HttpClient client, Guid eventId, Guid userId) =>
+            client.Put($"attendants/remove", new DontAttend(eventId, userId));
 
         public static async Task<Guid> ThenOk(this Task<HttpResponseMessage> httpResponseMessage)
         {

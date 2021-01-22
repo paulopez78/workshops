@@ -28,7 +28,7 @@ namespace Meetup.Scheduling.Test
             var events = new List<object>
             {
                 new AttendantListEvents.AttendantListCreated(id, meetupId, 2),
-                new AttendantListEvents.Opened(id, meetupId),
+                new AttendantListEvents.Opened(id, meetupId, now),
                 new AttendantListEvents.AttendantAdded(id, meetupId, joe, now.AddSeconds(1)),
                 new AttendantListEvents.AttendantAdded(id, meetupId, alice, now.AddSeconds(2)),
                 new AttendantListEvents.AttendantAddedToWaitingList(id, meetupId, carla, now.AddSeconds(3)),

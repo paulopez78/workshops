@@ -5,7 +5,7 @@ using static Meetup.Scheduling.Contracts.MeetupDetailsEvents.V1;
 
 namespace Meetup.Scheduling.MeetupDetails
 {
-    public class MeetupEventDetailsAggregate : Aggregate
+    public class MeetupDetailsAggregate : Aggregate
     {
         public GroupSlug         Group        { get; private set; }
         public Details           Details      { get; private set; }

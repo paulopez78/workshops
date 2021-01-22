@@ -53,7 +53,7 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
                         r.Ignore<ArgumentException>();
                     });
 
-                    cfg.ReceiveEndpoint($"{ApplicationKey}-notify",
+                    cfg.ReceiveEndpoint($"{ApplicationKey}-commands",
                         e =>
                         {
                             e.Consumer<NotificationsCommandHandler>(context);

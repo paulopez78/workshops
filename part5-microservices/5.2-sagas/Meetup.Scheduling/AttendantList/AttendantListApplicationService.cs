@@ -1,4 +1,5 @@
 using System;
+using Marten;
 using Meetup.Scheduling.Framework;
 using static Meetup.Scheduling.Contracts.AttendantListCommands.V1;
 
@@ -6,7 +7,8 @@ namespace Meetup.Scheduling.AttendantList
 {
     public static class AttendantListApplicationService
     {
-        public static HandleCommand<AttendantListAggregate> Handle(this Handle<AttendantListAggregate> handle,  UtcNow getUtcNow)
+        public static HandleCommand<AttendantListAggregate> Handle(this Handle<AttendantListAggregate> handle,
+            UtcNow getUtcNow)
             => (id, command, context) =>
                 command switch
                 {
@@ -19,13 +21,19 @@ namespace Meetup.Scheduling.AttendantList
                     Open _
                         => handle(
                             id,
-                            aggregate => aggregate.Open(),
+                            aggregate => aggregate.Open(getUtcNow()),
                             context
                         ),
                     Close _
                         => handle(
                             id,
-                            aggregate => aggregate.Open(),
+                            aggregate => aggregate.Close(getUtcNow()),
+                            context
+                        ),
+                    Archive _
+                        => handle(
+                            id,
+                            aggregate => aggregate.Archive(getUtcNow()),
                             context
                         ),
                     IncreaseCapacity cmd
@@ -54,6 +62,15 @@ namespace Meetup.Scheduling.AttendantList
                         ),
                     _
                         => throw new ApplicationException("command handler not found")
+                };
+
+        public static HandleCommand<AttendantListAggregate> MappingId(this HandleCommand<AttendantListAggregate> handle,
+            IDocumentStore store)
+            => async (id, command, context) =>
+                command switch
+                {
+                    CreateAttendantList _ => await handle(id, command, context),
+                    _                     => await handle(await store.GetAttendantListId(id), command, context),
                 };
     }
 }

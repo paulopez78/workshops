@@ -22,7 +22,9 @@ namespace Meetup.GroupManagement.Application
         public async Task<CommandResult> Handle(CreateRequest request, CancellationToken cancellationToken)
         {
             // check if group slug already taken
-            var sameGroupSlug = await DbContext.MeetupGroups.SingleOrDefaultAsync(x => x.Slug == request.GroupSlug, cancellationToken: cancellationToken);
+            var sameGroupSlug = await DbContext.MeetupGroups.SingleOrDefaultAsync(
+                x => x.Slug == request.GroupSlug, cancellationToken: cancellationToken
+            );
             if (sameGroupSlug is not null)
                 throw new ApplicationException($"Group slug {request.GroupSlug} already taken");
 
@@ -33,16 +35,23 @@ namespace Meetup.GroupManagement.Application
             };
 
             await DbContext.MeetupGroups.AddAsync(group, cancellationToken);
-            await DbContext.SaveChangesAsync(cancellationToken);
+
+            // join organizer as a group member
+            await Mediator.Send(
+                new JoinRequest(group.Id, group.OrganizerId, Role.Organizer), cancellationToken
+            );
 
             // notify event
-            await Mediator.Publish(new GroupCreated(group.Id), cancellationToken);
+            await Mediator.Publish(
+                new GroupCreated(group.Id, group.OrganizerId), cancellationToken
+            );
 
+            await DbContext.SaveChangesAsync(cancellationToken);
             return new CommandResult(group.Id, group.Slug);
         }
     }
 
-    public record GroupCreated(Guid Id) : INotification;
+    public record GroupCreated(Guid Id, Guid OrganizerId) : INotification;
 
     public record CreateRequest(Guid Id, Guid OrganizerId, string GroupSlug, string Title, string Description,
         string Location) : IRequest<CommandResult>;

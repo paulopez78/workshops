@@ -75,16 +75,16 @@ namespace Meetup.Scheduling.Test
             Assert.ThrowsAny<ApplicationException>(Publish);
         }
 
-        static MeetupEventDetailsAggregate CreateMeetupEvent()
+        static MeetupDetailsAggregate CreateMeetupEvent()
         {
-            var meetupAggregate = new MeetupEventDetailsAggregate {Id = NewGuid()};
+            var meetupAggregate = new MeetupDetailsAggregate {Id = NewGuid()};
             meetupAggregate.Create(GroupSlug.From("netcorebcn"),
                 Details.From("microservices failures", "This is a talk about main microservices pitfalls.."), 2);
 
             return meetupAggregate;
         }
 
-        static MeetupEventDetailsAggregate CreatePublishedMeetupEvent()
+        static MeetupDetailsAggregate CreatePublishedMeetupEvent()
         {
             var sut = CreateMeetupEvent();
             sut.Schedule(ScheduleDateTime.From(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(15), 2));

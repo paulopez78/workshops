@@ -38,17 +38,22 @@ namespace Meetup.GroupManagement.Application
             await DbContext.Members.AddAsync(member, cancellationToken);
             await DbContext.SaveChangesAsync(cancellationToken);
 
-            // notify event
-            await Mediator.Publish(new MemberJoined(member.GroupId, member.UserId, member.JoinedAt), cancellationToken);
+            if (request.Role != Role.Organizer)
+            {
+                // notify event
+                await Mediator.Publish(
+                    new MemberJoined(member.GroupId, member.UserId, member.JoinedAt), cancellationToken
+                );
+            }
 
             return new CommandResult(member.GroupId, "");
         }
     }
 
-    public record JoinRequest(Guid GroupId, Guid UserId) : IRequest<CommandResult>;
+    public record JoinRequest(Guid GroupId, Guid UserId, Role Role = Role.Member) : IRequest<CommandResult>;
 
     public record MemberJoined(Guid GroupId, Guid UserId, DateTimeOffset JoinedAt) : INotification;
-    
+
     public class JoinRequestValidator : AbstractValidator<JoinRequest>
     {
         public JoinRequestValidator()

@@ -8,11 +8,11 @@ namespace Meetup.Scheduling.MeetupDetails
 {
     [Route("/api/meetup/events")]
     [ApiController]
-    public class MeetupEventDetailsCommandApi : ControllerBase
+    public class MeetupDetailsCommandApi : ControllerBase
     {
-        readonly HandleCommand<MeetupEventDetailsAggregate> HandleCommand;
+        readonly HandleCommand<MeetupDetailsAggregate> HandleCommand;
 
-        public MeetupEventDetailsCommandApi(HandleCommand<MeetupEventDetailsAggregate> handle)
+        public MeetupDetailsCommandApi(HandleCommand<MeetupDetailsAggregate> handle)
             => HandleCommand = handle;
 
         [HttpPost("details")]
@@ -38,7 +38,15 @@ namespace Meetup.Scheduling.MeetupDetails
         [HttpPut("cancel")]
         public Task<IActionResult> CancelEvent(Cancel command) =>
             Handle(command.EventId, command);
+        
+        [HttpPut("start")]
+        public Task<IActionResult> StartEvent(Start command) =>
+            Handle(command.EventId, command);
 
+        [HttpPut("finish")]
+        public Task<IActionResult> FinishEvent(Finish command) =>
+            Handle(command.EventId, command);
+        
         Task<IActionResult> Handle(Guid id, object command)
             => HandleCommand.WithContext(HttpContext.Request.Headers)(id, command);
     }

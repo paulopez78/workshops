@@ -54,14 +54,6 @@ namespace Meetup.Scheduling.Queries
             );
         }
 
-        public static async Task<Guid?> GetAttendantListId(this IDocumentStore store, Guid meetupId)
-        {
-            using var session = store.QuerySession();
-            var result = await session.Query<AttendantListReadModel>()
-                .FirstOrDefaultAsync(x => x.MeetupEventId == meetupId);
-            return result.Id;
-        }
-
         static MeetupEvent Map(
             MeetupDetailsEventReadModel details,
             AttendantListReadModel? attendants) =>

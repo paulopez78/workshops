@@ -4,10 +4,10 @@ using static Meetup.Scheduling.Contracts.MeetupDetailsCommands.V1;
 
 namespace Meetup.Scheduling.MeetupDetails
 {
-    public static class MeetupEventDetailsApplicationService
+    public static class MeetupDetailsApplicationService
     {
-        public static HandleCommand<MeetupEventDetailsAggregate> Handle(
-            this Handle<MeetupEventDetailsAggregate> handle, UtcNow getUtcNow)
+        public static HandleCommand<MeetupDetailsAggregate> Handle(
+            this Handle<MeetupDetailsAggregate> handle, UtcNow getUtcNow)
             => (aggregateId, command, context) =>
             {
                 return command switch

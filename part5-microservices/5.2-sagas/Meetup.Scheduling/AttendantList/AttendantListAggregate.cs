@@ -17,24 +17,32 @@ namespace Meetup.Scheduling.AttendantList
         public void Create(Guid meetupEventId, PositiveNumber capacity)
             => Apply(new AttendantListCreated(Id, meetupEventId, capacity));
 
-        public void Open()
+        public void Open(DateTimeOffset openedAt)
         {
             EnforceNotArchived();
 
             if (Status == AttendantListStatus.Opened)
                 throw new ApplicationException($"AttendantList {Id} already opened");
 
-            Apply(new Opened(Id, MeetupEventId));
+            Apply(new Opened(Id, MeetupEventId, openedAt));
         }
 
-        public void Close()
+        public void Close(DateTimeOffset closedAt)
         {
             EnforceOpened();
 
             if (Status == AttendantListStatus.Closed)
                 throw new ApplicationException($"AttendantList {Id} already closed");
 
-            Apply(new Closed(Id, MeetupEventId));
+            Apply(new Closed(Id, MeetupEventId, closedAt));
+        }
+        
+        public void Archive(DateTimeOffset archivedAt)
+        {
+            if (Status == AttendantListStatus.Archived)
+                throw new ApplicationException($"AttendantList {Id} already archived");
+
+            Apply(new Archived(Id, MeetupEventId, archivedAt));
         }
 
         public void IncreaseCapacity(PositiveNumber number, DateTimeOffset increasedAt)

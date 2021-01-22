@@ -21,27 +21,27 @@ namespace Meetup.Scheduling.AttendantList
         
         [HttpPut("open")]
         public Task<IActionResult> Open(Open command) =>
-            Handle(command.Id, command);
+            Handle(command.MeetupEventId, command);
         
         [HttpPut("close")]
         public Task<IActionResult> Close(Close command) =>
-            Handle(command.Id, command);
+            Handle(command.MeetupEventId, command);
 
         [HttpPut("capacity/increase")]
         public Task<IActionResult> IncreaseCapacity(IncreaseCapacity command) =>
-            Handle(command.Id, command);
+            Handle(command.MeetupEventId, command);
 
         [HttpPut("capacity/reduce")]
         public Task<IActionResult> ReduceCapacity(ReduceCapacity command) =>
-            Handle(command.Id, command);
+            Handle(command.MeetupEventId, command);
 
         [HttpPut("add")]
         public Task<IActionResult> Attend(Attend command) =>
-            Handle(command.Id, command);
+            Handle(command.MeetupEventId, command);
 
         [HttpPut("remove")]
         public Task<IActionResult> DontAttend(DontAttend command) =>
-            Handle(command.Id, command);
+            Handle(command.MeetupEventId, command);
 
         Task<IActionResult> Handle(Guid id, object command)
             => HandleCommand.WithContext(HttpContext.Request.Headers)(id, command);
