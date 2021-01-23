@@ -1,10 +1,10 @@
 using System;
 using System.Reflection.Metadata;
-using Meetup.Notifications.Data;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
+using static Meetup.Notifications.Contracts.ReadModels.V1;
 
 namespace Meetup.Notifications.Infrastructure
 {
@@ -32,7 +32,7 @@ namespace Meetup.Notifications.Infrastructure
                     }
                 )
                 .Freeze();
-            
+
             BsonSerializer.RegisterSerializer(new DateTimeSerializer(DateTimeKind.Utc));
             BsonSerializer.RegisterSerializer(new NullableSerializer<DateTime>());
             BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer(BsonType.String));

@@ -8,10 +8,7 @@ namespace Meetup.UserProfile
 {
     public class UserProfileService : Contracts.UserProfile.UserProfileBase
     {
-        public UserProfileService(IMongoDatabase database)
-        {
-            DbCollection = database.GetCollection<Data.UserProfile>(nameof(UserProfile));
-        }
+        public UserProfileService(IMongoDatabase database) => DbCollection = database.GetCollection<Data.UserProfile>(nameof(UserProfile));
 
         readonly IMongoCollection<Data.UserProfile> DbCollection;
 

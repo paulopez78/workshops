@@ -1,32 +1,34 @@
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
+using static System.Guid;
 
 namespace Meetup.EndToEndTest
 {
-    public class EndToEndTest
+    public class EndToEndTest: IClassFixture<ClientsFixture>
     {
-        Guid Pau   = Guid.NewGuid();
-        Guid Joe   = Guid.NewGuid();
-        Guid Carla = Guid.NewGuid();
-        Guid Alice = Guid.NewGuid();
-        Guid Bob   = Guid.NewGuid();
+        public EndToEndTest(ClientsFixture fixture)
+        {
+            Fixture = fixture;
+        }
+
+        private readonly ClientsFixture Fixture;
+
 
         private string NetCoreBcn = "netcorebcn";
 
         [Fact]
-        public void Meetup_EndToEnd_Test()
+        public async Task Meetup_EndToEnd_Test()
         {
             // Create organizer user
-            var organizer = Pau;
-
-            // Create organizer user
-            CreateUserProfile(Pau);
+            await CreateUserProfile(Pau);
 
             // Create some users
-            CreateUserProfile(Joe, Carla, Alice, Bob);
+            await CreateUserProfile(Joe, Carla, Alice, Bob);
 
             // Start meetup group (organizer is added as member)
-            StartMeetupGroup(NetCoreBcn, Pau);
+            StartMeetupGroup(NetCoreBcn, organizer: Pau);
 
             // Add some members to the group
             AddGroupMember(NetCoreBcn, Joe, Carla, Alice, Bob);
@@ -48,13 +50,12 @@ namespace Meetup.EndToEndTest
             // Wait for notifications, check attendant list
 
             ReduceCapacity(meetupId, 1);
-            IncreaseCapacity(meetupId,1);
+            IncreaseCapacity(meetupId, 1);
 
             LeaveGroup(NetCoreBcn, Alice);
             // Wait for notifications, check attendant list
 
             // check meetup status is finished, attendant list is archived 
-            
         }
 
         private void IncreaseCapacity(Guid meetupId, int byNumber)
@@ -67,17 +68,17 @@ namespace Meetup.EndToEndTest
             throw new NotImplementedException();
         }
 
-        private void LeaveGroup(string netCoreBcn, Guid alice)
+        private void LeaveGroup(string netCoreBcn, User alice)
         {
             throw new NotImplementedException();
         }
 
-        private void DontAttend(Guid meetupId, Guid joe)
+        private void DontAttend(Guid meetupId, User joe)
         {
             throw new NotImplementedException();
         }
 
-        private void Attend(Guid meetupId, Guid bob)
+        private void Attend(Guid meetupId, User bob)
         {
             throw new NotImplementedException();
         }
@@ -93,19 +94,37 @@ namespace Meetup.EndToEndTest
             // start in 30 seconds stop in 1 minute to test schedule
         }
 
-        private void AddGroupMember(string group, Guid joe, Guid carla, Guid alice, Guid bob)
+        private void AddGroupMember(string group, params User[] user)
         {
             throw new NotImplementedException();
         }
 
-        private void StartMeetupGroup(string groupSlug, Guid organizer)
+        private void StartMeetupGroup(string groupSlug, User organizer)
         {
             throw new NotImplementedException();
         }
 
-        private void CreateUserProfile(params Guid[] userIds)
+        private async Task CreateUserProfile(params User[] users)
         {
-            throw new NotImplementedException();
+            foreach (var user in users)
+            {
+                await Fixture.UserProfile.CreateOrUpdateAsync(new()
+                    {
+                        UserId    = user.Id.ToString(),
+                        FirstName = user.Name,
+                        LastName  = user.Lastname,
+                        Email     = user.Email,
+                    }
+                );
+            }
         }
+
+        User Pau   = new(NewGuid(), "Pau", "Lopez", "pau.lopez@meetup.com");
+        User Joe   = new(NewGuid(), "Joe", "Smith", "joe.smith@meetup.com");
+        User Carla = new(NewGuid(), "Carla", "Garcia", "carla.garcia@meetup.com");
+        User Alice = new(NewGuid(), "Alice", "Joplin", "alice.joplin@meetup.com");
+        User Bob   = new(NewGuid(), "Bob", "Dylan", "bob.dylan@meetup.com");
+
+        public record User (Guid Id, string Name, string Lastname, string Email);
     }
 }

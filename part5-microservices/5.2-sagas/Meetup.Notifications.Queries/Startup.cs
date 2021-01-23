@@ -1,6 +1,4 @@
-﻿using MassTransit;
-using Meetup.UserProfile.Infrastructure;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -8,11 +6,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MongoDB.Driver;
 
-namespace Meetup.UserProfile
+namespace Meetup.Notifications.Queries
 {
     public class Startup
     {
-        const string ApplicationKey = "meetup_user_profiles";
+        const string ApplicationKey = "meetup_notifications";
+
         public Startup(IConfiguration configuration)
             => Configuration = configuration;
 
@@ -20,26 +19,9 @@ namespace Meetup.UserProfile
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var connectionString = Configuration.GetConnectionString("UserProfile");
-            var mongoDb          = CreateMongoDb(connectionString);
-            MongoConventions.RegisterConventions();
-
+            var mongoDb = CreateMongoDb();
             services.AddSingleton(mongoDb);
             services.AddGrpc();
-
-            services.AddMassTransit(x =>
-            {
-                x.UsingRabbitMq((_, cfg) =>
-                {
-                    cfg.Host("localhost", "/", h =>
-                    {
-                        h.Username("guest");
-                        h.Password("guest");
-                    });
-                });
-            });
-            services.AddMassTransitHostedService();
-            // services.AddHostedService<IntegrationEventsPublisher>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -53,7 +35,7 @@ namespace Meetup.UserProfile
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGrpcService<UserProfileService>();
+                endpoints.MapGrpcService<NotificationsQueriesService>();
 
                 endpoints.MapGet("/",
                     async context =>
@@ -64,9 +46,9 @@ namespace Meetup.UserProfile
             });
         }
 
-        static IMongoDatabase CreateMongoDb(string connectionString)
+        IMongoDatabase CreateMongoDb()
         {
-            var client = new MongoClient(connectionString);
+            var client = new MongoClient(Configuration.GetConnectionString("Notifications"));
             return client.GetDatabase(ApplicationKey);
         }
     }

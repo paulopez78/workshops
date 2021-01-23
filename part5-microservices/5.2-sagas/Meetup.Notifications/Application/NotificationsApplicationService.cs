@@ -1,9 +1,9 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using Meetup.Notifications.Contracts;
-using Meetup.Notifications.Data;
 using MongoDB.Driver;
 using static System.Guid;
+using static Meetup.Notifications.Contracts.ReadModels.V1;
 
 namespace Meetup.Notifications.Application
 {
@@ -41,17 +41,17 @@ namespace Meetup.Notifications.Application
 
                 case Commands.V1.NotifyGroupCreated groupCreated:
                     var users = await GetInterestedUsers(groupCreated.GroupId);
-
-                    await DbCollection.InsertManyAsync(
-                        users.Select(user =>
-                            new Notification()
-                            {
-                                Id               = NewGuid().ToString(),
-                                UserId           = user.ToString(),
-                                GroupId          = groupCreated.GroupId.ToString(),
-                                NotificationType = NotificationType.NewGroupCreated,
-                            })
-                    );
+                    if (users.Any())
+                        await DbCollection.InsertManyAsync(
+                            users.Select(user =>
+                                new Notification()
+                                {
+                                    Id               = NewGuid().ToString(),
+                                    UserId           = user.ToString(),
+                                    GroupId          = groupCreated.GroupId.ToString(),
+                                    NotificationType = NotificationType.NewGroupCreated,
+                                })
+                        );
                     break;
 
                 case Commands.V1.NotifyMeetupPublished published:
@@ -71,43 +71,43 @@ namespace Meetup.Notifications.Application
 
                 case Commands.V1.NotifyMeetupCancelled cancelled:
                     var attendants = await GetMeetupAttendants(cancelled.MeetupId, cancelled.GroupSlug);
-
-                    await DbCollection.InsertManyAsync(
-                        attendants.Select(attendant =>
-                            new Notification()
-                            {
-                                Id               = NewGuid().ToString(),
-                                UserId           = attendant.ToString(),
-                                MeetupId         = cancelled.MeetupId.ToString(),
-                                NotificationType = NotificationType.MeetupCancelled,
-                            })
-                    );
+                    if (attendants.Any())
+                        await DbCollection.InsertManyAsync(
+                            attendants.Select(attendant =>
+                                new Notification()
+                                {
+                                    Id               = NewGuid().ToString(),
+                                    UserId           = attendant.ToString(),
+                                    MeetupId         = cancelled.MeetupId.ToString(),
+                                    NotificationType = NotificationType.MeetupCancelled,
+                                })
+                        );
                     break;
 
                 case Commands.V1.NotifyMemberJoined joined:
                     var organizer = await GetGroupOrganizer(joined.GroupId);
-
-                    await DbCollection.InsertOneAsync(new Notification()
-                    {
-                        Id               = NewGuid().ToString(),
-                        UserId           = organizer.ToString(),
-                        GroupId          = joined.GroupId.ToString(),
-                        MemberId         = joined.MemberId.ToString(),
-                        NotificationType = NotificationType.MemberJoined,
-                    });
+                    if (organizer is not null)
+                        await DbCollection.InsertOneAsync(new Notification()
+                        {
+                            Id               = NewGuid().ToString(),
+                            UserId           = organizer,
+                            GroupId          = joined.GroupId.ToString(),
+                            MemberId         = joined.MemberId.ToString(),
+                            NotificationType = NotificationType.MemberJoined,
+                        });
                     break;
 
                 case Commands.V1.NotifyMemberLeft left:
                     organizer = await GetGroupOrganizer(left.GroupId);
-
-                    await DbCollection.InsertOneAsync(new Notification()
-                    {
-                        Id               = NewGuid().ToString(),
-                        UserId           = organizer.ToString(),
-                        GroupId          = left.GroupId.ToString(),
-                        MemberId         = left.MemberId.ToString(),
-                        NotificationType = NotificationType.MemberLeft,
-                    });
+                    if (organizer is not null)
+                        await DbCollection.InsertOneAsync(new Notification()
+                        {
+                            Id               = NewGuid().ToString(),
+                            UserId           = organizer,
+                            GroupId          = left.GroupId.ToString(),
+                            MemberId         = left.MemberId.ToString(),
+                            NotificationType = NotificationType.MemberLeft,
+                        });
                     break;
 
                 case Commands.V1.NotifyMeetupAttendantGoing going:

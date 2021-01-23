@@ -29,6 +29,9 @@ namespace Meetup.GroupManagement
                     => throw new ArgumentException(nameof(query.IdCase)),
             };
 
+            if (result is null)
+                throw new RpcException(new Status(StatusCode.NotFound, $"Group {query.GroupId}-{query.GroupSlug} not found"));
+
             return new()
             {
                 Group = new GetGroup.Types.Group()

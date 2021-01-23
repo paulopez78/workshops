@@ -14,9 +14,9 @@ services:
     image: mongo
     ports:
       - 27017:27017
-    command:
-      - --replSet 
-      - rs0
+#    command:
+#      - --replSet 
+#      - rs0
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: mysecretpassword

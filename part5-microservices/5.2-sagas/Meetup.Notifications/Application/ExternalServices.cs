@@ -4,8 +4,10 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using Grpc.Core;
 using Meetup.GroupManagement.Contracts.Queries.V1;
 using Meetup.Scheduling.Queries;
+using static System.Linq.Enumerable;
 
 namespace Meetup.Notifications.Application
 {
@@ -22,15 +24,15 @@ namespace Meetup.Notifications.Application
         public static GetGroupMembers GetGroupMembers(Func<MeetupGroupQueries.MeetupGroupQueriesClient> getClient)
             => async groupSlug =>
             {
-                var group = await getClient().GetAsync(new GetGroup { GroupSlug = groupSlug });
-                return group.Group.Members.Select(x => x.UserId);
+                var group = await getClient().GetAsync(new GetGroup {GroupSlug = groupSlug});
+                return group?.Group?.Members.Select(x => x.UserId);
             };
 
         public static GetGroupOrganizer GetGroupOrganizer(Func<MeetupGroupQueries.MeetupGroupQueriesClient> getClient)
             => async groupId =>
             {
                 var group = await getClient().GetAsync(new GetGroup {GroupId = groupId.ToString()});
-                return group.Group.OrganizerId;
+                return group?.Group?.OrganizerId;
             };
 
         public static GetMeetupAttendants GetMeetupAttendants(Func<HttpClient> getClient)
@@ -44,10 +46,6 @@ namespace Meetup.Notifications.Application
             };
 
         public static GetInterestedUsers GetInterestedUsers()
-            => async groupId =>
-            {
-                // recommendations system query
-                return new List<Guid>();
-            };
+            => _ => Task.FromResult(Empty<Guid>());
     }
 }
