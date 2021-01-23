@@ -36,7 +36,6 @@ namespace Meetup.GroupManagement.Application
             };
 
             await DbContext.Members.AddAsync(member, cancellationToken);
-            await DbContext.SaveChangesAsync(cancellationToken);
 
             if (request.Role != Role.Organizer)
             {

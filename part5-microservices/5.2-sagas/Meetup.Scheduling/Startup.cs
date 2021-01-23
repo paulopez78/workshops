@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Meetup.Scheduling.MeetupDetails;
 using Meetup.Scheduling.AttendantList;
+using Meetup.Scheduling.Contracts;
 using Meetup.Scheduling.Framework;
 using static Meetup.Scheduling.MeetupDetails.MeetupDetailsEventProjection;
 using static Meetup.Scheduling.AttendantList.AttendantListProjection;
@@ -57,6 +58,7 @@ namespace Meetup.Scheduling
             services.AddMassTransit(x =>
             {
                 x.AddConsumer<AttendantListCommandApiAsync>();
+                x.AddConsumer<AttendantListBatchCommandApiAsync>();
                 x.AddConsumer<MeetupDetailsCommandApiAsync>();
 
                 x.UsingRabbitMq((context, cfg) =>
@@ -71,11 +73,11 @@ namespace Meetup.Scheduling
                     cfg.UseMessageRetry(r =>
                     {
                         r.Interval(3, TimeSpan.FromMilliseconds(100));
-                        r.Handle<ApplicationException>();
-                        r.Ignore<ArgumentException>();
+                        // r.Handle<ApplicationException>();
+                        // r.Ignore<ArgumentException>();
                     });
-
-                    cfg.ReceiveEndpoint($"{ApplicationKey}-attendant-list-commands",
+                    var attendantListQueue = $"{ApplicationKey}-attendant-list-commands";
+                    cfg.ReceiveEndpoint(attendantListQueue,
                         e =>
                         {
                             e.Consumer<AttendantListCommandApiAsync>(context);
@@ -84,6 +86,8 @@ namespace Meetup.Scheduling
 
                     cfg.ReceiveEndpoint($"{ApplicationKey}-meetup-details-commands",
                         e => { e.Consumer<MeetupDetailsCommandApiAsync>(context); });
+
+                    EndpointConvention.Map<AttendantListCommands.V1.DontAttend>(new Uri($"queue:{attendantListQueue}"));
                 });
             });
             services.AddMassTransitHostedService();

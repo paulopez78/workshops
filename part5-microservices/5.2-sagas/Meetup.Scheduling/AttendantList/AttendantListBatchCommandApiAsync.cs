@@ -14,10 +14,10 @@ namespace Meetup.Scheduling.AttendantList
 
         public async Task Consume(ConsumeContext<RemoveAttendantFromMeetups> context)
         {
-            var opened = await DocumentStore.GetOpenedAttendantLists(context.Message.GroupSlug);
+            var opened = await DocumentStore.GetMeetupsWithOpenedList(context.Message.GroupSlug);
             await Task.WhenAll(
-                opened.Select(list =>
-                    context.Send(new DontAttend(list, context.Message.UserId))
+                opened.Select(meetup =>
+                    context.Send(new DontAttend(meetup, context.Message.UserId))
                 )
             );
         }

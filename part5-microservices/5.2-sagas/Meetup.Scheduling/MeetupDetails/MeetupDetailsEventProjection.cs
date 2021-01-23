@@ -1,3 +1,4 @@
+using ImTools;
 using static Meetup.Scheduling.Contracts.MeetupDetailsEvents.V1;
 using static Meetup.Scheduling.Contracts.ReadModels.V1;
 
@@ -11,7 +12,7 @@ namespace Meetup.Scheduling.MeetupDetails
                 Created created
                     => new MeetupDetailsEventReadModel(created.Id, created.Title, created.Description, created.Group,
                         created.Capacity,
-                        "Draft"),
+                        MeetupEventStatus.Draft.ToString()),
                 DetailsUpdated details
                     => state with
                     {
@@ -39,22 +40,22 @@ namespace Meetup.Scheduling.MeetupDetails
                 Published _
                     => state with
                     {
-                        Status = "Published"
+                        Status = MeetupEventStatus.Published.ToString()
                     },
                 Cancelled _
                     => state with
                     {
-                        Status = "Cancelled"
+                        Status = MeetupEventStatus.Cancelled.ToString()
                     },
                 Started _
                     => state with
                     {
-                        Status = "Started"
+                        Status = MeetupEventStatus.Started.ToString()
                     },
                 Finished _
                     => state with
                     {
-                        Status = "Finished"
+                        Status = MeetupEventStatus.Finished.ToString()
                     },
                 _ => state
             };

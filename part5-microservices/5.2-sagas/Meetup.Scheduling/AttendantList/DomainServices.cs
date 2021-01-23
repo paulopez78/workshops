@@ -9,7 +9,7 @@ namespace Meetup.Scheduling.AttendantList
 {
     public static class DomainServices
     {
-        public static async Task<IEnumerable<Guid>> GetOpenedAttendantLists(this IDocumentStore store,
+        public static async Task<IEnumerable<Guid>> GetMeetupsWithOpenedList(this IDocumentStore store,
             string group)
         {
             using var session = store.QuerySession();
@@ -19,7 +19,7 @@ namespace Meetup.Scheduling.AttendantList
                             x.AttendantListStatus == AttendantListStatus.Opened.ToString())
                 .ToListAsync();
 
-            return result.Select(x => x.AttendantListId.Value);
+            return result.Select(x => x.Id);
         }
 
         public static async Task<Guid> GetAttendantListId(this IDocumentStore store, Guid meetupId)

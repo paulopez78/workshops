@@ -46,7 +46,6 @@ namespace Meetup.GroupManagement.Application
                 new GroupCreated(group.Id, group.OrganizerId), cancellationToken
             );
 
-            await DbContext.SaveChangesAsync(cancellationToken);
             return new CommandResult(group.Id, group.Slug);
         }
     }

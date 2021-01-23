@@ -19,6 +19,7 @@ namespace Meetup.Scheduling.AsyncProjector
                     state.Description = created.Description;
                     state.Capacity    = created.Capacity;
                     state.Group       = created.Group;
+                    state.Status      = "Draft";
                 }
             );
 

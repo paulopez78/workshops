@@ -28,8 +28,6 @@ namespace Meetup.GroupManagement.Application
             meetupGroup.Description = request.Description;
             meetupGroup.Location    = request.Location;
 
-            await DbContext.SaveChangesAsync(cancellationToken);
-
             return new CommandResult(meetupGroup.Id, meetupGroup.Slug);
         }
     }

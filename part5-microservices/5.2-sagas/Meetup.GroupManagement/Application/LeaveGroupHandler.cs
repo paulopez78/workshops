@@ -32,7 +32,6 @@ namespace Meetup.GroupManagement.Application
                 throw new ApplicationException($"User {request.UserId} is not member of group {request.GroupId}");
 
             DbContext.Members.Remove(member);
-            await DbContext.SaveChangesAsync(cancellationToken);
 
             // notify event
             await Mediator.Publish(new MemberLeft(member.GroupId, member.UserId, DateTimeOffset.Now), cancellationToken);

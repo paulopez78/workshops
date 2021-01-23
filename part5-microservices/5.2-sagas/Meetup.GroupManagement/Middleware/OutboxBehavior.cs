@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using MassTransit;
 using MediatR;
 using Meetup.GroupManagement.Data;
@@ -27,18 +29,22 @@ namespace Meetup.GroupManagement.Middleware
             , RequestHandlerDelegate<TResponse> next
         )
         {
-            using var tx = DbContext.Database.BeginTransactionAsync(cancellationToken);
+            List<Outbox> pendingOutbox;
+            TResponse    result;
 
-            var result = await next();
+            using (var tx = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                result = await next();
 
-            var pendingOutbox = DbContext.ChangeTracker.Entries()
-                .Where(x => x.State == EntityState.Added)
-                .Select(x => x.Entity)
-                .OfType<Outbox>()
-                .ToList();
+                pendingOutbox = DbContext.ChangeTracker.Entries()
+                    .Where(x => x.State == EntityState.Added)
+                    .Select(x => x.Entity)
+                    .OfType<Outbox>()
+                    .ToList();
 
-            await DbContext.SaveChangesAsync(cancellationToken);
-            await DbContext.Database.CommitTransactionAsync(cancellationToken);
+                await DbContext.SaveChangesAsync(cancellationToken);
+                tx.Complete();
+            }
 
             await TryDispatch();
             await MarkAsDispatched();
@@ -52,14 +58,14 @@ namespace Meetup.GroupManagement.Middleware
                         .Select(x => PublishEndpoint.Publish(x.Change, cancellationToken))
                 );
 
-            Task MarkAsDispatched()
+            async Task MarkAsDispatched()
             {
                 foreach (var item in pendingOutbox)
                 {
                     item.DispatchedAt = DateTimeOffset.UtcNow;
                 }
 
-                return DbContext.SaveChangesAsync(cancellationToken);
+                await DbContext.SaveChangesAsync(cancellationToken);
             }
         }
     }
