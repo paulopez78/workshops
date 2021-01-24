@@ -9,7 +9,8 @@ namespace Meetup.Notifications.Application
 {
     public class NotificationsEventHandler :
             IConsumer<GroupManagementEvents.MeetupGroupFounded>,
-            IConsumer<GroupManagementEvents.MeetupGroupMemberJoined>
+            IConsumer<GroupManagementEvents.MeetupGroupMemberJoined>,
+            IConsumer<GroupManagementEvents.MeetupGroupMemberLeft>
         // IConsumer<SchedulingEvents.MeetupPublished>,
         // IConsumer<SchedulingEvents.MeetupCancelled>,
         // IConsumer<SchedulingEvents.MeetupAttendantAdded>,
@@ -27,6 +28,11 @@ namespace Meetup.Notifications.Application
         public Task Consume(ConsumeContext<GroupManagementEvents.MeetupGroupMemberJoined> context)
             => ApplicationService.Handle(
                 new Commands.V1.NotifyMemberJoined(context.Message.GroupId, context.Message.UserId)
+            );
+
+        public Task Consume(ConsumeContext<GroupManagementEvents.MeetupGroupMemberLeft> context)
+            => ApplicationService.Handle(
+                new Commands.V1.NotifyMemberLeft(context.Message.GroupId, context.Message.UserId)
             );
 
         // public Task Consume(ConsumeContext<SchedulingEvents.MeetupPublished> context)

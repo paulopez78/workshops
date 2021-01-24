@@ -26,7 +26,7 @@ namespace Meetup.EndToEndTest
             params NotificationType[] types)
         {
             var notifications = await getNotifications;
-            return notifications.Any(x => types.Any(y => x.NotificationType == y.ToString()));
+            return notifications.All(x => types.Any(y => x.NotificationType == y.ToString()));
         }
 
         public static async Task ShouldHaveReceived(this Task<bool> @this)
