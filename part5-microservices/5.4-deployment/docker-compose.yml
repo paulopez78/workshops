@@ -1,0 +1,71 @@
+version: "3.7"
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: mysecretpassword
+
+  mongo:
+    container_name: mongo
+    image: mongo
+    ports:
+      - 27017:27017
+    #    command:
+    #      - --replSet 
+    #      - rs0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mysecretpassword
+  # enable replicase set for change log
+  # mongo -u root -p mysecretpassword
+  # rs.initiate();
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq-plugins
+    ports:
+      - 15672:15672
+      - 5672:5672
+
+  seq:
+    container_name: seq
+    image: datalust/seq
+    ports:
+      - 8080:80
+      - 5341:5341
+    environment:
+      ACCEPT_EULA: "Y"
+
+  jaeger:
+    container_name: jaeger
+    image: jaegertracing/all-in-one
+    ports:
+      - 6831:6831/udp
+      - 16686:16686
+
+  zipkin:
+    container_name: zipkin
+    image: openzipkin/zipkin
+    ports:
+      - 9411:9411
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    restart: always
+    ports:
+      - 9090:9090
+
+  #user: admin
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=mysecretpassword
+    restart: always
+    ports:
+      - 3000:3000
