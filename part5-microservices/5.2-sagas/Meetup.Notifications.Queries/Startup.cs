@@ -5,6 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MongoDB.Driver;
+using static MongoDB.Driver.Builders<Meetup.Notifications.Contracts.ReadModels.V1.Notification>;
+using static Meetup.Notifications.Contracts.ReadModels.V1;
 
 namespace Meetup.Notifications.Queries
 {
@@ -48,8 +50,15 @@ namespace Meetup.Notifications.Queries
 
         IMongoDatabase CreateMongoDb()
         {
+            MongoConventions.RegisterConventions();
             var client = new MongoClient(Configuration.GetConnectionString("Notifications"));
-            return client.GetDatabase(ApplicationKey);
+
+            var db = client.GetDatabase(ApplicationKey);
+            db.GetCollection<Notification>(nameof(Notification))
+                .Indexes
+                .CreateOne(new CreateIndexModel<Notification>(IndexKeys.Ascending(x => x.UserId)));
+
+            return db;
         }
     }
 }

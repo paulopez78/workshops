@@ -41,6 +41,7 @@ namespace Meetup.Notifications.Application
 
                 case Commands.V1.NotifyGroupCreated groupCreated:
                     var users = await GetInterestedUsers(groupCreated.GroupId);
+
                     if (users.Any())
                         await DbCollection.InsertManyAsync(
                             users.Select(user =>
@@ -57,20 +58,22 @@ namespace Meetup.Notifications.Application
                 case Commands.V1.NotifyMeetupPublished published:
                     var members = await GetGroupMembers(published.GroupSlug);
 
-                    await DbCollection.InsertManyAsync(
-                        members.Select(member =>
-                            new Notification()
-                            {
-                                Id               = NewGuid().ToString(),
-                                UserId           = member.ToString(),
-                                MeetupId         = published.MeetupId.ToString(),
-                                NotificationType = NotificationType.MeetupPublished,
-                            })
-                    );
+                    if (members.Any())
+                        await DbCollection.InsertManyAsync(
+                            members.Select(member =>
+                                new Notification()
+                                {
+                                    Id               = NewGuid().ToString(),
+                                    UserId           = member.ToString(),
+                                    MeetupId         = published.MeetupId.ToString(),
+                                    NotificationType = NotificationType.MeetupPublished,
+                                })
+                        );
                     break;
 
                 case Commands.V1.NotifyMeetupCancelled cancelled:
                     var attendants = await GetMeetupAttendants(cancelled.MeetupId, cancelled.GroupSlug);
+
                     if (attendants.Any())
                         await DbCollection.InsertManyAsync(
                             attendants.Select(attendant =>
@@ -87,7 +90,7 @@ namespace Meetup.Notifications.Application
                 case Commands.V1.NotifyMemberJoined joined:
                     var organizer = await GetGroupOrganizer(joined.GroupId);
                     if (organizer is not null)
-                        await DbCollection.InsertOneAsync(new Notification()
+                        await DbCollection.InsertOneAsync(new()
                         {
                             Id               = NewGuid().ToString(),
                             UserId           = organizer,
@@ -100,7 +103,7 @@ namespace Meetup.Notifications.Application
                 case Commands.V1.NotifyMemberLeft left:
                     organizer = await GetGroupOrganizer(left.GroupId);
                     if (organizer is not null)
-                        await DbCollection.InsertOneAsync(new Notification()
+                        await DbCollection.InsertOneAsync(new()
                         {
                             Id               = NewGuid().ToString(),
                             UserId           = organizer,
@@ -111,7 +114,7 @@ namespace Meetup.Notifications.Application
                     break;
 
                 case Commands.V1.NotifyMeetupAttendantGoing going:
-                    await DbCollection.InsertOneAsync(new Notification()
+                    await DbCollection.InsertOneAsync(new()
                     {
                         Id               = NewGuid().ToString(),
                         UserId           = going.AttendantId.ToString(),
@@ -121,7 +124,7 @@ namespace Meetup.Notifications.Application
                     break;
 
                 case Commands.V1.NotifyMeetupAttendantWaiting waiting:
-                    await DbCollection.InsertOneAsync(new Notification()
+                    await DbCollection.InsertOneAsync(new()
                     {
                         Id               = NewGuid().ToString(),
                         UserId           = waiting.AttendantId.ToString(),

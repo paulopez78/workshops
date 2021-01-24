@@ -20,6 +20,8 @@ namespace Meetup.Scheduling.ProcessManager
         IConsumer<MeetupAttendantsAddedToWaitingList>,
         IConsumer<MeetupAttendantsRemovedFromWaitingList>
     {
+        readonly Uri MeetupCommandsAddress = new("queue:meetup_scheduling-meetup-details-commands");
+
         public Task Consume(ConsumeContext<MeetupCreated> context)
             => context.Send(
                 new AttendantListCommands.V1.CreateAttendantList(
@@ -31,11 +33,11 @@ namespace Meetup.Scheduling.ProcessManager
 
         public Task Consume(ConsumeContext<MeetupScheduled> context)
             => Task.WhenAll(
-                context.ScheduleSend(
+                context.ScheduleSend(MeetupCommandsAddress,
                     context.Message.Start.DateTime,
                     new MeetupDetailsCommands.V1.Start(context.Message.MeetupId)
                 ),
-                context.ScheduleSend(
+                context.ScheduleSend(MeetupCommandsAddress,
                     context.Message.End.DateTime,
                     new MeetupDetailsCommands.V1.Finish(context.Message.MeetupId)
                 )
@@ -64,7 +66,7 @@ namespace Meetup.Scheduling.ProcessManager
 
         public Task Consume(ConsumeContext<MeetupStarted> context) =>
             context.Send(
-                new AttendantListCommands.V1.Open(context.Message.MeetupId)
+                new AttendantListCommands.V1.Close(context.Message.MeetupId)
             );
 
         public Task Consume(ConsumeContext<MeetupFinished> context) =>

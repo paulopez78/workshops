@@ -52,8 +52,8 @@ namespace Meetup.EndToEndTest
             await Fixture.MeetupSchedulingCommands
                 .Publish(MicroservicesMeetup);
 
-            await Task.Delay(1000);
-            
+            await Task.Delay(5_000);
+
             await Fixture.MeetupSchedulingCommands
                 .Attend(MicroservicesMeetup,
                     Joe,
@@ -73,11 +73,12 @@ namespace Meetup.EndToEndTest
 
             await Fixture.GroupManagementCommands
                 .LeaveGroup(NetCoreBcn, Alice);
-            
+
             await Fixture.MeetupSchedulingCommands
                 .Attend(MicroservicesMeetup, Joe);
 
             // assert
+            await Task.Delay(35_000);
             var meetup = await Fixture.MeetupSchedulingQueries.Get(NetCoreBcnSlug, MicroservicesMeetup);
 
             meetup.Status.Should().Be("Finished");
@@ -87,33 +88,38 @@ namespace Meetup.EndToEndTest
             meetup.Going(Carla).Should().BeTrue();
             meetup.Going(Bob).Should().BeTrue();
 
-            (await Fixture.Notifications
-                    .UserNotifications(Joe)
-                    .OfType(NotificationType.Attending))
-                .Should().BeTrue();
+            await Fixture.Notifications
+                .UserNotifications(Joe)
+                .OfType(NotificationType.MeetupPublished, NotificationType.Attending, NotificationType.Waiting)
+                .ShouldHaveReceived();
 
-            (await Fixture.Notifications
-                    .UserNotifications(Carla)
-                    .OfType(NotificationType.Attending))
-                .Should().BeTrue();
+            await Fixture.Notifications
+                .UserNotifications(Carla)
+                .OfType(NotificationType.MeetupPublished, NotificationType.Attending)
+                .ShouldHaveReceived();
 
-            (await Fixture.Notifications
-                    .UserNotifications(Alice)
-                    .OfType(NotificationType.Waiting))
-                .Should().BeTrue();
+            await Fixture.Notifications
+                .UserNotifications(Alice)
+                .OfType(NotificationType.MeetupPublished, NotificationType.Waiting, NotificationType.Attending)
+                .ShouldHaveReceived();
 
-            (await Fixture.Notifications
-                    .UserNotifications(Pau)
-                    .OfType(NotificationType.MemberJoined, NotificationType.MemberLeft))
-                .Should().BeTrue();
+            await Fixture.Notifications
+                .UserNotifications(Bob)
+                .OfType(NotificationType.MeetupPublished, NotificationType.Waiting, NotificationType.Attending)
+                .ShouldHaveReceived();
+
+            await Fixture.Notifications
+                .UserNotifications(Pau)
+                .OfType(NotificationType.MemberJoined, NotificationType.MemberLeft)
+                .ShouldHaveReceived();
         }
 
         string NetCoreBcnSlug      = "netcorebcn";
         string NetCoreBcn          = NewGuid().ToString();
         Guid   MicroservicesMeetup = NewGuid();
 
-        DateTimeOffset StartTime = DateTimeOffset.UtcNow.AddSeconds(10);
-        DateTimeOffset EndTime   = DateTimeOffset.UtcNow.AddSeconds(20);
+        DateTimeOffset StartTime = DateTimeOffset.UtcNow.AddSeconds(15);
+        DateTimeOffset EndTime   = DateTimeOffset.UtcNow.AddSeconds(30);
 
         User Pau   = new(NewGuid(), "Pau", "Lopez", "pau.lopez@meetup.com");
         User Joe   = new(NewGuid(), "Joe", "Smith", "joe.smith@meetup.com");

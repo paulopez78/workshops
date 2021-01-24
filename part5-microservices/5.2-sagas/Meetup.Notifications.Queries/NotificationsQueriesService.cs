@@ -4,6 +4,8 @@ using Grpc.Core;
 using MongoDB.Driver;
 using Meetup.Notifications.Queries.Contracts.V1;
 using MongoDB.Driver.Linq;
+using static System.String;
+// using static MongoDB.Driver.Builders<Meetup.Notifications.Contracts.ReadModels.V1.Notification>;
 using static Meetup.Notifications.Contracts.ReadModels.V1;
 
 namespace Meetup.Notifications.Queries
@@ -21,19 +23,20 @@ namespace Meetup.Notifications.Queries
             ServerCallContext context)
         {
             var notifications = await DbCollection.AsQueryable().Where(x => x.UserId == request.UserId).ToListAsync();
+            // var notifications = await DbCollection.Find(Filter.Eq(x => x.UserId, request.UserId)).ToListAsync();
 
             return new()
             {
                 Notifications =
                 {
-                    notifications.Select(x => new GetNotificationRequest.Types.Notification()
+                    notifications.Select(x => new GetNotificationRequest.Types.Notification
                     {
                         NotificationId   = x.Id,
                         NotificationType = x.NotificationType.ToString(),
-                        GroupId          = x.GroupId,
-                        MeetupId         = x.MeetupId,
-                        MemberId         = x.MemberId,
-                        Message          = x.Message
+                        GroupId          = x.GroupId ?? Empty,
+                        MeetupId         = x.MeetupId ?? Empty,
+                        MemberId         = x.MemberId ?? Empty,
+                        Message          = x.Message ?? Empty
                     })
                 }
             };

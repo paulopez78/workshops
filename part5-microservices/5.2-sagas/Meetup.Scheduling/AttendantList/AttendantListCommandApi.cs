@@ -26,6 +26,10 @@ namespace Meetup.Scheduling.AttendantList
         [HttpPut("close")]
         public Task<IActionResult> Close(Close command) =>
             Handle(command.MeetupEventId, command);
+        
+        [HttpPut("archive")]
+        public Task<IActionResult> Archive(Archive command) =>
+            Handle(command.MeetupEventId, command);
 
         [HttpPut("capacity/increase")]
         public Task<IActionResult> IncreaseCapacity(IncreaseCapacity command) =>

@@ -22,8 +22,8 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
         {
             const string ApplicationKey = "meetup_notifications";
 
-            var mongoDb = CreateMongoDb();
             MongoConventions.RegisterConventions();
+            var mongoDb = CreateMongoDb();
             services.AddSingleton(mongoDb);
 
             // add external services

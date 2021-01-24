@@ -54,13 +54,9 @@ namespace Meetup.Scheduling.MeetupDetails
                 throw new ApplicationException("Already published");
 
             if (Status == MeetupEventStatus.Cancelled)
-                throw new ApplicationException("Meetup cancelled can not be published");
+                throw new ApplicationException("Cancelled meetup can not be published");
 
-            if (ScheduleTime == ScheduleDateTime.None)
-                throw new ApplicationException("Meetup can not be published without schedule");
-
-            if (Location == Location.None)
-                throw new ApplicationException("Meetup can not be published without location");
+            EnforceScheduledWithLocation();
 
             Apply(new Published(Id, Group));
         }
@@ -78,15 +74,32 @@ namespace Meetup.Scheduling.MeetupDetails
             if (Status == MeetupEventStatus.Started)
                 throw new ApplicationException("Already started");
 
+            if (Status == MeetupEventStatus.Cancelled)
+                throw new ApplicationException("Cancelled meetup can not start");
+
+            EnforceScheduledWithLocation();
+
             Apply(new Started(Id));
         }
 
         public void Finish()
         {
             if (Status == MeetupEventStatus.Finished)
-                throw new ApplicationException("Already started");
+                throw new ApplicationException("Already finished");
+
+            if (Status != MeetupEventStatus.Started)
+                throw new ApplicationException("Not started meetup can not finish");
 
             Apply(new Finished(Id));
+        }
+
+        void EnforceScheduledWithLocation()
+        {
+            if (ScheduleTime == ScheduleDateTime.None)
+                throw new ApplicationException("Meetup can not be published without schedule");
+
+            if (Location == Location.None)
+                throw new ApplicationException("Meetup can not be published without location");
         }
 
         public override void When(object domainEvent)

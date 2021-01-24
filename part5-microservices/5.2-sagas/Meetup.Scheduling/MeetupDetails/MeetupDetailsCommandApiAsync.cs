@@ -17,36 +17,45 @@ namespace Meetup.Scheduling.MeetupDetails
         IConsumer<Start>,
         IConsumer<Finish>
     {
-        readonly HandleCommand<AttendantListAggregate> Handle;
+        readonly HandleCommand<MeetupDetailsAggregate> HandleCommand;
 
-        public MeetupDetailsCommandApiAsync(HandleCommand<AttendantListAggregate> handle)
-            => Handle = handle;
+        public MeetupDetailsCommandApiAsync(HandleCommand<MeetupDetailsAggregate> handleCommand)
+            => HandleCommand = handleCommand;
 
         public Task Consume(ConsumeContext<CreateMeetup> context)
-            => Handle.WithContext(context).Invoke(context.Message.EventId, context.Message);
+            => HandleCommand.WithContext(context)
+                (context.Message.EventId, context.Message);
 
         public Task Consume(ConsumeContext<UpdateDetails> context)
-            => Handle.WithContext(context).Invoke(context.Message.EventId, context.Message);
+            => HandleCommand.WithContext(context)
+                (context.Message.EventId, context.Message);
 
         public Task Consume(ConsumeContext<MakeOnline> context)
-            => Handle.WithContext(context).Invoke(context.Message.EventId, context.Message);
+            => HandleCommand.WithContext(context)
+                (context.Message.EventId, context.Message);
 
         public Task Consume(ConsumeContext<MakeOnsite> context)
-            => Handle.WithContext(context).Invoke(context.Message.EventId, context.Message);
+            => HandleCommand.WithContext(context)
+                (context.Message.EventId, context.Message);
 
         public Task Consume(ConsumeContext<Schedule> context)
-            => Handle.WithContext(context).Invoke(context.Message.EventId, context.Message);
+            => HandleCommand.WithContext(context)
+                (context.Message.EventId, context.Message);
 
         public Task Consume(ConsumeContext<Publish> context)
-            => Handle.WithContext(context).Invoke(context.Message.EventId, context.Message);
+            => HandleCommand.WithContext(context)
+                (context.Message.EventId, context.Message);
 
         public Task Consume(ConsumeContext<Cancel> context)
-            => Handle.WithContext(context).Invoke(context.Message.EventId, context.Message);
+            => HandleCommand.WithContext(context)
+                (context.Message.EventId, context.Message);
 
         public Task Consume(ConsumeContext<Start> context)
-            => Handle.WithContext(context).Invoke(context.Message.EventId, context.Message);
+            => HandleCommand.WithContext(context)
+                (context.Message.EventId, context.Message);
 
         public Task Consume(ConsumeContext<Finish> context)
-            => Handle.WithContext(context).Invoke(context.Message.EventId, context.Message);
+            => HandleCommand.WithContext(context)
+                (context.Message.EventId, context.Message);
     }
 }

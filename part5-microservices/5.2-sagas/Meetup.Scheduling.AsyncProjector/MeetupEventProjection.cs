@@ -47,9 +47,10 @@ namespace Meetup.Scheduling.AsyncProjector
                 state.Location = location.Address;
             });
 
-            ProjectEvent<Published>((state, _) => { state.Status = "Published"; })/**/;
-
-            ProjectEvent<Cancelled>((state, _) => { state.Status = "Cancelled"; });
+            ProjectEvent<Published>((state, _) => state.Status = "Published");
+            ProjectEvent<Cancelled>((state, _) => state.Status = "Cancelled");
+            ProjectEvent<Started>((state, _) => state.Status   = "Started");
+            ProjectEvent<Finished>((state, _) => state.Status  = "Finished");
 
             ProjectEvent<AttendantListCreated>(e => e.MeeupEventId, (state, created) =>
             {

@@ -9,6 +9,7 @@ namespace Meetup.Scheduling.AttendantList
         IConsumer<CreateAttendantList>,
         IConsumer<Open>,
         IConsumer<Close>,
+        IConsumer<Archive>,
         IConsumer<ReduceCapacity>,
         IConsumer<IncreaseCapacity>,
         IConsumer<Attend>,
@@ -20,24 +21,35 @@ namespace Meetup.Scheduling.AttendantList
             => Handle = handle;
 
         public Task Consume(ConsumeContext<CreateAttendantList> context)
-            => Handle.WithContext(context).Invoke(context.Message.Id, context.Message);
+            => Handle.WithContext(context)
+                (context.Message.Id, context.Message);
 
         public Task Consume(ConsumeContext<Open> context)
-            => Handle.WithContext(context).Invoke(context.Message.MeetupEventId, context.Message);
+            => Handle.WithContext(context)
+                (context.Message.MeetupEventId, context.Message);
 
         public Task Consume(ConsumeContext<Close> context)
-            => Handle.WithContext(context).Invoke(context.Message.MeetupEventId, context.Message);
+            => Handle.WithContext(context)
+                (context.Message.MeetupEventId, context.Message);
+
+        public Task Consume(ConsumeContext<Archive> context)
+            => Handle.WithContext(context)
+                (context.Message.MeetupEventId, context.Message);
 
         public Task Consume(ConsumeContext<ReduceCapacity> context)
-            => Handle.WithContext(context).Invoke(context.Message.MeetupEventId, context.Message);
+            => Handle.WithContext(context)
+                (context.Message.MeetupEventId, context.Message);
 
         public Task Consume(ConsumeContext<IncreaseCapacity> context)
-            => Handle.WithContext(context).Invoke(context.Message.MeetupEventId, context.Message);
+            => Handle.WithContext(context)
+                (context.Message.MeetupEventId, context.Message);
 
         public Task Consume(ConsumeContext<Attend> context)
-            => Handle.WithContext(context).Invoke(context.Message.MeetupEventId, context.Message);
+            => Handle.WithContext(context)
+                (context.Message.MeetupEventId, context.Message);
 
         public Task Consume(ConsumeContext<DontAttend> context)
-            => Handle.WithContext(context).Invoke(context.Message.MeetupEventId, context.Message);
+            => Handle.WithContext(context)
+                (context.Message.MeetupEventId, context.Message);
     }
 }

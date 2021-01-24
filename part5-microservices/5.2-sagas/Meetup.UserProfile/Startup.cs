@@ -20,9 +20,9 @@ namespace Meetup.UserProfile
 
         public void ConfigureServices(IServiceCollection services)
         {
+            MongoConventions.RegisterConventions();
             var connectionString = Configuration.GetConnectionString("UserProfile");
             var mongoDb          = CreateMongoDb(connectionString);
-            MongoConventions.RegisterConventions();
 
             services.AddSingleton(mongoDb);
             services.AddGrpc();

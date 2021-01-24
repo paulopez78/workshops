@@ -46,7 +46,7 @@ namespace Meetup.Scheduling
             services.AddMarten(cfg =>
             {
                 cfg.Connection(Configuration.GetConnectionString("MeetupScheduling"));
-                cfg.AutoCreateSchemaObjects   = AutoCreate.All;
+                cfg.AutoCreateSchemaObjects   = AutoCreate.CreateOrUpdate;
                 cfg.DatabaseSchemaName        = "scheduling";
                 cfg.Events.DatabaseSchemaName = "scheduling";
 
@@ -73,7 +73,7 @@ namespace Meetup.Scheduling
                     cfg.UseMessageRetry(r =>
                     {
                         r.Interval(3, TimeSpan.FromMilliseconds(100));
-                        // r.Handle<ApplicationException>();
+                        r.Handle<ApplicationException>();
                         // r.Ignore<ArgumentException>();
                     });
                     var attendantListQueue = $"{ApplicationKey}-attendant-list-commands";

@@ -15,6 +15,9 @@ namespace Meetup.Scheduling.Framework
     public delegate Task<IActionResult> HandleHttpCommand<out T>(Guid aggregateId, object command)
         where T : Aggregate, new();
 
+    public delegate Task HandleAsyncCommand<out T>(Guid aggregateId, object command)
+        where T : Aggregate, new();
+
     public delegate Task<CommandResult> HandleCommand<out T>(Guid aggregateId, object command, CommandContext context)
         where T : new();
 
@@ -102,10 +105,10 @@ namespace Meetup.Scheduling.Framework
                 return result;
             };
 
-        public static Func<Guid, object, Task> WithContext<T>(this HandleCommand<T> handle, ConsumeContext context)
+        public static HandleAsyncCommand<T> WithContext<T>(this HandleCommand<T> handle, ConsumeContext context)
             where T : Aggregate, new()
-            => (aggregateId, command) => handle(aggregateId, command, CommandContext.From(context));
-
+            => (aggregateId, command)
+                => handle(aggregateId, command, CommandContext.From(context));
 
         public static HandleHttpCommand<T> WithContext<T>(this HandleCommand<T> handle, IHeaderDictionary headers)
             where T : Aggregate, new()
