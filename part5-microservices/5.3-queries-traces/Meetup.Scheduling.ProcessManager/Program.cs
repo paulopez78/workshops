@@ -4,7 +4,9 @@ using MassTransit;
 using Meetup.Notifications.Contracts;
 using Meetup.Scheduling.Contracts;
 using Meetup.Scheduling.ProcessManager;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Trace;
 using Serilog;
 using static System.Environment;
 
@@ -73,6 +75,13 @@ IHostBuilder CreateHostBuilder(string[] args) =>
                     EndpointConvention.Map<Commands.V1.NotifyMeetupAttendantGoing>(notificationsQueue);
                     EndpointConvention.Map<Commands.V1.NotifyMeetupAttendantWaiting>(notificationsQueue);
                 });
+            });
+
+            services.AddOpenTelemetryTracing(x =>
+            {
+                x.AddMassTransitInstrumentation();
+                x.AddZipkinExporter(config => { config.ServiceName = ApplicationKey; });
+                x.AddJaegerExporter(config => { config.ServiceName = ApplicationKey; });
             });
 
             services.AddMassTransitHostedService();

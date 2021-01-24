@@ -2,12 +2,13 @@ using System;
 using GreenPipes;
 using MassTransit;
 using Meetup.Scheduling.IntegrationEventsPublisher;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Trace;
 using Serilog;
 using static System.Environment;
 
 const string ApplicationKey = "meetup_scheduling";
-
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .WriteTo.Console()
@@ -54,4 +55,10 @@ IHostBuilder CreateHostBuilder(string[] args) =>
             });
 
             services.AddMassTransitHostedService();
+
+            services.AddOpenTelemetryTracing(b =>
+                b.AddMassTransitInstrumentation()
+                    .AddJaegerExporter(o => o.ServiceName = ApplicationKey)
+                    .AddZipkinExporter(o => o.ServiceName = ApplicationKey)
+            );
         });

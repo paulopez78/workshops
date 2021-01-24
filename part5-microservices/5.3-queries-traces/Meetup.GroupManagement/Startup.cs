@@ -4,6 +4,8 @@ using FluentValidation;
 using GreenPipes;
 using MassTransit;
 using MediatR;
+using Npgsql;
+using OpenTelemetry.Trace;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -13,20 +15,18 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Meetup.GroupManagement.Data;
 using Meetup.GroupManagement.Middleware;
-using Npgsql;
 
 namespace Meetup.GroupManagement
 {
     public class Startup
     {
         public static string ApplicationKey = "meetup_group";
+
         public Startup(IConfiguration configuration)
             => Configuration = configuration;
 
         IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
-        // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
             var connectionString = Configuration.GetConnectionString("MeetupGroupManagement");
@@ -39,6 +39,14 @@ namespace Meetup.GroupManagement
             services.AddValidatorsFromAssemblies(new[] {typeof(Startup).Assembly});
 
             services.AddScoped<IntegrationEventsPublisher>();
+
+            services.AddOpenTelemetryTracing(b =>
+                b.AddAspNetCoreInstrumentation()
+                    .AddMassTransitInstrumentation()
+                    .AddEntityFrameworkCoreInstrumentation()
+                    .AddJaegerExporter(o => o.ServiceName = ApplicationKey)
+                    .AddZipkinExporter(o => o.ServiceName = ApplicationKey)
+            );
 
             services.AddGrpc();
 
@@ -67,7 +75,6 @@ namespace Meetup.GroupManagement
             services.AddMassTransitHostedService();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())

@@ -12,6 +12,7 @@ using Meetup.Scheduling.MeetupDetails;
 using Meetup.Scheduling.AttendantList;
 using Meetup.Scheduling.Contracts;
 using Meetup.Scheduling.Framework;
+using OpenTelemetry.Trace;
 using static Meetup.Scheduling.MeetupDetails.MeetupDetailsEventProjection;
 using static Meetup.Scheduling.AttendantList.AttendantListProjection;
 using static Meetup.Scheduling.Contracts.ReadModels.V1;
@@ -29,6 +30,13 @@ namespace Meetup.Scheduling
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddOpenTelemetryTracing(b =>
+                b.AddAspNetCoreInstrumentation()
+                    .AddMassTransitInstrumentation()
+                    .AddJaegerExporter(o => o.ServiceName = ApplicationKey)
+                    .AddZipkinExporter(o => o.ServiceName = ApplicationKey)
+            );
+
             services.AddControllers();
             services.AddSingleton<UtcNow>(() => DateTimeOffset.UtcNow);
 

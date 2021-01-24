@@ -11,12 +11,13 @@ using Polly;
 using Meetup.Notifications.Application;
 using Meetup.Notifications.Infrastructure;
 using Meetup.GroupManagement.Contracts.Queries.V1;
+using OpenTelemetry.Trace;
 using Serilog;
 using static System.Environment;
+using static Meetup.Notifications.Application.NotificationsApplicationService;
 using static Meetup.Notifications.Infrastructure.HttpPolicies;
 using static Meetup.Notifications.Application.ExternalServices;
 
-const string ApplicationKey = "meetup_notifications";
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .WriteTo.Console()
@@ -120,4 +121,10 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
             HttpClient GetHttpClient(IServiceProvider sp)
                 => sp.GetRequiredService<IHttpClientFactory>()
                     .CreateClient("MeetupScheduling");
+            
+            services.AddOpenTelemetryTracing(b =>
+                b.AddMassTransitInstrumentation()
+                    .AddJaegerExporter(o => o.ServiceName = ApplicationKey)
+                    .AddZipkinExporter(o => o.ServiceName = ApplicationKey)
+            );
         });

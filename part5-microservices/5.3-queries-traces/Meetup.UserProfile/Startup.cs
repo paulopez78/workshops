@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MongoDB.Driver;
+using OpenTelemetry.Trace;
 
 namespace Meetup.UserProfile
 {
@@ -27,6 +28,13 @@ namespace Meetup.UserProfile
 
             services.AddSingleton(mongoDb);
             services.AddGrpc();
+            
+            services.AddOpenTelemetryTracing(b =>
+                b.AddAspNetCoreInstrumentation()
+                    .AddMassTransitInstrumentation()
+                    .AddJaegerExporter(o => o.ServiceName = ApplicationKey)
+                    .AddZipkinExporter(o => o.ServiceName = ApplicationKey)
+            );
 
             services.AddMassTransit(x =>
             {

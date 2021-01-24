@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using FluentAssertions;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 using Xunit;
 using static System.Guid;
 using static Meetup.EndToEndTest.UserProfileExtensions;
@@ -16,6 +18,13 @@ namespace Meetup.EndToEndTest
         [Fact]
         public async Task Meetup_EndToEnd_Test()
         {
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddHttpClientInstrumentation()
+                .AddGrpcClientInstrumentation()
+                .AddJaegerExporter()
+                .AddZipkinExporter(b => b.ServiceName=nameof(EndToEndTest))
+                .Build();
+
             await Fixture.UserProfile
                 .CreateUserProfile(Pau, Joe, Carla, Alice, Bob);
 

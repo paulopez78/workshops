@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MongoDB.Driver;
+using OpenTelemetry.Trace;
 using static MongoDB.Driver.Builders<Meetup.Notifications.Contracts.ReadModels.V1.Notification>;
 using static Meetup.Notifications.Contracts.ReadModels.V1;
 
@@ -24,6 +25,11 @@ namespace Meetup.Notifications.Queries
             var mongoDb = CreateMongoDb();
             services.AddSingleton(mongoDb);
             services.AddGrpc();
+            services.AddOpenTelemetryTracing(b =>
+                b.AddAspNetCoreInstrumentation()
+                    .AddJaegerExporter(o => o.ServiceName = ApplicationKey)
+                    .AddZipkinExporter(o => o.ServiceName = ApplicationKey)
+            );
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

@@ -2,6 +2,8 @@
 using System.Threading.Tasks;
 using Meetup.Notifications.Contracts;
 using MongoDB.Driver;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 using static System.Guid;
 using static Meetup.Notifications.Contracts.ReadModels.V1;
 
@@ -9,6 +11,8 @@ namespace Meetup.Notifications.Application
 {
     public class NotificationsApplicationService
     {
+        public static string ApplicationKey = "meetup_notifications";
+
         readonly IMongoCollection<Notification> DbCollection;
         readonly GetGroupMembers                GetGroupMembers;
         readonly GetMeetupAttendants            GetMeetupAttendants;
@@ -28,6 +32,13 @@ namespace Meetup.Notifications.Application
 
         public async Task Handle(object command)
         {
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddGrpcClientInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddJaegerExporter(o => o.ServiceName = ApplicationKey)
+                .AddZipkinExporter(o => o.ServiceName = ApplicationKey)
+                .Build();
+
             switch (command)
             {
                 case Commands.V1.Notify notify:
