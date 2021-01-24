@@ -1,10 +1,11 @@
 using System;
+using Meetup.Queries;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Meetup.Scheduling.Queries;
 using static System.Environment;
-using static Meetup.Scheduling.Queries.Startup;
+using static Meetup.Queries.Startup;
+
 
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()

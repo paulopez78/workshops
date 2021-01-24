@@ -5,11 +5,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Trace;
 
 namespace Meetup.Scheduling.Queries
 {
     public class Startup
     {
+        public static string ApplicationKey = "meetup_scheduling";
+
         public Startup(IConfiguration configuration)
             => Configuration = configuration;
 
@@ -17,6 +20,11 @@ namespace Meetup.Scheduling.Queries
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddOpenTelemetryTracing(b =>
+                b.AddAspNetCoreInstrumentation()
+                    .AddJaegerExporter(o => o.ServiceName = ApplicationKey)
+                    .AddZipkinExporter(o => o.ServiceName = ApplicationKey)
+            );
             services.AddControllers();
             services.AddMarten(cfg =>
             {
