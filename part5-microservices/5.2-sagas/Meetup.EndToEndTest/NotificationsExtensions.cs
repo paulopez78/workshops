@@ -12,13 +12,13 @@ namespace Meetup.EndToEndTest
         public static async Task<IEnumerable<GetNotificationRequest.Types.Notification>> UserNotifications(
             this NotificationsQueries.NotificationsQueriesClient client, User user)
         {
-            var notificationReply = await client.GetAsync(new GetNotificationRequest()
+            var notificationReply = await client.GetAsync(new GetNotificationRequest
                 {
                     UserId = user.Id.ToString()
                 }
             );
 
-            return notificationReply.Notifications;
+            return notificationReply?.Notifications;
         }
 
         public static async Task<bool> OfType(

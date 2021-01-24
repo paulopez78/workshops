@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option csharp_namespace = "Meetup.Notifications.Queries.Contracts.V1";
 
-package greet;
+package meetup.notifications;
 
 service NotificationsQueries{
   rpc Get(GetNotificationRequest) returns (GetNotificationRequest.GeNotificationReply);

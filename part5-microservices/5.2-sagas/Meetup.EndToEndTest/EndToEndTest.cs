@@ -110,7 +110,7 @@ namespace Meetup.EndToEndTest
 
             await Fixture.Notifications
                 .UserNotifications(Pau)
-                .OfType(NotificationType.MemberJoined, NotificationType.MemberLeft)
+                .OfType(NotificationType.MemberJoined)
                 .ShouldHaveReceived();
         }
 
