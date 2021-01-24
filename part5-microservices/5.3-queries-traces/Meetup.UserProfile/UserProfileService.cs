@@ -1,14 +1,17 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Meetup.UserProfile.Contracts;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
+using static MongoDB.Driver.Builders<Meetup.UserProfile.Data.UserProfile>;
 
 namespace Meetup.UserProfile
 {
     public class UserProfileService : Contracts.UserProfile.UserProfileBase
     {
-        public UserProfileService(IMongoDatabase database) => DbCollection = database.GetCollection<Data.UserProfile>(nameof(UserProfile));
+        public UserProfileService(IMongoDatabase database) =>
+            DbCollection = database.GetCollection<Data.UserProfile>(nameof(UserProfile));
 
         readonly IMongoCollection<Data.UserProfile> DbCollection;
 
@@ -17,7 +20,7 @@ namespace Meetup.UserProfile
         {
             await DbCollection.UpdateOneAsync(
                 x => x.Id == request.UserId,
-                Builders<Data.UserProfile>.Update
+                Update
                     .SetOnInsert(x => x.Id, request.UserId)
                     .Set(x => x.FirstName, request.FirstName)
                     .Set(x => x.FirstName, request.FirstName)
@@ -41,8 +44,21 @@ namespace Meetup.UserProfile
         public override async Task<GetRequest.Types.GetReply> Get(GetRequest request, ServerCallContext context)
         {
             var userProfile = await DbCollection.AsQueryable().Where(x => x.Id == request.UserId).SingleAsync();
+            return new() {User = Map(userProfile)};
+        }
 
+        public override async Task<GetUsersRequest.Types.GetUsersReply> GetUsers(GetUsersRequest request,
+            ServerCallContext context)
+        {
+            var users = await DbCollection.Find(Filter.In(x => x.Id, request.Users)).ToListAsync();
             return new()
+            {
+                Users = {users.Select(Map)}
+            };
+        }
+
+        User Map(Data.UserProfile userProfile)
+            => new()
             {
                 UserId    = userProfile.Id,
                 FirstName = userProfile.FirstName,
@@ -50,6 +66,5 @@ namespace Meetup.UserProfile
                 Email     = userProfile.Email,
                 Interests = {userProfile.Interests}
             };
-        }
     }
 }

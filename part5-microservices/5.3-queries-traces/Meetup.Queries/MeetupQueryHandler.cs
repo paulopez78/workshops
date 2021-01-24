@@ -51,8 +51,8 @@ namespace Meetup.Queries
 
                 case V1.GetMeetupEvent eventQuery:
                     // parallel get
-                    var meetupEvent = GetMeetupEvent(eventQuery);
                     var meetupGroup = GetGroup(eventQuery.Group);
+                    var meetupEvent = GetMeetupEvent(eventQuery);
                     await Task.WhenAll(meetupEvent, meetupGroup);
 
                     var result = new ReadModels.V1.MeetupEvent
@@ -95,7 +95,7 @@ namespace Meetup.Queries
 
         async Task<MeetupEvent> GetMeetupEvent(V1.GetMeetupEvent query)
         {
-            var queryResponse = await SchedulingClient.GetAsync($"api/meetup/{query.Group}/{query.EventId}");
+            var queryResponse = await SchedulingClient.GetAsync($"api/meetup/{query.Group}/events/{query.EventId}");
             queryResponse.EnsureSuccessStatusCode();
 
             var queryResult = await queryResponse.Content.ReadFromJsonAsync<MeetupEvent>();
