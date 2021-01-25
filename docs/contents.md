@@ -2,7 +2,7 @@
 
 ## show full csproj file
 
-```dotnet build -pp full.xml```
+```dotnet build -pp > full.xml```
 
 ## runtimeconfig.json shared frameworks and frameworks reference
 
