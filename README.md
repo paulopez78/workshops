@@ -28,6 +28,8 @@
 
 - docker concepts
 - Dockerfile
+- Docker compose
+- Docker networking
 - donet images
 
 ## Day 3
@@ -44,16 +46,17 @@
     * Domain events
     * Integration events
     * Outbox
-    * EventSourcing and CQRS 
 
 ## Day 5
 
+- EventSourcing and CQRS 
+
 - Process Managers:
     * Orchestration vs Coreography
-    * Sagas
 
 - Microservices Queries
-    * Orchestration vs Coreography
+    * Composition
+    * CQRS
 
 ## Day 6
 
