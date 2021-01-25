@@ -57,6 +57,8 @@ services:
     container_name: prometheus
     image: prom/prometheus
     restart: always
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - 9090:9090
 

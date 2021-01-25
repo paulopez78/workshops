@@ -9,13 +9,14 @@ services:
     image: meetup-scheduling
     restart: always
     ports:
-      - 5000:80
+      - 5000:5000
     environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      URLS: http://+:5000
       ConnectionStrings__MeetupScheduling: "Host=postgres;Database=meetup;Username=meetup;Password=password;SearchPath=group_management"
       RabbitMQ__Host: rabbitmq
       SEQ_URL: http://seq:5341
       JAEGER_HOST: jaeger
-      ASPNETCORE_ENVIRONMENT: Development
 
   meetup_scheduling_queries:
     container_name: meetup_scheduling_queries
@@ -25,12 +26,13 @@ services:
     image: meetup-scheduling-queries
     restart: always
     ports:
-      - 8000:80
+      - 8000:5000
     environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      URLS: http://+:5000
       ConnectionStrings__MeetupScheduling: "Host=postgres;Database=meetup;Username=meetup;Password=password;SearchPath=group_management"
       SEQ_URL: http://seq:5341
       JAEGER_HOST: jaeger
-      ASPNETCORE_ENVIRONMENT: Development
 
   meetup_scheduling_process_manager:
     container_name: meetup_scheduling_process_manager
@@ -78,13 +80,14 @@ services:
     image: meetup-user-profile
     restart: always
     ports:
-      - 7000:80
+      - 7000:5000
     environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      URLS: http://+:5000
       ConnectionStrings__UserProfile: "mongodb://root:mysecretpassword@mongo:27017"
       RabbitMQ__Host: rabbitmq
       SEQ_URL: http://seq:5341
       JAEGER_HOST: jaeger
-      ASPNETCORE_ENVIRONMENT: Development
 
   meetup_group_management:
     container_name: meetup_group_management
@@ -94,13 +97,14 @@ services:
     image: meetup-group-management
     restart: always
     ports:
-      - 6000:80
+      - 6000:5000
     environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      URLS: http://+:5000
       ConnectionStrings__MeetupGroupManagement: "Host=postgres;Database=meetup;Username=meetup;Password=password;SearchPath=group_management"
       RabbitMQ__Host: rabbitmq
       SEQ_URL: http://seq:5341
       JAEGER_HOST: jaeger
-      ASPNETCORE_ENVIRONMENT: Development
 
   meetup_notifications:
     container_name: meetup_notifications
@@ -111,8 +115,8 @@ services:
     restart: always
     environment:
       ConnectionStrings__Notifications: "mongodb://root:mysecretpassword@mongo:27017"
-      GroupManagement__Address: http://meetup_group_management:6000
-      MeetupScheduling__Address: http://meetup_scheduling:8000
+      GroupManagement__Address: http://meetup_group_management:5000
+      MeetupScheduling__Address: http://meetup_scheduling:5000
       RabbitMQ__Host: rabbitmq
       SEQ_URL: http://seq:5341
       JAEGER_HOST: jaeger
@@ -126,10 +130,30 @@ services:
     image: meetup-notifications-queries
     restart: always
     ports:
-      - 9000:80
+      - 9000:5000
     environment:
+      URLS: http://+:5000
       ConnectionStrings__Notifications: "mongodb://root:mysecretpassword@mongo:27017"
       RabbitMQ__Host: rabbitmq
+      SEQ_URL: http://seq:5341
+      JAEGER_HOST: jaeger
+      ASPNETCORE_ENVIRONMENT: Development
+
+  meetup_queries:
+    container_name: meetup_queries
+    build:
+      dockerfile: Meetup.Queries/Dockerfile
+      context: .
+    image: meetup-queries
+    restart: always
+    ports:
+      - 10000:5000
+    environment:
+      GroupManagement__Address: http://meetup_group_management:5000
+      MeetupScheduling__Address: http://meetup_scheduling_queries:5000
+      UserProfile__Address: http://meetup_user_profile:5000
+      Notifications__Address: http://meetup_notifications_queries:5000
+      URLS: http://+:5000
       SEQ_URL: http://seq:5341
       JAEGER_HOST: jaeger
       ASPNETCORE_ENVIRONMENT: Development

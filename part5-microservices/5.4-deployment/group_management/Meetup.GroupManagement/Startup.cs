@@ -44,8 +44,11 @@ namespace Meetup.GroupManagement
                 b.AddAspNetCoreInstrumentation()
                     .AddMassTransitInstrumentation()
                     .AddEntityFrameworkCoreInstrumentation()
-                    .AddJaegerExporter(o => o.ServiceName = ApplicationKey)
-                    .AddZipkinExporter(o => o.ServiceName = ApplicationKey)
+                    .AddJaegerExporter(o =>
+                    {
+                        o.ServiceName = ApplicationKey;
+                        o.AgentHost   = Configuration["JAEGER_HOST"] ?? "localhost";
+                    })
             );
 
             services.AddGrpc();

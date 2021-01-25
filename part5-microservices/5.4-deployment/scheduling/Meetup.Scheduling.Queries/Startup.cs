@@ -23,8 +23,11 @@ namespace Meetup.Scheduling.Queries
         {
             services.AddOpenTelemetryTracing(b =>
                 b.AddAspNetCoreInstrumentation()
-                    .AddJaegerExporter(o => o.ServiceName = ApplicationKey)
-                    .AddZipkinExporter(o => o.ServiceName = ApplicationKey)
+                    .AddJaegerExporter(o =>
+                    {
+                        o.ServiceName = ApplicationKey;
+                        o.AgentHost   = Configuration["JAEGER_HOST"] ?? "localhost";
+                    })
             );
             services.AddControllers();
             services.AddMarten(cfg =>

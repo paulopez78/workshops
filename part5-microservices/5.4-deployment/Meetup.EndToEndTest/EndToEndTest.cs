@@ -21,8 +21,7 @@ namespace Meetup.EndToEndTest
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation()
                 .AddGrpcClientInstrumentation()
-                .AddJaegerExporter()
-                .AddZipkinExporter(b => b.ServiceName=nameof(EndToEndTest))
+                .AddJaegerExporter(b => b.ServiceName=nameof(EndToEndTest))
                 .Build();
 
             await Fixture.UserProfile
@@ -123,7 +122,7 @@ namespace Meetup.EndToEndTest
                 .ShouldHaveReceived();
         }
 
-        string NetCoreBcnSlug      = "netcorebcn";
+        string NetCoreBcnSlug      = $"netcorebcn-{NewGuid()}";
         string NetCoreBcn          = NewGuid().ToString();
         Guid   MicroservicesMeetup = NewGuid();
 

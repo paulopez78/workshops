@@ -28,12 +28,15 @@ namespace Meetup.UserProfile
 
             services.AddSingleton(mongoDb);
             services.AddGrpc();
-            
+
             services.AddOpenTelemetryTracing(b =>
                 b.AddAspNetCoreInstrumentation()
                     .AddMassTransitInstrumentation()
-                    .AddJaegerExporter(o => o.ServiceName = ApplicationKey)
-                    .AddZipkinExporter(o => o.ServiceName = ApplicationKey)
+                    .AddJaegerExporter(o =>
+                    {
+                        o.ServiceName = ApplicationKey;
+                        o.AgentHost   = Configuration["JAEGER_HOST"] ?? "localhost";
+                    })
             );
 
             services.AddMassTransit(x =>
