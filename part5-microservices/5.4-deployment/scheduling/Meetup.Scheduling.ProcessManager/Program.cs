@@ -43,7 +43,7 @@ IHostBuilder CreateHostBuilder(string[] args) =>
                 x.UsingRabbitMq((context, cfg) =>
                 {
                     cfg.UseDelayedExchangeMessageScheduler();
-                    cfg.Host("localhost", "/", h =>
+                    cfg.Host(hostContext.Configuration["RabbitMQ:Host"], "/", h =>
                     {
                         h.Username("guest");
                         h.Password("guest");
@@ -77,12 +77,14 @@ IHostBuilder CreateHostBuilder(string[] args) =>
                 });
             });
 
-            services.AddOpenTelemetryTracing(x =>
-            {
-                x.AddMassTransitInstrumentation();
-                x.AddZipkinExporter(config => { config.ServiceName = ApplicationKey; });
-                x.AddJaegerExporter(config => { config.ServiceName = ApplicationKey; });
-            });
+            services.AddOpenTelemetryTracing(b =>
+                b.AddMassTransitInstrumentation()
+                    .AddJaegerExporter(o =>
+                    {
+                        o.ServiceName = ApplicationKey;
+                        o.AgentHost   = hostContext.Configuration["JAEGER_HOST"] ?? "localhost";
+                    })
+            );
 
             services.AddMassTransitHostedService();
         });

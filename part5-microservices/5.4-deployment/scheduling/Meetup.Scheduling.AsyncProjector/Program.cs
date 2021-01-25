@@ -6,7 +6,6 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Meetup.Scheduling.AsyncProjector;
 using Meetup.Scheduling.Contracts;
-using OpenTelemetry.Trace;
 using static System.Environment;
 
 const string ApplicationKey = "meetup_scheduling";
@@ -47,9 +46,4 @@ IHostBuilder CreateHostBuilder(string[] args) =>
                 cfg.Schema.For<ReadModels.V1.MeetupEvent>().UniqueIndex(x => x.AttendantListId);
             });
             services.AddHostedService<AsyncProjectionsBackgroundService>();
-            services.AddOpenTelemetryTracing(b =>
-                b.AddMassTransitInstrumentation()
-                    .AddJaegerExporter(o => o.ServiceName = ApplicationKey)
-                    .AddZipkinExporter(o => o.ServiceName = ApplicationKey)
-            );
         });

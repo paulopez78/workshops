@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Marten;
 using Meetup.Scheduling.Framework;
 using static Meetup.Scheduling.Contracts.AttendantListCommands.V1;
@@ -70,7 +71,16 @@ namespace Meetup.Scheduling.AttendantList
                 command switch
                 {
                     CreateAttendantList _ => await handle(id, command, context),
-                    _                     => await handle(await store.GetAttendantListId(id), command, context),
+                    _                     => await handle(await store.GetMappedId(id), command, context),
                 };
+
+        static async Task<Guid> GetMappedId(this IDocumentStore store, Guid id)
+        {
+            var result = await store.GetAttendantListId(id);
+            if (!result.HasValue)
+                throw new ApplicationException($"Mapped id {id} not found");
+
+            return result.Value;
+        }
     }
 }

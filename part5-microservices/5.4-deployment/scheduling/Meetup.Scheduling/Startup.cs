@@ -14,6 +14,7 @@ using Meetup.Scheduling.Contracts;
 using Meetup.Scheduling.Framework;
 using OpenTelemetry.Trace;
 using Prometheus;
+using static Meetup.Scheduling.Program;
 using static Meetup.Scheduling.MeetupDetails.MeetupDetailsEventProjection;
 using static Meetup.Scheduling.AttendantList.AttendantListProjection;
 using static Meetup.Scheduling.Contracts.ReadModels.V1;
@@ -22,8 +23,6 @@ namespace Meetup.Scheduling
 {
     public class Startup
     {
-        public const string ApplicationKey = "meetup_scheduling";
-
         public Startup(IConfiguration configuration)
             => Configuration = configuration;
 
@@ -34,8 +33,11 @@ namespace Meetup.Scheduling
             services.AddOpenTelemetryTracing(b =>
                 b.AddAspNetCoreInstrumentation()
                     .AddMassTransitInstrumentation()
-                    .AddJaegerExporter(o => o.ServiceName = ApplicationKey)
-                    .AddZipkinExporter(o => o.ServiceName = ApplicationKey)
+                    .AddJaegerExporter(o =>
+                    {
+                        o.ServiceName = ApplicationKey;
+                        o.AgentHost   = Configuration["JAEGER_HOST"] ?? "localhost";
+                    })
             );
 
             services.AddControllers();
@@ -72,7 +74,7 @@ namespace Meetup.Scheduling
 
                 x.UsingRabbitMq((context, cfg) =>
                 {
-                    cfg.Host("localhost", "/", h =>
+                    cfg.Host(Configuration["RabbitMQ:Host"], "/", h =>
                     {
                         h.Username("guest");
                         h.Password("guest");

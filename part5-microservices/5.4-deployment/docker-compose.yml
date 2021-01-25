@@ -1,71 +1,72 @@
 version: "3.7"
 
 services:
-  postgres:
-    container_name: postgres
-    image: postgres
-    ports:
-      - 5432:5432
-    environment:
-      POSTGRES_PASSWORD: mysecretpassword
-
-  mongo:
-    container_name: mongo
-    image: mongo
-    ports:
-      - 27017:27017
-    #    command:
-    #      - --replSet 
-    #      - rs0
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: mysecretpassword
-  # enable replicase set for change log
-  # mongo -u root -p mysecretpassword
-  # rs.initiate();
-
-  rabbitmq:
-    container_name: rabbitmq
-    image: rabbitmq-plugins
-    ports:
-      - 15672:15672
-      - 5672:5672
-
-  seq:
-    container_name: seq
-    image: datalust/seq
-    ports:
-      - 8080:80
-      - 5341:5341
-    environment:
-      ACCEPT_EULA: "Y"
-
-  jaeger:
-    container_name: jaeger
-    image: jaegertracing/all-in-one
-    ports:
-      - 6831:6831/udp
-      - 16686:16686
-
-  zipkin:
-    container_name: zipkin
-    image: openzipkin/zipkin
-    ports:
-      - 9411:9411
-
-  prometheus:
-    container_name: prometheus
-    image: prom/prometheus
+  meetup_scheduling:
+    container_name: meetup_scheduling
+    build:
+      dockerfile: Meetup.Scheduling/Dockerfile
+      context: ./scheduling
+    image: meetup-scheduling
     restart: always
     ports:
-      - 9090:9090
-
-  #user: admin
-  grafana:
-    container_name: grafana
-    image: grafana/grafana
+      - 5000:80
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=mysecretpassword
+      ConnectionStrings__MeetupScheduling: "Host=postgres;Database=meetup;Username=meetup;Password=password;SearchPath=group_management"
+      RabbitMQ__Host: rabbitmq
+      SEQ_URL: http://seq:5341
+      JAEGER_HOST: jaeger
+      ASPNETCORE_ENVIRONMENT: Development
+
+  meetup_scheduling_queries:
+    container_name: meetup_scheduling_queries
+    build:
+      dockerfile: Meetup.Scheduling.Queries/Dockerfile
+      context: ./scheduling
+    image: meetup-scheduling-queries
     restart: always
     ports:
-      - 3000:3000
+      - 8000:80
+    environment:
+      ConnectionStrings__MeetupScheduling: "Host=postgres;Database=meetup;Username=meetup;Password=password;SearchPath=group_management"
+      SEQ_URL: http://seq:5341
+      JAEGER_HOST: jaeger
+
+  meetup_scheduling_process_manager:
+    container_name: meetup_scheduling_process_manager
+    build:
+      dockerfile: Meetup.Scheduling.ProcessManager/Dockerfile
+      context: ./scheduling
+    image: meetup-scheduling-process-manager
+    restart: always
+    environment:
+      RabbitMQ__Host: rabbitmq
+      SEQ_URL: http://seq:5341
+      JAEGER_HOST: jaeger
+
+  meetup_scheduling_integration_events_publisher:
+    container_name: meetup_scheduling_integration_events_publisher
+    build:
+      dockerfile: Meetup.Scheduling.IntegrationEventsPublisher/Dockerfile
+      context: ./scheduling
+    image: meetup-scheduling-integration-events-publisher
+    restart: always
+    environment:
+      RabbitMQ__Host: rabbitmq
+      SEQ_URL: http://seq:5341
+      JAEGER_HOST: jaeger
+
+  meetup_scheduling_async_projector:
+    container_name: meetup_scheduling_async_projector
+    build:
+      dockerfile: Meetup.Scheduling.AsyncProjector/Dockerfile
+      context: ./scheduling
+    image: meetup-scheduling-async-projector
+    restart: always
+    environment:
+      ConnectionStrings__MeetupScheduling: "Host=postgres;Database=meetup;Username=meetup;Password=password;SearchPath=group_management"
+      SEQ_URL: http://seq:5341
+
+
+networks:
+  default:
+    name: meetup-network

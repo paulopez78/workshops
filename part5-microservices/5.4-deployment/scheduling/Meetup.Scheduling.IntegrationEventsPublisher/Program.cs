@@ -41,7 +41,7 @@ IHostBuilder CreateHostBuilder(string[] args) =>
                 x.AddConsumer<IntegrationEventsPublisher>();
                 x.UsingRabbitMq((context, cfg) =>
                 {
-                    cfg.Host("localhost", "/", h =>
+                    cfg.Host(hostContext.Configuration["RabbitMQ:Host"], "/", h =>
                     {
                         h.Username("guest");
                         h.Password("guest");
@@ -58,7 +58,10 @@ IHostBuilder CreateHostBuilder(string[] args) =>
 
             services.AddOpenTelemetryTracing(b =>
                 b.AddMassTransitInstrumentation()
-                    .AddJaegerExporter(o => o.ServiceName = ApplicationKey)
-                    .AddZipkinExporter(o => o.ServiceName = ApplicationKey)
+                    .AddJaegerExporter(o =>
+                    {
+                        o.ServiceName = ApplicationKey;
+                        o.AgentHost   = hostContext.Configuration["JAEGER_HOST"] ?? "localhost";
+                    })
             );
         });

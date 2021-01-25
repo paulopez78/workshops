@@ -22,12 +22,13 @@ namespace Meetup.Scheduling.AttendantList
             return result.Select(x => x.Id);
         }
 
-        public static async Task<Guid> GetAttendantListId(this IDocumentStore store, Guid meetupId)
+        public static async Task<Guid?> GetAttendantListId(this IDocumentStore store, Guid meetupId)
         {
             using var session = store.QuerySession();
             var result = await session.Query<AttendantListReadModel>()
                 .FirstOrDefaultAsync(x => x.MeetupEventId == meetupId);
-            return result.Id;
+            
+            return result?.Id;
         }
     }
 }

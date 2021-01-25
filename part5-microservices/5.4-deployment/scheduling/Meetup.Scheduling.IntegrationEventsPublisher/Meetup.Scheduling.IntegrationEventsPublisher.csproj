@@ -2,7 +2,6 @@
 
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
-        <UserSecretsId>dotnet-Meetup.Scheduling.IntegrationEventsPublisher-310A0AA3-1CA1-4DE7-9F87-4FEEEED4E6E2</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
