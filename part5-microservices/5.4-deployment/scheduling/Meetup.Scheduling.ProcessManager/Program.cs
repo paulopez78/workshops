@@ -43,7 +43,7 @@ IHostBuilder CreateHostBuilder(string[] args) =>
                 x.UsingRabbitMq((context, cfg) =>
                 {
                     cfg.UseDelayedExchangeMessageScheduler();
-                    cfg.Host(hostContext.Configuration["RabbitMQ:Host"], "/", h =>
+                    cfg.Host(hostContext.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
                     {
                         h.Username("guest");
                         h.Password("guest");

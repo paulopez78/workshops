@@ -41,7 +41,7 @@ IHostBuilder CreateHostBuilder(string[] args) =>
                 x.AddConsumer<IntegrationEventsPublisher>();
                 x.UsingRabbitMq((context, cfg) =>
                 {
-                    cfg.Host(hostContext.Configuration["RabbitMQ:Host"], "/", h =>
+                    cfg.Host(hostContext.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
                     {
                         h.Username("guest");
                         h.Password("guest");

@@ -40,7 +40,7 @@ namespace Meetup.UserProfile
             {
                 x.UsingRabbitMq((_, cfg) =>
                 {
-                    cfg.Host("localhost", "/", h =>
+                    cfg.Host(Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
                     {
                         h.Username("guest");
                         h.Password("guest");

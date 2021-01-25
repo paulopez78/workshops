@@ -64,7 +64,7 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
                 x.AddConsumer<NotificationsEventHandler>();
                 x.UsingRabbitMq((context, cfg) =>
                 {
-                    cfg.Host("localhost", "/", h =>
+                    cfg.Host(hostContext.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
                     {
                         h.Username("guest");
                         h.Password("guest");

@@ -74,7 +74,7 @@ namespace Meetup.Scheduling
 
                 x.UsingRabbitMq((context, cfg) =>
                 {
-                    cfg.Host(Configuration["RabbitMQ:Host"], "/", h =>
+                    cfg.Host(Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
                     {
                         h.Username("guest");
                         h.Password("guest");
