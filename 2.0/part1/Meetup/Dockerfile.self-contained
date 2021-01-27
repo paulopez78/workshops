@@ -1,0 +1,26 @@
+FROM mcr.microsoft.com/dotnet/runtime-deps
+#FROM debian
+
+#RUN apt-get update \
+#    && apt-get install -y --no-install-recommends \
+#        ca-certificates \
+#        \
+        # .NET Core dependencies
+#        libc6 \
+#        libgcc1 \
+#        libgssapi-krb5-2 \
+#        libicu63 \
+#        libssl1.1 \
+#        libstdc++6 \
+#        zlib1g \
+#    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY ./publish-linux .
+
+ENV ASPNETCORE_URLS=http://0.0.0.0:5000
+ENV ASPNETCORE_ENVIRONMENT=Development
+
+ENTRYPOINT [ "./MeetupEvents" ]
+#ENTRYPOINT [ "dotnet", "MeetupEvents.dll" ]
