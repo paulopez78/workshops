@@ -1,53 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
+using MeetupEvents.Domain;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 namespace MeetupEvents.Infrastructure
 {
     public class MeetupEventsRepository
     {
-        readonly MeetupEventOptions   Options;
         readonly MeetupEventDbContext DbContext;
 
-        public MeetupEventsRepository(MeetupEventDbContext dbContext, IOptions<MeetupEventOptions> options)
+        public MeetupEventsRepository(MeetupEventDbContext dbContext)
+            => DbContext = dbContext;
+
+        public Task<MeetupEventAggregate?> Get(Guid id)
+            => DbContext.MeetupEvents.Include(x => x.Attendants).SingleOrDefaultAsync(x => x.Id == id)!;
+
+        public async Task Add(MeetupEventAggregate meetupEvent)
         {
-            Options   = options.Value;
-            DbContext = dbContext;
-        }
-
-        public Task<List<MeetupEvent>> GetAll()
-            => DbContext.MeetupEvents.ToListAsync();
-
-        public Task<MeetupEvent?> Get(Guid id)
-            => DbContext.MeetupEvents.SingleOrDefaultAsync(x => x.Id == id)!;
-
-        public async Task<bool> Add(MeetupEvent meetupEvent)
-        {
-            if (meetupEvent.Capacity == 0)
-                meetupEvent = meetupEvent with {Capacity = Options.DefaultCapacity};
-
             await DbContext.MeetupEvents.AddAsync(meetupEvent);
-
-            return await SaveChanges();
         }
 
-        public async Task<bool> Remove(Guid id)
+        public async Task SaveChanges(MeetupEventAggregate aggregate)
         {
-            var meetup = await Get(id);
-            if (meetup is null) return false;
+            if (DbContext.ChangeTracker.HasChanges())
+                aggregate.IncreaseVersion();
 
-            DbContext.MeetupEvents.Remove(meetup);
-
-            var affected = await DbContext.SaveChangesAsync();
-            return affected > 0;
+            await DbContext.SaveChangesAsync();
         }
+    }
 
-        public async Task<bool> SaveChanges()
-        {
-            var affected = await DbContext.SaveChangesAsync();
-            return affected > 0;
-        }
+    public record MeetupEventOptions()
+    {
+        public int DefaultCapacity { get; init; } = 100;
     }
 }

@@ -1,5 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using MeetupEvents.Contracts;
 using MeetupEvents.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -18,21 +18,27 @@ namespace MeetupEvents.Application
             AppService = new ExceptionLoggingMiddleware<MeetupEventsCommandApi>(applicationService, logger);
 
         [HttpPost]
-        public Task<IActionResult> Create(Create command)
+        public Task<IActionResult> Create(Commands.V1.Create command)
+            => AppService.HandleHttpCommand(command.Id, command);
+        
+        [HttpPut("details")]
+        public Task<IActionResult> UpdateDetails(Commands.V1.UpdateDetails command)
             => AppService.HandleHttpCommand(command.Id, command);
 
         [HttpPut("publish")]
-        public Task<IActionResult> Publish(Publish command)
+        public Task<IActionResult> Publish(Commands.V1.Publish command)
             => AppService.HandleHttpCommand(command.Id, command);
 
         [HttpPut("cancel")]
-        public Task<IActionResult> Cancel(Cancel command)
+        public Task<IActionResult> Cancel(Commands.V1.Cancel command)
+            => AppService.HandleHttpCommand(command.Id, command);
+        
+        [HttpPut("attend")]
+        public Task<IActionResult> Attend(Commands.V1.Attend command)
+            => AppService.HandleHttpCommand(command.Id, command);
+        
+        [HttpPut("cancel-attendance")]
+        public Task<IActionResult> CancelAttendance(Commands.V1.CancelAttendance command)
             => AppService.HandleHttpCommand(command.Id, command);
     }
-
-    public record Create(Guid Id, string Title, int Capacity);
-
-    public record Publish(Guid Id);
-
-    public record Cancel(Guid Id, string Reason);
 }

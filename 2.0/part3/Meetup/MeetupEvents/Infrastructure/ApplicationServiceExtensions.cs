@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace MeetupEvents.Infrastructure
 {
@@ -33,6 +35,10 @@ namespace MeetupEvents.Infrastructure
             catch (InvalidOperationException e)
             {
                 return new BadRequestObjectResult(e.Message);
+            }
+            catch (DbUpdateConcurrencyException e)
+            {
+                return new ObjectResult(e.Message) {StatusCode = StatusCodes.Status500InternalServerError};
             }
         }
     }

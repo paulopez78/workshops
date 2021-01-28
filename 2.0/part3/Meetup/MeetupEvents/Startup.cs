@@ -26,6 +26,7 @@ namespace MeetupEvents
             services.AddDbContext<MeetupEventDbContext>(o => o.UseNpgsql(connectionString));
 
             services.Configure<MeetupEventOptions>(Configuration.GetSection("MeetupEventOptions"));
+            services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
             services.AddScoped<MeetupEventsApplicationService>();
             services.AddScoped<MeetupEventsRepository>();
             services.AddControllers();
