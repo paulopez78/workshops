@@ -144,7 +144,7 @@ namespace MeetupEvents.Test
 
             // assert
             var expectedMeetup = await Get(meetupEventId);
-            expectedMeetup.Attendants.FirstOrDefault(x => x.Id == joe).Should().NotBeNull();
+            expectedMeetup.NotGoing(joe).Should().BeTrue();
         }
 
         [Fact]
@@ -269,7 +269,7 @@ namespace MeetupEvents.Test
             => meetup.Attendants.Any(x => x.Id == userId && !x.Waiting);
 
         public static bool NotGoing(this ReadModels.V1.MeetupEvent meetup, Guid userId)
-            => meetup.Attendants.Any(x => x.Id != userId);
+            => meetup.Attendants.All(x => x.Id != userId);
 
         public static bool Waiting(this ReadModels.V1.MeetupEvent meetup, Guid userId)
             => meetup.Attendants.Any(x => x.Id == userId && x.Waiting);
