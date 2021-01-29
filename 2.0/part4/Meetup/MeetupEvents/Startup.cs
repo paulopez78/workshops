@@ -1,6 +1,10 @@
+using System;
+using System.Data.Common;
 using System.Xml.Serialization;
 using MeetupEvents.Application;
+using MeetupEvents.Domain;
 using MeetupEvents.Infrastructure;
+using MeetupEvents.Queries;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 
 namespace MeetupEvents
 {
@@ -23,12 +28,23 @@ namespace MeetupEvents
         public void ConfigureServices(IServiceCollection services)
         {
             var connectionString = Configuration.GetConnectionString("MeetupEvents");
-            services.AddDbContext<MeetupEventDbContext>(o => o.UseNpgsql(connectionString));
+            services.AddDbContext<MeetupDbContext>(o => o.UseNpgsql(connectionString));
 
-            services.Configure<MeetupEventOptions>(Configuration.GetSection("MeetupEventOptions"));
+            services.AddScoped<Repository<MeetupEventAggregate>>();
+            services.AddScoped<AttendantListRepository>();
+
             services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+            services.Configure<MeetupEventOptions>(Configuration.GetSection("MeetupEventOptions"));
+
             services.AddScoped<MeetupEventsApplicationService>();
-            services.AddScoped<MeetupEventsRepository>();
+            services.AddScoped<AttendantListApplicationService>();
+
+            services.AddSingleton(
+                new MeetupEventQueries(
+                    () => new NpgsqlConnection(connectionString)
+                )
+            );
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {

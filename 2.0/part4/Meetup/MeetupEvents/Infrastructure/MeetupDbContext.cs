@@ -8,11 +8,9 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace MeetupEvents.Infrastructure
 {
-    public class MeetupEventDbContext : DbContext
+    public class MeetupDbContext : DbContext
     {
-        public DbSet<MeetupEventAggregate> MeetupEvents { get; set; }
-
-        public MeetupEventDbContext(DbContextOptions<MeetupEventDbContext> options) : base(options)
+        public MeetupDbContext(DbContextOptions<MeetupDbContext> options) : base(options)
         {
         }
 
@@ -20,10 +18,17 @@ namespace MeetupEvents.Infrastructure
         {
             modelBuilder.Entity<MeetupEventAggregate>(b =>
             {
+                b.ToTable("MeetupEvent");
                 b.Property(p => p.Status).HasConversion(new EnumToStringConverter<MeetupEventStatus>());
                 b.Property(p => p.Version).IsConcurrencyToken();
-                // b.Property(p => p.Title).IsConcurrencyToken();
-                // b.UseXminAsConcurrencyToken();
+                //b.UseXminAsConcurrencyToken();
+            });
+            
+            modelBuilder.Entity<AttendantListAggregate>(b =>
+            {
+                b.ToTable("AttendantList");
+                b.Property(p => p.Status).HasConversion(new EnumToStringConverter<AttendantListStatus>());
+                b.Property(p => p.Version).IsConcurrencyToken();
             });
 
             modelBuilder.Entity<Attendant>(b =>
@@ -43,14 +48,14 @@ namespace MeetupEvents.Infrastructure
         }
     }
 
-    public class MeetupEventDbContextCreateDbContext : IDesignTimeDbContextFactory<MeetupEventDbContext>
+    public class MeetupEventDbContextCreateDbContext : IDesignTimeDbContextFactory<MeetupDbContext>
     {
-        public MeetupEventDbContext CreateDbContext(string[] args)
+        public MeetupDbContext CreateDbContext(string[] args)
         {
-            var optionsBuilder = new DbContextOptionsBuilder<MeetupEventDbContext>();
+            var optionsBuilder = new DbContextOptionsBuilder<MeetupDbContext>();
             optionsBuilder.UseNpgsql(
                 @"Host=localhost;Database=meetup_events;Username=postgres;Password=mysecretpassword");
-            return new MeetupEventDbContext(optionsBuilder.Options);
+            return new MeetupDbContext(optionsBuilder.Options);
         }
     }
 }

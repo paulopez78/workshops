@@ -1,55 +1,31 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
-using MeetupEvents.Contracts;
-using MeetupEvents.Domain;
-using MeetupEvents.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using static MeetupEvents.Contracts.Queries.V1;
 
 namespace MeetupEvents.Queries
 {
     [ApiController]
-    [Route("/api/meetup/events")]
+    [Route("/api/meetup")]
     public class MeetupEventsQueryApi : ControllerBase
     {
-        readonly MeetupEventDbContext Database;
+        readonly MeetupEventQueries Queries;
 
-        public MeetupEventsQueryApi(MeetupEventDbContext database)
-        {
-            Database = database;
-        }
+        public MeetupEventsQueryApi(MeetupEventQueries queries) => Queries= queries;
 
-        [HttpGet]
-        public async Task<IActionResult> Get()
-        {
-            var meetups = await Database.MeetupEvents
-                .Include(x => x.Attendants)
-                .AsNoTracking()
-                .ToListAsync();
+        [HttpGet("{group:Guid}")]
+        public async Task<IActionResult> GetByGroup(Guid groupId)
+            => Ok(
+                await Queries.Handle(new GetByGroup(groupId))
+            );
 
-            return Ok(meetups.Select(Map));
-        }
-
-        [HttpGet("{id:Guid}")]
+        [HttpGet("events/{id:Guid}")]
         public async Task<IActionResult> Get(Guid id) =>
-            await Database.MeetupEvents
-                    .Include(x => x.Attendants)
-                    .AsNoTracking()
-                    .SingleOrDefaultAsync(x => x.Id == id)
+            await Queries.Handle(new Get(id))
                 switch
                 {
                     null       => NotFound($"Meetup event {id} not found"),
-                    var meetup => Ok(Map(meetup)),
+                    var meetup => Ok(meetup),
                 };
-
-        ReadModels.V1.MeetupEvent Map(MeetupEventAggregate aggregate) =>
-            new(
-                aggregate.Id,
-                aggregate.Title,
-                aggregate.Status.ToString(),
-                aggregate.Capacity,
-                aggregate.Attendants.Select(x => new ReadModels.V1.Attendant(x.UserId, x.At, x.Waiting)).ToList()
-            );
-    };
+    }
 }

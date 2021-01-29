@@ -34,7 +34,7 @@ namespace MeetupEvents.Test
             {
                 using var scope = services.BuildServiceProvider().CreateScope();
 
-                var dbContext = scope.ServiceProvider.GetRequiredService<MeetupEventDbContext>();
+                var dbContext = scope.ServiceProvider.GetRequiredService<MeetupDbContext>();
                 dbContext.Database.EnsureDeleted();
                 dbContext.Database.EnsureCreated();
             });

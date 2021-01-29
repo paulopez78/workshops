@@ -6,14 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MeetupEvents.Infrastructure
 {
-    public record CommandResult (Guid Id, bool OkResult);
-
-    public interface IApplicationService
-    {
-        Task<CommandResult> HandleCommand(Guid id, object command);
-    }
-
-    public static class ApplicationServiceExtensions
+    public static class ApplicationServiceHttpExtensions
     {
         public static async Task<IActionResult> HandleHttpCommand(
             this IApplicationService appService,

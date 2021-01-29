@@ -15,11 +15,10 @@ namespace MeetupEvents
 
             using (var scope = host.Services.CreateScope())
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService<MeetupEventDbContext>();
+                var dbContext = scope.ServiceProvider.GetRequiredService<MeetupDbContext>();
                 
                 // only development
-                //await dbContext.Database.EnsureCreatedAsync();
-                await dbContext.Database.MigrateAsync();
+                await dbContext.Database.EnsureCreatedAsync();
             }
 
             await host.RunAsync();
