@@ -19,23 +19,40 @@ namespace MeetupEvents.Infrastructure
             modelBuilder.Entity<MeetupEventAggregate>(b =>
             {
                 b.ToTable("MeetupEvent");
+                b.OwnsOne(p => p.Details, d =>
+                {
+                    d.Property(p => p.Title).HasColumnName("Title");
+                    d.Property(p => p.Description).HasColumnName("Description");
+                });
+                b.OwnsOne(p => p.ScheduleTime, d =>
+                {
+                    d.Property(p => p.Start).HasColumnName("Start");
+                    d.Property(p => p.End).HasColumnName("End");
+                });
+                b.OwnsOne(p => p.Location,
+                    l =>
+                    {
+                        l.Property(p => p.Url).HasColumnName("Url");
+                        l.Property(p => p.IsOnline).HasColumnName("IsOnline");
+                        l.OwnsOne(p => p.Address, a => a.Property(p => p.Value).HasColumnName("Address"));
+                    }
+                );
                 b.Property(p => p.Status).HasConversion(new EnumToStringConverter<MeetupEventStatus>());
                 b.Property(p => p.Version).IsConcurrencyToken();
-                //b.UseXminAsConcurrencyToken();
             });
-            
+
             modelBuilder.Entity<AttendantListAggregate>(b =>
             {
                 b.ToTable("AttendantList");
                 b.Property(p => p.Status).HasConversion(new EnumToStringConverter<AttendantListStatus>());
                 b.Property(p => p.Version).IsConcurrencyToken();
+                b.OwnsOne(p => p.Capacity, d => d.Property(p => p.Value).HasColumnName("Capacity"));
             });
 
             modelBuilder.Entity<Attendant>(b =>
             {
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Id).ValueGeneratedOnAdd();
-                // b.UseXminAsConcurrencyToken();
             });
 
             // modelBuilder.Entity<Commands.V1.Attend>(b =>

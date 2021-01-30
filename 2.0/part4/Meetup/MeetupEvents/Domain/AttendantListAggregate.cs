@@ -10,7 +10,7 @@ namespace MeetupEvents.Domain
 
         readonly List<Attendant>          _attendants = new();
         public   IReadOnlyList<Attendant> Attendants => _attendants;
-        public   int                      Capacity   { get; private set; }
+        public   PositiveNumber           Capacity   { get; private set; }
         public   AttendantListStatus      Status     { get; private set; } = AttendantListStatus.None;
 
         public void Create(Guid id, Guid meetupEventId, int capacity, int defaultCapacity = 50)
@@ -39,6 +39,20 @@ namespace MeetupEvents.Domain
             EnforceStatusBe(AttendantListStatus.Opened);
 
             Status = AttendantListStatus.Closed;
+        }
+
+        public void ReduceCapacity(PositiveNumber byNumber)
+        {
+            EnforceStatusNotBe(AttendantListStatus.Archived);
+
+            Capacity -= byNumber;
+        }
+
+        public void IncreaseCapacity(PositiveNumber byNumber)
+        {
+            EnforceStatusNotBe(AttendantListStatus.Archived);
+
+            Capacity += byNumber;
         }
 
         public void Attend(Guid memberId, DateTimeOffset at)

@@ -180,17 +180,8 @@ namespace MeetupEvents.Test
             expectedMeetup.Attendants.Should().HaveCount(3);
             expectedMeetup.Attendants.Any(x => x.Waiting).Should().BeTrue();
 
-            async Task AttendWithDelay(Guid userId, int maxDelay = 200)
-            {
-                var jitter = new Random().Next(100, maxDelay);
-                await Task.Delay(jitter);
-                await Attend(attendantListId, userId);
-            }
-
             async Task AttendWithRetry(Guid userId)
-            {
-                await Retry().ExecuteAsync(() => Attend(attendantListId, userId));
-            }
+                => await Retry().ExecuteAsync(() => Attend(attendantListId, userId));
         }
 
         [Fact]
@@ -203,34 +194,18 @@ namespace MeetupEvents.Test
             await Publish(meetupEventId, attendantListId);
 
             var joe   = NewGuid();
-            var carla = NewGuid();
             var title = "Concurrency with Aggregates";
-
-            // await Task.WhenAll(
-            //     Retry().ExecuteAsync(() => Attend(meetupEventId, joe)),
-            //     Retry().ExecuteAsync(() => UpdateDetails(meetupEventId, title))
-            // );
 
             await Task.WhenAll(
                 Attend(attendantListId, joe),
                 UpdateDetails(meetupEventId, title)
             );
 
-            // await Attend(meetupEventId, joe);
-            // await UpdateDetails(meetupEventId, title);
-
             // assert
             var expectedMeetup = await Get(meetupEventId);
 
             expectedMeetup.Title.Should().Be(title);
             expectedMeetup.Going(joe).Should().BeTrue();
-
-            async Task WithDelay(Func<Task> command, int maxDelay = 200)
-            {
-                var jitter = new Random().Next(100, maxDelay);
-                await Task.Delay(jitter);
-                await command();
-            }
         }
 
         const string  BaseUrl          = "/api/meetup/events";
@@ -241,10 +216,19 @@ namespace MeetupEvents.Test
 
         async Task<HttpResponseMessage> CreateMeetup(Guid meetupEventId, Guid attendantListId, int capacity = 0)
         {
-            var meetup   = new CreateMeetupEvent(meetupEventId, BarcelonaNetCore, Title, Description);
-            var response = await Client.PostAsJsonAsync(BaseUrl, meetup);
+            var response = await Client.PostAsJsonAsync(BaseUrl,
+                new CreateMeetupEvent(meetupEventId, BarcelonaNetCore, Title, Description));
+
             await Client.PostAsJsonAsync($"{AttendantListUrl}",
                 new CreateAttendantList(attendantListId, meetupEventId, capacity));
+
+            await Client.PutAsJsonAsync($"{BaseUrl}/online",
+                new MakeOnline(meetupEventId, new Uri("http://zoom.us/netcorebn")));
+
+            var now = DateTimeOffset.UtcNow;
+
+            await Client.PutAsJsonAsync($"{BaseUrl}/schedule",
+                new Schedule(meetupEventId, now.AddDays(7), now.AddDays(7).AddHours(2)));
 
             return response;
         }
@@ -264,7 +248,7 @@ namespace MeetupEvents.Test
         {
             var response = await Client.PutAsJsonAsync($"{BaseUrl}/cancel", new Cancel(meetupEventId, reason));
             response.EnsureSuccessStatusCode();
-            
+
             await Client.PutAsJsonAsync($"{AttendantListUrl}/close", new Close(attendantListId));
             return response;
         }
