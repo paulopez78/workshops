@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,13 +16,13 @@ namespace MeetupEvents.Infrastructure
         {
             try
             {
-                var (_, ok) = await appService
+                var (_, changes) = await appService
                     .HandleCommand(
                         id,
                         command
                     );
 
-                return ok
+                return changes.Any()
                     ? new OkObjectResult(id)
                     : new NotFoundObjectResult($"Meetup event {id} not found");
             }

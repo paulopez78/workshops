@@ -23,3 +23,13 @@ services:
       - 5432:5432
     volumes:
       - ./postgresql/data:/var/lib/postgresql/data
+      
+  rabbitmq:
+    container_name: rabbitmq
+    build: 
+      context: ./rabbitmq
+    image: rabbitmq-plugins
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+  

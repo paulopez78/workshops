@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using MeetupEvents.Infrastructure;
@@ -14,8 +15,14 @@ namespace MeetupEvents.Application
 
         public AttendantListCommandApi(
             AttendantListApplicationService applicationService,
+            MeetupDbContext dbContext,
+            IPublishEndpoint publishEndpoint,
+            IDateTimeProvider dateTimeProvider,
             ILogger<AttendantListCommandApi> logger) =>
-            AppService = new ExceptionLoggingMiddleware<AttendantListCommandApi>(applicationService, logger);
+            AppService = new ExceptionLoggingMiddleware<AttendantListCommandApi>(
+                new OutboxMiddleware(applicationService, dbContext, publishEndpoint, dateTimeProvider),
+                logger
+            );
 
         [HttpPost]
         public Task<IActionResult> Create(CreateAttendantList command)

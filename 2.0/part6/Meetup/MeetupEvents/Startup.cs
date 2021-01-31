@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -38,7 +39,6 @@ namespace MeetupEvents
                 GetMapId(() => new NpgsqlConnection(connectionString), id)
             );
 
-            services.AddDomainEventsDispatcher(typeof(AttendantListEventsHandler));
 
             services.AddSingleton(
                 new MeetupEventQueries(
@@ -46,11 +46,29 @@ namespace MeetupEvents
                 )
             );
 
+            services.AddHostedService<OutboxProcessor>();
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo {Title = "MeetupEvents", Version = "v1"});
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "MeetupEvents", Version = "v1" });
             });
+
+            services.AddMassTransit(x =>
+            {
+                x.AddConsumer<AttendantListEventsHandler>();
+                x.UsingRabbitMq((context, cfg) =>
+                {
+                    cfg.Host(Configuration.GetValue("RabbitMQ:Host", "localhost"), "/", h =>
+                    {
+                        h.Username("guest");
+                        h.Password("guest");
+                    });
+
+                    cfg.ReceiveEndpoint("attendant-list", e => e.Consumer<AttendantListEventsHandler>(context));
+                });
+            });
+            services.AddMassTransitHostedService();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

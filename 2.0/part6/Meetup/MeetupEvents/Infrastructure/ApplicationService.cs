@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using static System.Linq.Enumerable;
 using System.Threading.Tasks;
 using MeetupEvents.Domain;
 
 namespace MeetupEvents.Infrastructure
 {
-    public record CommandResult (Guid Id, bool OkResult);
+    public record CommandResult (Guid Id, IEnumerable<object> Changes);
 
     public interface IApplicationService
     {
@@ -13,7 +15,8 @@ namespace MeetupEvents.Infrastructure
 
     public delegate Task<Guid?> GetMapId(Guid id);
 
-    public abstract class ApplicationService<TAggregate> : IApplicationService where TAggregate : Aggregate, new()
+    public abstract class ApplicationService<TAggregate> : IApplicationService
+        where TAggregate : Aggregate, new()
     {
         readonly Repository<TAggregate> Repository;
 
@@ -26,15 +29,9 @@ namespace MeetupEvents.Infrastructure
         {
             // load entity
             var aggregate = await Repository.Load(id);
-            if (aggregate is null) return new(id, false);
+            if (aggregate is null) return new(id, Empty<object>());
 
-            // execute business logic
-            commandHandler(aggregate);
-
-            // commit transaction
-            await Repository.SaveChanges(aggregate);
-            
-            return new(id, true);
+            return await Commit(commandHandler, aggregate);
         }
 
         protected async Task<CommandResult> HandleCreate(Guid id, Action<TAggregate> commandHandler)
@@ -46,12 +43,23 @@ namespace MeetupEvents.Infrastructure
 
             // execute business logic
             aggregate = new TAggregate();
-            commandHandler(aggregate);
             await Repository.Add(aggregate);
 
+            return await Commit(commandHandler, aggregate);
+        }
+
+        async Task<CommandResult> Commit(Action<TAggregate> commandHandler, TAggregate aggregate)
+        {
+            commandHandler(aggregate);
+
+            aggregate.IncreaseVersion();
+
             // commit transaction
-            await Repository.SaveChanges(aggregate);
-            return new(id, true);
+            await Repository.SaveChanges();
+            var result = new CommandResult(aggregate.Id, aggregate.Changes.ToList());
+
+            aggregate.ClearChanges();
+            return result;
         }
     }
 }

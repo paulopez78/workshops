@@ -55,6 +55,12 @@ namespace MeetupEvents.Infrastructure
                 b.Property(x => x.Id).ValueGeneratedOnAdd();
             });
 
+            modelBuilder.Entity<Outbox>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Id).ValueGeneratedOnAdd();
+            });
+
             // modelBuilder.Entity<Commands.V1.Attend>(b =>
             // {
             //     b.Property<int>("Id")

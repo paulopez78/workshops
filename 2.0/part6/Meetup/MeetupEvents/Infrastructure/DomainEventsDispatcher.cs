@@ -3,22 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MeetupEvents.Infrastructure
 {
     public static class DomainEventsDispatcherExtensions
     {
-        public static IServiceCollection AddDomainEventsDispatcher(this IServiceCollection serviceCollection, Type type)
+        public static void AddDomainEventsDispatcher(this IServiceCollection serviceCollection, Type type)
         {
             var registry = new DomainEventHandlerRegistry();
             RegisterHandlers(type.Assembly);
 
-            serviceCollection.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            serviceCollection.AddSingleton(registry);
-            serviceCollection.AddScoped<DomainEventsDispatcher>();
-            return serviceCollection;
+            serviceCollection.AddScoped(sp => new DomainEventsDispatcher(sp, registry));
 
             void RegisterHandlers(params Assembly[] assemblies)
             {
@@ -52,9 +48,9 @@ namespace MeetupEvents.Infrastructure
         readonly IServiceProvider           ServiceProvider;
         readonly DomainEventHandlerRegistry Registry;
 
-        public DomainEventsDispatcher(IHttpContextAccessor httpContextAccessor, DomainEventHandlerRegistry registry)
+        public DomainEventsDispatcher(IServiceProvider sp, DomainEventHandlerRegistry registry)
         {
-            ServiceProvider = httpContextAccessor.HttpContext.RequestServices;
+            ServiceProvider = sp;
             Registry        = registry;
         }
 

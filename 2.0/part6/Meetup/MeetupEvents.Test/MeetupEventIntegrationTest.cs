@@ -34,7 +34,7 @@ namespace MeetupEvents.Test
         public async Task Should_Create_MeetupEvent()
         {
             // arrange
-            var meetupEventId   = NewGuid();
+            var meetupEventId = NewGuid();
 
             // act
             await CreateMeetup(meetupEventId);
@@ -50,7 +50,7 @@ namespace MeetupEvents.Test
         public async Task Should_Not_Duplicate_Meetup()
         {
             // arrange
-            var meetupEventId   = NewGuid();
+            var meetupEventId = NewGuid();
             await CreateMeetup(meetupEventId);
 
             // act
@@ -64,7 +64,7 @@ namespace MeetupEvents.Test
         public async Task Should_Publish_MeetupEvent()
         {
             // arrange
-            var meetupEventId   = NewGuid();
+            var meetupEventId = NewGuid();
             await CreateMeetup(meetupEventId);
 
             // act
@@ -81,7 +81,7 @@ namespace MeetupEvents.Test
         public async Task Should_Cancel_MeetupEvent()
         {
             // arrange
-            var meetupEventId   = NewGuid();
+            var meetupEventId = NewGuid();
 
             await CreateMeetup(meetupEventId);
             await Publish(meetupEventId);
@@ -100,7 +100,7 @@ namespace MeetupEvents.Test
         public async Task Should_Return_NotFound()
         {
             // arrange
-            var meetupEventId   = NewGuid();
+            var meetupEventId = NewGuid();
 
             await CreateMeetup(meetupEventId);
 
@@ -115,7 +115,7 @@ namespace MeetupEvents.Test
         public async Task Should_Attend()
         {
             // arrange
-            var meetupEventId   = NewGuid();
+            var meetupEventId = NewGuid();
 
             await CreateMeetup(meetupEventId);
             await Publish(meetupEventId);
@@ -133,7 +133,7 @@ namespace MeetupEvents.Test
         public async Task Should_Cancel_Attendance()
         {
             // arrange
-            var meetupEventId   = NewGuid();
+            var meetupEventId = NewGuid();
 
             await CreateMeetup(meetupEventId);
             await Publish(meetupEventId);
@@ -153,7 +153,7 @@ namespace MeetupEvents.Test
         public async Task Should_Accept_Concurrent_Attendants_WhenRetrying()
         {
             // arrange
-            var meetupEventId   = NewGuid();
+            var meetupEventId = NewGuid();
             await CreateMeetup(meetupEventId);
             await Publish(meetupEventId);
 
@@ -180,7 +180,7 @@ namespace MeetupEvents.Test
         public async Task Should_Create_ConcurrencyProblem()
         {
             // arrange
-            var meetupEventId   = NewGuid();
+            var meetupEventId = NewGuid();
             await CreateMeetup(meetupEventId);
             await Publish(meetupEventId);
 
@@ -210,12 +210,15 @@ namespace MeetupEvents.Test
             var response = await Client.PostAsJsonAsync(BaseUrl,
                 new CreateMeetupEvent(meetupEventId, BarcelonaNetCore, Title, Description));
 
-            //await Client.PostAsJsonAsync($"{AttendantListUrl}", new CreateAttendantList(attendantListId, meetupEventId, capacity));
-
-            await Client.PutAsJsonAsync($"{BaseUrl}/online", new MakeOnline(meetupEventId, new Uri("http://zoom.us/netcorebn")));
+            await Client.PutAsJsonAsync($"{BaseUrl}/online",
+                new MakeOnline(meetupEventId, new Uri("http://zoom.us/netcorebn")));
 
             var now = DateTimeOffset.UtcNow;
-            await Client.PutAsJsonAsync($"{BaseUrl}/schedule", new Schedule(meetupEventId, now.AddDays(7), now.AddDays(7).AddHours(2)));
+            await Client.PutAsJsonAsync($"{BaseUrl}/schedule",
+                new Schedule(meetupEventId, now.AddDays(7), now.AddDays(7).AddHours(2)));
+
+            // harcoded delay for eventual consistency, we should poll and retry using a query
+            // await Task.Delay(1_000);
 
             return response;
         }
@@ -227,7 +230,8 @@ namespace MeetupEvents.Test
         async Task<HttpResponseMessage> Publish(Guid meetupEventId)
         {
             var response = await Client.PutAsJsonAsync($"{BaseUrl}/publish", new Publish(meetupEventId));
-            //await Client.PutAsJsonAsync($"{AttendantListUrl}/open", new Open(attendantListId));
+            // harcoded delay for eventual consistency, we should poll and retry using a query
+            // await Task.Delay(1_000);
             return response;
         }
 
@@ -236,7 +240,6 @@ namespace MeetupEvents.Test
             var response = await Client.PutAsJsonAsync($"{BaseUrl}/cancel", new Cancel(meetupEventId, reason));
             response.EnsureSuccessStatusCode();
 
-            //await Client.PutAsJsonAsync($"{AttendantListUrl}/close", new Close(attendantListId));
             return response;
         }
 

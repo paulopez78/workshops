@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Threading.Tasks;
+using MeetupEvents.Domain;
 using Microsoft.Extensions.Logging;
 
 namespace MeetupEvents.Infrastructure
 {
-    public class ExceptionLoggingMiddleware<T> : IApplicationService
+    public class ExceptionLoggingMiddleware<TLogger> : IApplicationService
     {
         readonly IApplicationService AppService;
-        readonly ILogger<T>          Logger;
+        readonly ILogger<TLogger>    Logger;
 
         public ExceptionLoggingMiddleware(
             IApplicationService applicationService,
-            ILogger<T> logger)
+            ILogger<TLogger> logger)
         {
             AppService = applicationService;
             Logger     = logger;
