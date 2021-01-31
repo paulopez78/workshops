@@ -10,7 +10,8 @@ namespace MeetupEvents.Application
     {
         readonly IDateTimeProvider DateTimeProvider;
 
-        public MeetupEventsApplicationService(Repository<MeetupEventAggregate> repository, IDateTimeProvider dateTimeProvider) :
+        public MeetupEventsApplicationService(Repository<MeetupEventAggregate> repository,
+            IDateTimeProvider dateTimeProvider) :
             base(repository)
             => DateTimeProvider = dateTimeProvider;
 
@@ -21,20 +22,40 @@ namespace MeetupEvents.Application
                 CreateMeetupEvent cmd
                     => HandleCreate(
                         id,
-                        entity => entity.Create(id, cmd.GroupId, cmd.Title, cmd.Description)
+                        entity => entity.Create(id, cmd.GroupId, Details.From(cmd.Title, cmd.Description))
                     ),
 
                 UpdateDetails cmd
                     => Handle(
                         id,
-                        entity => entity.UpdateDetails(cmd.Title, cmd.Description)),
+                        entity => entity.UpdateDetails(Details.From(cmd.Title, cmd.Description))
+                    ),
+
+                MakeOnline cmd
+                    => Handle(
+                        id,
+                        entity => entity.MakeOnline(cmd.Url)
+                    ),
+
+                MakeOnsite cmd
+                    => Handle(
+                        id,
+                        entity => entity.MakeOnsite(cmd.Address)
+                    ),
+
+                Schedule cmd
+                    => Handle(
+                        id,
+                        entity => entity.Schedule(
+                            ScheduleTime.From(DateTimeProvider.GetUtcNow, cmd.Start, cmd.End)
+                        )
+                    ),
 
                 Publish _
                     => Handle(
                         id,
                         entity => entity.Publish()
                     ),
-
                 Cancel cmd
                     => Handle(
                         id,

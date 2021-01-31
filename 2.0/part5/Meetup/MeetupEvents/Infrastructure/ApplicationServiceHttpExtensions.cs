@@ -29,6 +29,10 @@ namespace MeetupEvents.Infrastructure
             {
                 return new BadRequestObjectResult(e.Message);
             }
+            catch (ArgumentException e)
+            {
+                return new BadRequestObjectResult(e.Message);
+            }
             catch (DbUpdateConcurrencyException e)
             {
                 return new ObjectResult(e.Message) {StatusCode = StatusCodes.Status500InternalServerError};

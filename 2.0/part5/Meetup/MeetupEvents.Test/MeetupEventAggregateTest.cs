@@ -53,13 +53,20 @@ namespace MeetupEvents.Test
 
         MeetupEventAggregate CreateMeetup()
         {
+            var now    = DateTimeOffset.UtcNow;
             var meetup = new MeetupEventAggregate();
             meetup.Create(
                 id: NewGuid(),
                 groupId: NewGuid(),
-                "Microservices failures",
-                "This is talk about all failures Ive seen with microservices ..."
+                Details.From(
+                    "Microservices failures",
+                    "This is talk about all failures Ive seen with microservices ..."
+                )
             );
+
+            meetup.MakeOnline(new Uri("http://zoom.us/netcorebcn"));
+            meetup.Schedule(ScheduleTime.From(() => now, now.AddDays(7), 2));
+
             return meetup;
         }
     }

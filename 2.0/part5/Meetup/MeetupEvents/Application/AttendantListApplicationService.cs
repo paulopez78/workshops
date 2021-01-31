@@ -42,7 +42,19 @@ namespace MeetupEvents.Application
                         id,
                         entity => entity.Close()
                     ),
+                
+                IncreaseCapacity cmd
+                    => Handle(
+                        id,
+                        entity => entity.IncreaseCapacity(cmd.byNumber)
+                    ),
 
+                ReduceCapacity cmd
+                    => Handle(
+                        id,
+                        entity => entity.ReduceCapacity(cmd.byNumber)
+                    ),
+                
                 Attend cmd
                     => Handle(
                         id,

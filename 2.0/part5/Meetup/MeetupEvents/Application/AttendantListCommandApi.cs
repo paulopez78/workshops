@@ -28,11 +28,19 @@ namespace MeetupEvents.Application
         [HttpPut("close")]
         public Task<IActionResult> Close(Close command)
             => AppService.HandleHttpCommand(command.Id, command);
-        
+
         [HttpPut("attend")]
         public Task<IActionResult> Attend(Attend command)
             => AppService.HandleHttpCommand(command.Id, command);
-        
+
+        [HttpPut("reduce")]
+        public Task<IActionResult> Attend(ReduceCapacity command)
+            => AppService.HandleHttpCommand(command.Id, command);
+
+        [HttpPut("increase")]
+        public Task<IActionResult> Attend(IncreaseCapacity command)
+            => AppService.HandleHttpCommand(command.Id, command);
+
         [HttpPut("cancel-attendance")]
         public Task<IActionResult> CancelAttendance(CancelAttendance command)
             => AppService.HandleHttpCommand(command.Id, command);
