@@ -8,17 +8,17 @@ namespace MeetupEvents.Contracts
         {
             public record CreateAttendantList(Guid Id, Guid MeetupEventId, int Capacity);
 
-            public record Open(Guid Id);
+            public record Open(Guid MeetupEventId);
 
-            public record Close(Guid Id);
+            public record Close(Guid MeetupEventId);
 
-            public record IncreaseCapacity(Guid Id, int byNumber);
+            public record IncreaseCapacity(Guid MeetupEventId, int byNumber);
 
-            public record ReduceCapacity(Guid Id, int byNumber);
+            public record ReduceCapacity(Guid MeetupEventId, int byNumber);
 
-            public record Attend(Guid Id, Guid MemberId);
+            public record Attend(Guid MeetupEventId, Guid MemberId);
 
-            public record CancelAttendance(Guid Id, Guid MemberId);
+            public record CancelAttendance(Guid MeetupEventId, Guid MemberId);
         }
     }
 }

@@ -13,7 +13,7 @@ using Polly.Retry;
 using Xunit;
 using Xunit.Abstractions;
 using static System.Guid;
-using static MeetupEvents.Contracts.MeetupEventsCommands.V1;
+using static MeetupEvents.Contracts.MeetupCommands.V1;
 using static MeetupEvents.Contracts.AttendantListCommands.V1;
 
 namespace MeetupEvents.Test
@@ -35,10 +35,9 @@ namespace MeetupEvents.Test
         {
             // arrange
             var meetupEventId   = NewGuid();
-            var attendantListId = NewGuid();
 
             // act
-            await CreateMeetup(meetupEventId, attendantListId);
+            await CreateMeetup(meetupEventId);
 
             // assert
             var expectedMeetup = await Get(meetupEventId);
@@ -52,11 +51,10 @@ namespace MeetupEvents.Test
         {
             // arrange
             var meetupEventId   = NewGuid();
-            var attendantListId = NewGuid();
-            await CreateMeetup(meetupEventId, attendantListId);
+            await CreateMeetup(meetupEventId);
 
             // act
-            var result = await CreateMeetup(meetupEventId, attendantListId);
+            var result = await CreateMeetup(meetupEventId);
 
             // assert
             result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -67,11 +65,10 @@ namespace MeetupEvents.Test
         {
             // arrange
             var meetupEventId   = NewGuid();
-            var attendantListId = NewGuid();
-            await CreateMeetup(meetupEventId, attendantListId);
+            await CreateMeetup(meetupEventId);
 
             // act
-            var result = await Publish(meetupEventId, attendantListId);
+            var result = await Publish(meetupEventId);
 
             // arrange
             var expectedMeetup = await Get(meetupEventId);
@@ -85,13 +82,12 @@ namespace MeetupEvents.Test
         {
             // arrange
             var meetupEventId   = NewGuid();
-            var attendantListId = NewGuid();
 
-            await CreateMeetup(meetupEventId, attendantListId);
-            await Publish(meetupEventId, attendantListId);
+            await CreateMeetup(meetupEventId);
+            await Publish(meetupEventId);
 
             // act
-            var result = await Cancel(meetupEventId, "covid", attendantListId);
+            var result = await Cancel(meetupEventId, "covid");
 
             // assert
             var expectedMeetup = await Get(meetupEventId);
@@ -105,12 +101,11 @@ namespace MeetupEvents.Test
         {
             // arrange
             var meetupEventId   = NewGuid();
-            var attendantListId = NewGuid();
 
-            await CreateMeetup(meetupEventId, attendantListId);
+            await CreateMeetup(meetupEventId);
 
             // act
-            var result = await Publish(NewGuid(), NewGuid());
+            var result = await Publish(NewGuid());
 
             // assert
             result.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -121,14 +116,13 @@ namespace MeetupEvents.Test
         {
             // arrange
             var meetupEventId   = NewGuid();
-            var attendantListId = NewGuid();
 
-            await CreateMeetup(meetupEventId, attendantListId);
-            await Publish(meetupEventId, attendantListId);
+            await CreateMeetup(meetupEventId);
+            await Publish(meetupEventId);
             var joe = NewGuid();
 
             // act
-            await Attend(attendantListId, joe);
+            await Attend(meetupEventId, joe);
 
             // assert
             var expectedMeetup = await Get(meetupEventId);
@@ -140,16 +134,15 @@ namespace MeetupEvents.Test
         {
             // arrange
             var meetupEventId   = NewGuid();
-            var attendantListId = NewGuid();
 
-            await CreateMeetup(meetupEventId, attendantListId);
-            await Publish(meetupEventId, attendantListId);
+            await CreateMeetup(meetupEventId);
+            await Publish(meetupEventId);
 
             var joe = NewGuid();
-            await Attend(attendantListId, joe);
+            await Attend(meetupEventId, joe);
 
             // act
-            await CancelAttendance(attendantListId, joe);
+            await CancelAttendance(meetupEventId, joe);
 
             // assert
             var expectedMeetup = await Get(meetupEventId);
@@ -161,9 +154,8 @@ namespace MeetupEvents.Test
         {
             // arrange
             var meetupEventId   = NewGuid();
-            var attendantListId = NewGuid();
-            await CreateMeetup(meetupEventId, attendantListId, capacity: 2);
-            await Publish(meetupEventId, attendantListId);
+            await CreateMeetup(meetupEventId);
+            await Publish(meetupEventId);
 
             var joe   = NewGuid();
             var carla = NewGuid();
@@ -181,7 +173,7 @@ namespace MeetupEvents.Test
             expectedMeetup.Attendants.Any(x => x.Waiting).Should().BeTrue();
 
             async Task AttendWithRetry(Guid userId)
-                => await Retry().ExecuteAsync(() => Attend(attendantListId, userId));
+                => await Retry().ExecuteAsync(() => Attend(meetupEventId, userId));
         }
 
         [Fact]
@@ -189,15 +181,14 @@ namespace MeetupEvents.Test
         {
             // arrange
             var meetupEventId   = NewGuid();
-            var attendantListId = NewGuid();
-            await CreateMeetup(meetupEventId, attendantListId, capacity: 2);
-            await Publish(meetupEventId, attendantListId);
+            await CreateMeetup(meetupEventId);
+            await Publish(meetupEventId);
 
             var joe   = NewGuid();
             var title = "Concurrency with Aggregates";
 
             await Task.WhenAll(
-                Attend(attendantListId, joe),
+                Attend(meetupEventId, joe),
                 UpdateDetails(meetupEventId, title)
             );
 
@@ -214,21 +205,17 @@ namespace MeetupEvents.Test
         const  string Description      = "We will talk about and show and demo ....";
         static Guid   BarcelonaNetCore = NewGuid();
 
-        async Task<HttpResponseMessage> CreateMeetup(Guid meetupEventId, Guid attendantListId, int capacity = 0)
+        async Task<HttpResponseMessage> CreateMeetup(Guid meetupEventId)
         {
             var response = await Client.PostAsJsonAsync(BaseUrl,
                 new CreateMeetupEvent(meetupEventId, BarcelonaNetCore, Title, Description));
 
-            await Client.PostAsJsonAsync($"{AttendantListUrl}",
-                new CreateAttendantList(attendantListId, meetupEventId, capacity));
+            //await Client.PostAsJsonAsync($"{AttendantListUrl}", new CreateAttendantList(attendantListId, meetupEventId, capacity));
 
-            await Client.PutAsJsonAsync($"{BaseUrl}/online",
-                new MakeOnline(meetupEventId, new Uri("http://zoom.us/netcorebn")));
+            await Client.PutAsJsonAsync($"{BaseUrl}/online", new MakeOnline(meetupEventId, new Uri("http://zoom.us/netcorebn")));
 
             var now = DateTimeOffset.UtcNow;
-
-            await Client.PutAsJsonAsync($"{BaseUrl}/schedule",
-                new Schedule(meetupEventId, now.AddDays(7), now.AddDays(7).AddHours(2)));
+            await Client.PutAsJsonAsync($"{BaseUrl}/schedule", new Schedule(meetupEventId, now.AddDays(7), now.AddDays(7).AddHours(2)));
 
             return response;
         }
@@ -237,28 +224,28 @@ namespace MeetupEvents.Test
             => Client.PutAsJsonAsync($"{BaseUrl}/details",
                 new UpdateDetails(meetupEventId, title, Description));
 
-        async Task<HttpResponseMessage> Publish(Guid meetupEventId, Guid attendantListId)
+        async Task<HttpResponseMessage> Publish(Guid meetupEventId)
         {
             var response = await Client.PutAsJsonAsync($"{BaseUrl}/publish", new Publish(meetupEventId));
-            await Client.PutAsJsonAsync($"{AttendantListUrl}/open", new Open(attendantListId));
+            //await Client.PutAsJsonAsync($"{AttendantListUrl}/open", new Open(attendantListId));
             return response;
         }
 
-        async Task<HttpResponseMessage> Cancel(Guid meetupEventId, string reason, Guid attendantListId)
+        async Task<HttpResponseMessage> Cancel(Guid meetupEventId, string reason)
         {
             var response = await Client.PutAsJsonAsync($"{BaseUrl}/cancel", new Cancel(meetupEventId, reason));
             response.EnsureSuccessStatusCode();
 
-            await Client.PutAsJsonAsync($"{AttendantListUrl}/close", new Close(attendantListId));
+            //await Client.PutAsJsonAsync($"{AttendantListUrl}/close", new Close(attendantListId));
             return response;
         }
 
-        Task<HttpResponseMessage> Attend(Guid attendantListId, Guid memberId)
-            => Client.PutAsJsonAsync($"{AttendantListUrl}/attend", new Attend(attendantListId, memberId));
+        Task<HttpResponseMessage> Attend(Guid meetupEventId, Guid memberId)
+            => Client.PutAsJsonAsync($"{AttendantListUrl}/attend", new Attend(meetupEventId, memberId));
 
-        Task<HttpResponseMessage> CancelAttendance(Guid attendantListId, Guid memberId)
+        Task<HttpResponseMessage> CancelAttendance(Guid meetupEventId, Guid memberId)
             => Client.PutAsJsonAsync($"{AttendantListUrl}/cancel-attendance",
-                new CancelAttendance(attendantListId, memberId));
+                new CancelAttendance(meetupEventId, memberId));
 
         Task<ReadModels.V1.MeetupEvent> Get(Guid meetupEventId)
             => Client.GetFromJsonAsync<ReadModels.V1.MeetupEvent>($"{BaseUrl}/{meetupEventId}");

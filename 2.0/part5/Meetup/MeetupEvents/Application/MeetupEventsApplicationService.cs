@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using MeetupEvents.Domain;
 using MeetupEvents.Infrastructure;
-using static MeetupEvents.Contracts.MeetupEventsCommands.V1;
+using static MeetupEvents.Contracts.MeetupCommands.V1;
 
 namespace MeetupEvents.Application
 {
@@ -54,12 +54,13 @@ namespace MeetupEvents.Application
                 Publish _
                     => Handle(
                         id,
-                        entity => entity.Publish()
+                        entity => entity.Publish(DateTimeProvider.GetUtcNow())
                     ),
+                
                 Cancel cmd
                     => Handle(
                         id,
-                        entity => entity.Cancel(cmd.Reason)
+                        entity => entity.Cancel(cmd.Reason, DateTimeProvider.GetUtcNow())
                     ),
                 _
                     => throw new InvalidOperationException($"Command handler for {command} does not exist")

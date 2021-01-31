@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MeetupEvents.Contracts
 {
-    public static class MeetupEventsCommands
+    public static class MeetupCommands
     {
         public static class V1
         {

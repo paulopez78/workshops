@@ -1,10 +1,3 @@
-using System;
-using System.Data.Common;
-using System.Xml.Serialization;
-using MeetupEvents.Application;
-using MeetupEvents.Domain;
-using MeetupEvents.Infrastructure;
-using MeetupEvents.Queries;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -13,15 +6,17 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Npgsql;
+using MeetupEvents.Application;
+using MeetupEvents.Domain;
+using MeetupEvents.Infrastructure;
+using MeetupEvents.Queries;
+using static MeetupEvents.Application.DomainServices;
 
 namespace MeetupEvents
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+        public Startup(IConfiguration configuration) => Configuration = configuration;
 
         public IConfiguration Configuration { get; }
 
@@ -38,6 +33,12 @@ namespace MeetupEvents
 
             services.AddScoped<MeetupEventsApplicationService>();
             services.AddScoped<AttendantListApplicationService>();
+
+            services.AddSingleton<GetMapId>(id =>
+                GetMapId(() => new NpgsqlConnection(connectionString), id)
+            );
+
+            services.AddDomainEventsDispatcher(typeof(AttendantListEventsHandler));
 
             services.AddSingleton(
                 new MeetupEventQueries(

@@ -1,0 +1,24 @@
+﻿using System;
+
+namespace MeetupEvents.Contracts
+{
+    public static class MeetupEvents
+    {
+        public static class V1
+        {
+            public record MeetupEventCreated(Guid Id);
+
+            public record DetailsUpdated(Guid Id, string Title, string Description);
+
+            public record MadeOnline(Guid Id, Uri Url);
+
+            public record MadeOnsite(Guid Id, string Address);
+
+            public record Scheduled(Guid Id, DateTimeOffset Start, DateTimeOffset End);
+
+            public record Published(Guid Id, DateTimeOffset At);
+
+            public record Canceled(Guid Id, string Reason, DateTimeOffset At);
+        }
+    }
+}

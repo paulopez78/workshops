@@ -11,14 +11,17 @@ namespace MeetupEvents.Application
     {
         readonly MeetupEventOptions Options;
         readonly IDateTimeProvider  DateTimeProvider;
+        readonly GetMapId           GetMapId;
 
         public AttendantListApplicationService(
             AttendantListRepository repository,
             IOptions<MeetupEventOptions> options,
-            IDateTimeProvider dateTimeProvider) : base(repository)
+            IDateTimeProvider dateTimeProvider,
+            GetMapId getMapId) : base(repository)
         {
             Options          = options.Value;
             DateTimeProvider = dateTimeProvider;
+            GetMapId         = getMapId;
         }
 
         public override Task<CommandResult> HandleCommand(Guid id, object command)
@@ -28,47 +31,56 @@ namespace MeetupEvents.Application
                 CreateAttendantList cmd
                     => HandleCreate(
                         id,
-                        entity => entity.Create(id, cmd.MeetupEventId, cmd.Capacity, Options.DefaultCapacity)
+                        aggregate => aggregate.Create(id, cmd.MeetupEventId, cmd.Capacity, Options.DefaultCapacity)
                     ),
 
                 Open _
-                    => Handle(
+                    => HandleWithMapping(
                         id,
-                        entity => entity.Open()
+                        aggregate => aggregate.Open()
                     ),
 
                 Close _
-                    => Handle(
+                    => HandleWithMapping(
                         id,
                         entity => entity.Close()
                     ),
-                
+
                 IncreaseCapacity cmd
-                    => Handle(
+                    => HandleWithMapping(
                         id,
                         entity => entity.IncreaseCapacity(cmd.byNumber)
                     ),
 
                 ReduceCapacity cmd
-                    => Handle(
+                    => HandleWithMapping(
                         id,
                         entity => entity.ReduceCapacity(cmd.byNumber)
                     ),
-                
+
                 Attend cmd
-                    => Handle(
+                    => HandleWithMapping(
                         id,
                         entity => entity.Attend(cmd.MemberId, DateTimeProvider.GetUtcNow())
                     ),
 
                 CancelAttendance cmd
-                    => Handle(
+                    => HandleWithMapping(
                         id,
                         entity => entity.CancelAttendance(cmd.MemberId, DateTimeProvider.GetUtcNow())
                     ),
                 _
                     => throw new InvalidOperationException($"Command handler for {command} does not exist")
             };
+        }
+
+        async Task<CommandResult> HandleWithMapping(Guid id, Action<AttendantListAggregate> commandHandler)
+        {
+            var mapId = await GetMapId(id);
+            if (!mapId.HasValue)
+                throw new ArgumentException($"Can not map {id}");
+
+            return await Handle(mapId.Value, commandHandler);
         }
     }
 

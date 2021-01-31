@@ -1,4 +1,5 @@
 ﻿using System;
+using static MeetupEvents.Contracts.MeetupEvents.V1;
 
 namespace MeetupEvents.Domain
 {
@@ -14,7 +15,6 @@ namespace MeetupEvents.Domain
 
         public MeetupEventStatus Status { get; private set; } = MeetupEventStatus.None;
 
-
         public void Create(Guid id, Guid groupId, Details details)
         {
             EnforceStatusBe(MeetupEventStatus.None);
@@ -23,24 +23,32 @@ namespace MeetupEvents.Domain
             GroupId = groupId;
             Details = details;
             Status  = MeetupEventStatus.Draft;
+
+            _changes.Add(new MeetupEventCreated(id));
         }
 
         public void MakeOnline(Uri url)
         {
             EnforceStatusBe(MeetupEventStatus.Draft);
             Location = Location.OnLine(url);
+
+            _changes.Add(new MadeOnline(Id, url));
         }
 
         public void MakeOnsite(Address address)
         {
             EnforceStatusBe(MeetupEventStatus.Draft);
             Location = Location.OnSite(address);
+
+            _changes.Add(new MadeOnsite(Id, address));
         }
 
         public void Schedule(ScheduleTime scheduleTime)
         {
             EnforceStatusBe(MeetupEventStatus.Draft);
             ScheduleTime = scheduleTime;
+
+            _changes.Add(new Scheduled(Id, ScheduleTime.Start, ScheduleTime.End));
         }
 
         public void UpdateDetails(Details details)
@@ -48,37 +56,43 @@ namespace MeetupEvents.Domain
             EnforceStatusNotBe(MeetupEventStatus.Cancelled);
 
             Details = details;
+
+            _changes.Add(new DetailsUpdated(Id, details.Title, details.Description));
         }
 
-        public void Publish()
+        public void Publish(DateTimeOffset at)
         {
             EnforceStatusBe(MeetupEventStatus.Draft);
             EnforceStatusNotBe(MeetupEventStatus.Cancelled);
-            
+
             EnforceLocation();
             EnforceSchedule();
 
             Status = MeetupEventStatus.Published;
+
+            _changes.Add(new Published(Id, at));
         }
 
-        private void EnforceLocation()
-        {
-            if (Location is null)
-                throw new ArgumentNullException(nameof(Location));
-        }
-        
-        private void EnforceSchedule()
-        {
-            if (Location is null)
-                throw new ArgumentNullException(nameof(ScheduleTime));
-        }
-
-        public void Cancel(string reason)
+        public void Cancel(string reason, DateTimeOffset at)
         {
             EnforceStatusBe(MeetupEventStatus.Published);
 
             Status            = MeetupEventStatus.Cancelled;
             CancelationReason = reason;
+
+            _changes.Add(new Canceled(Id, reason, at));
+        }
+
+        void EnforceLocation()
+        {
+            if (Location is null)
+                throw new ArgumentNullException(nameof(Location));
+        }
+
+        void EnforceSchedule()
+        {
+            if (Location is null)
+                throw new ArgumentNullException(nameof(ScheduleTime));
         }
 
         void EnforceStatusBe(MeetupEventStatus status)

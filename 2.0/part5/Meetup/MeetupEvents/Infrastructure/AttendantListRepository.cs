@@ -7,7 +7,8 @@ namespace MeetupEvents.Infrastructure
 {
     public class AttendantListRepository : Repository<AttendantListAggregate>
     {
-        public AttendantListRepository(MeetupDbContext dbContext) : base(dbContext)
+        public AttendantListRepository(MeetupDbContext dbContext, DomainEventsDispatcher dispatcher) :
+            base(dbContext, dispatcher)
         {
         }
 

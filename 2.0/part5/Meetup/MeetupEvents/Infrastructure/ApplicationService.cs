@@ -11,6 +11,8 @@ namespace MeetupEvents.Infrastructure
         Task<CommandResult> HandleCommand(Guid id, object command);
     }
 
+    public delegate Task<Guid?> GetMapId(Guid id);
+
     public abstract class ApplicationService<TAggregate> : IApplicationService where TAggregate : Aggregate, new()
     {
         readonly Repository<TAggregate> Repository;
@@ -31,6 +33,7 @@ namespace MeetupEvents.Infrastructure
 
             // commit transaction
             await Repository.SaveChanges(aggregate);
+            
             return new(id, true);
         }
 
@@ -42,7 +45,6 @@ namespace MeetupEvents.Infrastructure
                 throw new InvalidOperationException($"{typeof(TAggregate).Name} {id} already exists");
 
             // execute business logic
-
             aggregate = new TAggregate();
             commandHandler(aggregate);
             await Repository.Add(aggregate);

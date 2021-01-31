@@ -15,7 +15,7 @@ namespace MeetupEvents.Test
             var meetup = CreateMeetup();
 
             // act
-            meetup.Publish();
+            meetup.Publish(DateTimeOffset.UtcNow);
 
             // assert
             meetup.Status.Should().Be(MeetupEventStatus.Published);
@@ -26,10 +26,10 @@ namespace MeetupEvents.Test
         {
             // arrange
             var meetup = CreateMeetup();
-            meetup.Publish();
+            meetup.Publish(DateTimeOffset.UtcNow);
 
             // act
-            meetup.Cancel("covid");
+            meetup.Cancel("covid", DateTimeOffset.UtcNow);
 
             // assert
             meetup.Status.Should().Be(MeetupEventStatus.Cancelled);
@@ -40,11 +40,11 @@ namespace MeetupEvents.Test
         {
             // arrange
             var meetup = CreateMeetup();
-            meetup.Publish();
-            meetup.Cancel("more covid");
+            meetup.Publish(DateTimeOffset.UtcNow);
+            meetup.Cancel("more covid", DateTimeOffset.UtcNow);
 
             // act
-            Action publish = () => meetup.Publish();
+            Action publish = () => meetup.Publish(DateTimeOffset.UtcNow);
 
             // assert
             publish.Should().ThrowExactly<InvalidOperationException>();

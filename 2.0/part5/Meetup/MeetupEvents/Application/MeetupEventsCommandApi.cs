@@ -2,7 +2,7 @@
 using MeetupEvents.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using static MeetupEvents.Contracts.MeetupEventsCommands.V1;
+using static MeetupEvents.Contracts.MeetupCommands.V1;
 
 namespace MeetupEvents.Application
 {
