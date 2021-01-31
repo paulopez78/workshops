@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using static MeetupEvents.Contracts.AttendantListEvents.V1;
 
 namespace MeetupEvents.Domain
 {
@@ -22,17 +23,21 @@ namespace MeetupEvents.Domain
             Capacity      = capacity == 0 ? defaultCapacity : capacity;
             Status        = AttendantListStatus.Closed;
             MeetupEventId = meetupEventId;
+
+            _changes.Add(new AttendantListCreated(Id, MeetupEventId, Capacity));
         }
 
-        public void Open()
+        public void Open(DateTimeOffset at)
         {
             EnforceStatusNotBe(AttendantListStatus.Opened);
             EnforceStatusNotBe(AttendantListStatus.Archived);
 
             Status = AttendantListStatus.Opened;
+
+            _changes.Add(new Opened(Id, at));
         }
 
-        public void Close()
+        public void Close(DateTimeOffset at)
         {
             EnforceStatusNotBe(AttendantListStatus.Closed);
             EnforceStatusNotBe(AttendantListStatus.Archived);
@@ -40,6 +45,8 @@ namespace MeetupEvents.Domain
             EnforceStatusBe(AttendantListStatus.Opened);
 
             Status = AttendantListStatus.Closed;
+
+            _changes.Add(new Closed(Id, at));
         }
 
         public void ReduceCapacity(PositiveNumber byNumber)
@@ -48,11 +55,16 @@ namespace MeetupEvents.Domain
 
             Capacity -= byNumber;
 
-            OrderedAttendants
+            var shouldWait = OrderedAttendants
                 .Where(x => !x.Waiting)
                 .TakeLast(byNumber)
-                .ToList()
-                .ForEach(x => x.Wait());
+                .ToList();
+
+            shouldWait.ForEach(x => x.Wait());
+
+            _changes.AddRange(
+                shouldWait.Select(x => new AttendantMovedToWaiting(Id, x.UserId, x.At))
+            );
         }
 
         public void IncreaseCapacity(PositiveNumber byNumber)
@@ -61,11 +73,16 @@ namespace MeetupEvents.Domain
 
             Capacity += byNumber;
 
-            OrderedAttendants
+            var shouldAttend = OrderedAttendants
                 .Where(x => x.Waiting)
                 .Take(byNumber)
-                .ToList()
-                .ForEach(x => x.Attend());
+                .ToList();
+
+            shouldAttend.ForEach(x => x.Attend());
+
+            _changes.AddRange(
+                shouldAttend.Select(x => new AttendantAdded(Id, x.UserId, x.At))
+            );
         }
 
         public void Attend(Guid memberId, DateTimeOffset at)
@@ -77,9 +94,15 @@ namespace MeetupEvents.Domain
                 throw new InvalidOperationException($"Member {memberId} already going to the meetup");
 
             if (HasFreeSpots())
+            {
                 _attendants.Add(new(memberId, at));
+                _changes.Add(new AttendantAdded(Id, memberId, at));
+            }
             else
+            {
                 _attendants.Add(new(memberId, at, waiting: true));
+                _changes.Add(new AttendantMovedToWaiting(Id, memberId, at));
+            }
 
             bool HasFreeSpots() => Capacity - _attendants.Count > 0;
         }
@@ -88,10 +111,19 @@ namespace MeetupEvents.Domain
         {
             EnforceStatusBe(AttendantListStatus.Opened);
 
-            _attendants.RemoveAll(x => x.UserId == memberId);
+            var attendant = _attendants.FirstOrDefault(x => x.UserId == memberId);
+            if (attendant is null)
+                throw new InvalidOperationException($"Member {memberId} already not going to the meetup");
 
-            // first in the waiting list moved to attend 
-            OrderedAttendants.FirstOrDefault(x => x.Waiting)?.Attend();
+            _attendants.Remove(attendant);
+
+            var firstWaiting = OrderedAttendants.FirstOrDefault(x => x.Waiting);
+            if (firstWaiting is null) return;
+
+            firstWaiting.Attend();
+
+            _changes.Add(new AttendantRemoved(Id, attendant.UserId, attendant.At));
+            _changes.Add(new AttendantAdded(Id, firstWaiting.UserId, firstWaiting.At));
         }
 
         void EnforceStatusBe(AttendantListStatus status)

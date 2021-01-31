@@ -37,13 +37,13 @@ namespace MeetupEvents.Application
                 Open _
                     => HandleWithMapping(
                         id,
-                        aggregate => aggregate.Open()
+                        aggregate => aggregate.Open(DateTimeProvider.GetUtcNow())
                     ),
 
                 Close _
                     => HandleWithMapping(
                         id,
-                        entity => entity.Close()
+                        entity => entity.Close(DateTimeProvider.GetUtcNow())
                     ),
 
                 IncreaseCapacity cmd

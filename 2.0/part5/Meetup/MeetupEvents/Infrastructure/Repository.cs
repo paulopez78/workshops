@@ -20,10 +20,8 @@ namespace MeetupEvents.Infrastructure
         public virtual Task<TAggregate?> Load(Guid id)
             => DbContext.Set<TAggregate>().SingleOrDefaultAsync(x => x.Id == id)!;
 
-        public async Task Add(TAggregate aggregate)
-        {
-            await DbContext.Set<TAggregate>().AddAsync(aggregate);
-        }
+        public async Task Add(TAggregate aggregate) 
+            => await DbContext.Set<TAggregate>().AddAsync(aggregate);
 
         public async Task SaveChanges(TAggregate aggregate)
         {

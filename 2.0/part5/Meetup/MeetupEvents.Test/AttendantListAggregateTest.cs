@@ -16,7 +16,7 @@ namespace MeetupEvents.Test
             var attendantList = CreateAttendantList();
 
             // act
-            attendantList.Open();
+            attendantList.Open(DateTimeOffset.UtcNow);
 
             // assert
             attendantList.Status.Should().Be(AttendantListStatus.Opened);
@@ -27,10 +27,10 @@ namespace MeetupEvents.Test
         {
             // arrange
             var attendantList = CreateAttendantList();
-            attendantList.Open();
+            attendantList.Open(DateTimeOffset.UtcNow);
 
             // act
-            attendantList.Close();
+            attendantList.Close(DateTimeOffset.UtcNow);
 
             // assert
             attendantList.Status.Should().Be(AttendantListStatus.Closed);
@@ -41,11 +41,11 @@ namespace MeetupEvents.Test
         {
             // arrange
             var attendantList = CreateAttendantList();
-            attendantList.Open();
-            attendantList.Close();
+            attendantList.Open(DateTimeOffset.UtcNow);
+            attendantList.Close(DateTimeOffset.UtcNow);
 
             // act
-            attendantList.Open();
+            attendantList.Open(DateTimeOffset.UtcNow);
 
             // assert
             attendantList.Status.Should().Be(AttendantListStatus.Opened);
@@ -58,7 +58,7 @@ namespace MeetupEvents.Test
             var attendantList = CreateAttendantList();
 
             // act
-            Action close = () => attendantList.Close();
+            Action close = () => attendantList.Close(DateTimeOffset.UtcNow);
 
             // assert
             close.Should().ThrowExactly<InvalidOperationException>();
@@ -70,7 +70,7 @@ namespace MeetupEvents.Test
         {
             // arrange
             var attendantList = CreateAttendantList();
-            attendantList.Open();
+            attendantList.Open(DateTimeOffset.UtcNow);
             var joe = NewGuid();
 
             // act
@@ -85,7 +85,7 @@ namespace MeetupEvents.Test
         {
             // arrange
             var attendantList = CreateAttendantList();
-            attendantList.Open();
+            attendantList.Open(DateTimeOffset.UtcNow);
 
             var joe = NewGuid();
             attendantList.Attend(joe, DateTimeOffset.UtcNow);
@@ -102,7 +102,7 @@ namespace MeetupEvents.Test
         {
             // arrange
             var attendantList = CreateAttendantList();
-            attendantList.Open();
+            attendantList.Open(DateTimeOffset.UtcNow);
 
             var now = DateTimeOffset.UtcNow;
 
@@ -123,7 +123,7 @@ namespace MeetupEvents.Test
             // arrange
             var now           = DateTimeOffset.UtcNow;
             var attendantList = CreateAttendantList(capacity: 2);
-            attendantList.Open();
+            attendantList.Open(DateTimeOffset.UtcNow);
 
             // act
             attendantList.Attend(joe, now);
@@ -149,7 +149,7 @@ namespace MeetupEvents.Test
         {
             // arrange
             var attendantList = CreateAttendantList(capacity: 3);
-            attendantList.Open();
+            attendantList.Open(DateTimeOffset.UtcNow);
 
             var now = DateTimeOffset.UtcNow;
             attendantList.Attend(joe, now);
@@ -170,7 +170,7 @@ namespace MeetupEvents.Test
         {
             // arrange
             var attendantList = CreateAttendantList(capacity: 2);
-            attendantList.Open();
+            attendantList.Open(DateTimeOffset.UtcNow);
 
             var now = DateTimeOffset.UtcNow;
             attendantList.Attend(joe, now);
