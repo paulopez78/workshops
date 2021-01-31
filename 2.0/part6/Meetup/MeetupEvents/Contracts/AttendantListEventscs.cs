@@ -8,18 +8,18 @@ namespace MeetupEvents.Contracts
         {
             public record AttendantListCreated(Guid Id, Guid MeetupEventId, int Capacity);
 
-            public record Opened(Guid Id, DateTimeOffset at);
+            public record Opened(Guid Id, DateTimeOffset At);
 
-            public record Closed(Guid Id, DateTimeOffset at);
+            public record Closed(Guid Id, DateTimeOffset At);
 
-            public record CapacityIncreased(Guid Id, int byNumber);
+            public record CapacityIncreased(Guid Id, int ByNumber);
 
-            public record CapacityReduced(Guid Id, int byNumber);
+            public record CapacityReduced(Guid Id, int ByNumber);
 
-            public record AttendantAdded(Guid Id, Guid MemberId, DateTimeOffset at);
+            public record AttendantAdded(Guid Id, Guid MemberId, DateTimeOffset At);
 
-            public record AttendantRemoved(Guid Id, Guid MemberId, DateTimeOffset at);
-            public record AttendantMovedToWaiting(Guid Id, Guid MemberId, DateTimeOffset at);
+            public record AttendantRemoved(Guid Id, Guid MemberId, DateTimeOffset At);
+            public record AttendantMovedToWaiting(Guid Id, Guid MemberId, DateTimeOffset At);
         }
     }
 }
