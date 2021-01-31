@@ -12,6 +12,10 @@ namespace MeetupEvents.Contracts
 
             public record Close(Guid Id);
 
+            public record IncreaseCapacity(Guid Id, int byNumber);
+
+            public record ReduceCapacity(Guid Id, int byNumber);
+
             public record Attend(Guid Id, Guid MemberId);
 
             public record CancelAttendance(Guid Id, Guid MemberId);

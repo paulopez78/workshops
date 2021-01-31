@@ -6,12 +6,13 @@ namespace MeetupEvents.Domain
 {
     public class AttendantListAggregate : Aggregate
     {
-        public Guid MeetupEventId { get; private set; }
-
         readonly List<Attendant>          _attendants = new();
-        public   IReadOnlyList<Attendant> Attendants => _attendants;
-        public   PositiveNumber           Capacity   { get; private set; }
-        public   AttendantListStatus      Status     { get; private set; } = AttendantListStatus.None;
+        public   IReadOnlyList<Attendant> Attendants        => _attendants.OrderBy(x => x.At).ToList();
+        public   IReadOnlyList<Attendant> OrderedAttendants => _attendants.OrderBy(x => x.At).ToList();
+        public   Guid                     MeetupEventId     { get; private set; }
+        public   PositiveNumber           Capacity          { get; private set; }
+        public   AttendantListStatus      Status            { get; private set; } = AttendantListStatus.None;
+
 
         public void Create(Guid id, Guid meetupEventId, int capacity, int defaultCapacity = 50)
         {
@@ -46,6 +47,12 @@ namespace MeetupEvents.Domain
             EnforceStatusNotBe(AttendantListStatus.Archived);
 
             Capacity -= byNumber;
+
+            OrderedAttendants
+                .Where(x => !x.Waiting)
+                .TakeLast(byNumber)
+                .ToList()
+                .ForEach(x => x.Wait());
         }
 
         public void IncreaseCapacity(PositiveNumber byNumber)
@@ -53,6 +60,12 @@ namespace MeetupEvents.Domain
             EnforceStatusNotBe(AttendantListStatus.Archived);
 
             Capacity += byNumber;
+
+            OrderedAttendants
+                .Where(x => x.Waiting)
+                .Take(byNumber)
+                .ToList()
+                .ForEach(x => x.Attend());
         }
 
         public void Attend(Guid memberId, DateTimeOffset at)
@@ -68,7 +81,7 @@ namespace MeetupEvents.Domain
             else
                 _attendants.Add(new(memberId, at, waiting: true));
 
-            bool HasFreeSpots() => Capacity > _attendants.Count;
+            bool HasFreeSpots() => Capacity - _attendants.Count > 0;
         }
 
         public void CancelAttendance(Guid memberId, DateTimeOffset at)
@@ -77,8 +90,8 @@ namespace MeetupEvents.Domain
 
             _attendants.RemoveAll(x => x.UserId == memberId);
 
-            var waiting = _attendants.Where(x => x.Waiting).OrderBy(x => x.At).FirstOrDefault();
-            waiting?.Attend();
+            // first in the waiting list moved to attend 
+            OrderedAttendants.FirstOrDefault(x => x.Waiting)?.Attend();
         }
 
         void EnforceStatusBe(AttendantListStatus status)
@@ -110,6 +123,9 @@ namespace MeetupEvents.Domain
 
         public void Attend()
             => Waiting = false;
+
+        public void Wait()
+            => Waiting = true;
     }
 
     public enum AttendantListStatus

@@ -21,7 +21,7 @@ namespace MeetupEvents.Test
             // assert
             attendantList.Status.Should().Be(AttendantListStatus.Opened);
         }
-        
+
         [Fact]
         public void Given_Opened_AttendantList_When_Close_Then_Closed()
         {
@@ -35,7 +35,7 @@ namespace MeetupEvents.Test
             // assert
             attendantList.Status.Should().Be(AttendantListStatus.Closed);
         }
-        
+
         [Fact]
         public void Given_Closed_AttendantList_When_Open_Then_Opened()
         {
@@ -98,17 +98,13 @@ namespace MeetupEvents.Test
         }
 
         [Fact]
-        public void Given_Meetup_With_Enough_Capacity_When_Members_Attend_Then_Going()
+        public void Given_Attendant_List_With_Enough_Capacity_When_Members_Attend_Then_Going()
         {
             // arrange
             var attendantList = CreateAttendantList();
             attendantList.Open();
 
             var now = DateTimeOffset.UtcNow;
-
-            var joe   = NewGuid();
-            var alice = NewGuid();
-            var bob   = NewGuid();
 
             // act
             attendantList.Attend(joe, now);
@@ -122,16 +118,12 @@ namespace MeetupEvents.Test
         }
 
         [Fact]
-        public void Given_Meetup_Without_Enough_Capacity_When_Members_Attend_Then_Some_Waiting()
+        public void Given_AttendingList_Without_Enough_Capacity_When_Members_Attend_Then_Some_Waiting()
         {
             // arrange
             var now           = DateTimeOffset.UtcNow;
             var attendantList = CreateAttendantList(capacity: 2);
             attendantList.Open();
-
-            var joe   = NewGuid();
-            var alice = NewGuid();
-            var bob   = NewGuid();
 
             // act
             attendantList.Attend(joe, now);
@@ -152,12 +144,58 @@ namespace MeetupEvents.Test
             attendantList.Going(bob).Should().BeTrue();
         }
 
+        [Fact]
+        public void Given_Full_Attendant_List_When_ReduceCapacity_Then_Last_Attendant_Waiting()
+        {
+            // arrange
+            var attendantList = CreateAttendantList(capacity: 3);
+            attendantList.Open();
+
+            var now = DateTimeOffset.UtcNow;
+            attendantList.Attend(joe, now);
+            attendantList.Attend(alice, now.AddSeconds(1));
+            attendantList.Attend(bob, now.AddSeconds(2));
+
+            // act
+            attendantList.ReduceCapacity(1);
+
+            // assert
+            attendantList.Going(joe).Should().BeTrue();
+            attendantList.Going(alice).Should().BeTrue();
+            attendantList.Waiting(bob).Should().BeTrue();
+        }
+
+        [Fact]
+        public void Given_Attendant_List_With_Waiting_Attendant_When_IncreaseCapacity_Then_Attendant_Going()
+        {
+            // arrange
+            var attendantList = CreateAttendantList(capacity: 2);
+            attendantList.Open();
+
+            var now = DateTimeOffset.UtcNow;
+            attendantList.Attend(joe, now);
+            attendantList.Attend(alice, now.AddSeconds(1));
+            attendantList.Attend(bob, now.AddSeconds(2));
+
+            // act
+            attendantList.IncreaseCapacity(1);
+
+            // assert
+            attendantList.Going(joe).Should().BeTrue();
+            attendantList.Going(alice).Should().BeTrue();
+            attendantList.Going(bob).Should().BeTrue();
+        }
+
         private AttendantListAggregate CreateAttendantList(int capacity = 0)
         {
             var aggregate = new AttendantListAggregate();
             aggregate.Create(NewGuid(), NewGuid(), capacity, 10);
             return aggregate;
         }
+
+        Guid joe   = NewGuid();
+        Guid alice = NewGuid();
+        Guid bob   = NewGuid();
     }
 
     public static class TestExtensions
