@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkerService", "WorkerService\WorkerService.csproj", "{9DF1C435-F60C-4438-BC40-FC19BE5F2F92}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApplication", "WebApplication\WebApplication.csproj", "{FF73E6B8-3DAE-4898-8E2F-433BD9B90290}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9DF1C435-F60C-4438-BC40-FC19BE5F2F92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DF1C435-F60C-4438-BC40-FC19BE5F2F92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DF1C435-F60C-4438-BC40-FC19BE5F2F92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DF1C435-F60C-4438-BC40-FC19BE5F2F92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF73E6B8-3DAE-4898-8E2F-433BD9B90290}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF73E6B8-3DAE-4898-8E2F-433BD9B90290}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF73E6B8-3DAE-4898-8E2F-433BD9B90290}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF73E6B8-3DAE-4898-8E2F-433BD9B90290}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
