@@ -1,0 +1,35 @@
+version: "3.7"
+
+services:
+  meetup-events:
+    image: paulopez/meetup-events
+    container_name: meetup-events
+    build:
+      context: ./MeetupEvents
+    ports:
+      - 5000:5000
+    environment:
+      ConnectionStrings__MeetupEvents: "Host=postgres;Port=5432;Database=meetup_events;Username=postgres;Password=mysecretpassword;"
+    restart: always
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres
+    container_name: database
+    environment:
+      POSTGRES_PASSWORD: mysecretpassword
+    ports:
+      - 5432:5432
+    volumes:
+      - ./postgresql/data:/var/lib/postgresql/data
+      
+  rabbitmq:
+    container_name: rabbitmq
+    build: 
+      context: ./rabbitmq
+    image: rabbitmq-plugins
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+  
