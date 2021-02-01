@@ -119,14 +119,18 @@ namespace MeetupEvents.Test
 
             await CreateMeetup(meetupEventId);
             await Publish(meetupEventId);
+
             var joe = NewGuid();
 
             // act
-            await Attend(meetupEventId, joe);
+            await AttendWithRetry(joe);
 
             // assert
             var expectedMeetup = await Get(meetupEventId);
             expectedMeetup.Going(joe).Should().BeTrue();
+            
+            async Task AttendWithRetry(Guid userId)
+                => await Retry().ExecuteAsync(() => Attend(meetupEventId, userId));
         }
 
         [Fact]
@@ -258,7 +262,7 @@ namespace MeetupEvents.Test
             Random jitterer = new();
             return HttpPolicyExtensions
                 .HandleTransientHttpError()
-                .WaitAndRetryAsync(3, _ => TimeSpan.FromMilliseconds(jitterer.Next(0, 100)));
+                .WaitAndRetryAsync(3, _ => TimeSpan.FromMilliseconds(jitterer.Next(10, 200)));
         }
     }
 

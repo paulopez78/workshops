@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using MeetupEvents.Domain;
 using MeetupEvents.Infrastructure;
 using Microsoft.Extensions.Options;
+using Npgsql;
 using static MeetupEvents.Contracts.AttendantListCommands.V1;
 
 namespace MeetupEvents.Application
@@ -10,8 +11,8 @@ namespace MeetupEvents.Application
     public class AttendantListApplicationService : ApplicationService<AttendantListAggregate>
     {
         readonly MeetupEventOptions Options;
-        readonly IDateTimeProvider  DateTimeProvider;
-        readonly GetMapId           GetMapId;
+        readonly IDateTimeProvider DateTimeProvider;
+        readonly GetMapId GetMapId;
 
         public AttendantListApplicationService(
             AttendantListRepository repository,
@@ -19,9 +20,9 @@ namespace MeetupEvents.Application
             IDateTimeProvider dateTimeProvider,
             GetMapId getMapId) : base(repository)
         {
-            Options          = options.Value;
+            Options = options.Value;
             DateTimeProvider = dateTimeProvider;
-            GetMapId         = getMapId;
+            GetMapId = getMapId;
         }
 
         public override Task<CommandResult> HandleCommand(Guid id, object command)
@@ -35,7 +36,7 @@ namespace MeetupEvents.Application
                     ),
 
                 Open _
-                    => HandleWithMapping(
+                    => HandleWithRandomException(
                         id,
                         aggregate => aggregate.Open(DateTimeProvider.GetUtcNow())
                     ),
@@ -72,6 +73,15 @@ namespace MeetupEvents.Application
                 _
                     => throw new InvalidOperationException($"Command handler for {command} does not exist")
             };
+        }
+
+        async Task<CommandResult> HandleWithRandomException(Guid id, Action<AttendantListAggregate> commandHandler)
+        {
+            var random = new Random();
+            if (random.Next(1, 10) > 5)
+                throw new NpgsqlException();
+
+            return await HandleWithMapping(id, commandHandler);
         }
 
         async Task<CommandResult> HandleWithMapping(Guid id, Action<AttendantListAggregate> commandHandler)

@@ -1,3 +1,5 @@
+using System;
+using GreenPipes;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -38,7 +40,7 @@ namespace MeetupEvents
             services.AddSingleton<GetMapId>(id =>
                 GetAttendantListId(() => new NpgsqlConnection(connectionString), id)
             );
-            
+
             services.AddSingleton<GetMeetupEventId>(id =>
                 GetMeetupEventId(() => new NpgsqlConnection(connectionString), id)
             );
@@ -54,7 +56,7 @@ namespace MeetupEvents
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "MeetupEvents", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo {Title = "MeetupEvents", Version = "v1"});
             });
 
             services.AddMassTransit(x =>
@@ -69,8 +71,17 @@ namespace MeetupEvents
                         h.Password("guest");
                     });
 
+                    cfg.UseMessageRetry(r =>
+                    {
+                        r.Interval(5, TimeSpan.FromMilliseconds(100));
+                        r.Handle<InvalidOperationException>();
+                        r.Handle<NpgsqlException>();
+                        r.Ignore<ArgumentException>();
+                    });
+
                     cfg.ReceiveEndpoint("attendant-list", e => e.Consumer<AttendantListEventsHandler>(context));
-                    cfg.ReceiveEndpoint("publish-integration-events", e => e.Consumer<IntegrationEventsDispatcher>(context));
+                    cfg.ReceiveEndpoint("publish-integration-events",
+                        e => e.Consumer<IntegrationEventsDispatcher>(context));
                 });
             });
             services.AddMassTransitHostedService();
