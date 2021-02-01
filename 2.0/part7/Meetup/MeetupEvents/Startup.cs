@@ -12,7 +12,6 @@ using Npgsql;
 using MeetupEvents.Application;
 using MeetupEvents.Domain;
 using MeetupEvents.Infrastructure;
-using MeetupEvents.Queries;
 using static MeetupEvents.Application.DomainServices;
 
 namespace MeetupEvents
@@ -40,17 +39,6 @@ namespace MeetupEvents
             services.AddSingleton<GetMapId>(id =>
                 GetAttendantListId(() => new NpgsqlConnection(connectionString), id)
             );
-
-            services.AddSingleton<GetMeetupEventId>(id =>
-                GetMeetupEventId(() => new NpgsqlConnection(connectionString), id)
-            );
-
-            services.AddSingleton(
-                new MeetupEventQueries(
-                    () => new NpgsqlConnection(connectionString)
-                )
-            );
-
             services.AddHostedService<OutboxProcessor>();
 
             services.AddControllers();
@@ -62,7 +50,6 @@ namespace MeetupEvents
             services.AddMassTransit(x =>
             {
                 x.AddConsumer<AttendantListEventsHandler>();
-                x.AddConsumer<IntegrationEventsDispatcher>();
                 x.UsingRabbitMq((context, cfg) =>
                 {
                     cfg.Host(Configuration.GetValue("RabbitMQ:Host", "localhost"), "/", h =>
@@ -80,8 +67,6 @@ namespace MeetupEvents
                     });
 
                     cfg.ReceiveEndpoint("attendant-list", e => e.Consumer<AttendantListEventsHandler>(context));
-                    cfg.ReceiveEndpoint("publish-integration-events",
-                        e => e.Consumer<IntegrationEventsDispatcher>(context));
                 });
             });
             services.AddMassTransitHostedService();

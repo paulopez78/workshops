@@ -77,7 +77,7 @@ namespace MeetupEvents.Infrastructure
             {
                 AggregateId = aggregateId,
                 Payload     = JsonSerializer.Serialize(domainEvent),
-                MessageType = domainEvent.GetType().FullName!
+                MessageType = $"{domainEvent.GetType().FullName}, {domainEvent.GetType().Assembly.FullName}",
             };
     }
 }

@@ -28,8 +28,8 @@ namespace MeetupEvents.Infrastructure
             }
             catch (InvalidOperationException e)
             {
-                // return new BadRequestObjectResult(e.Message);
-                return new ObjectResult(e.Message) { StatusCode = StatusCodes.Status500InternalServerError };
+                return new BadRequestObjectResult(e.Message);
+                //return new ObjectResult(e.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
             catch (ArgumentException e)
             {

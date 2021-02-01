@@ -36,7 +36,7 @@ namespace MeetupEvents.Application
                     ),
 
                 Open _
-                    => HandleWithRandomException(
+                    => HandleWithMapping(
                         id,
                         aggregate => aggregate.Open(DateTimeProvider.GetUtcNow())
                     ),
@@ -73,15 +73,6 @@ namespace MeetupEvents.Application
                 _
                     => throw new InvalidOperationException($"Command handler for {command} does not exist")
             };
-        }
-
-        async Task<CommandResult> HandleWithRandomException(Guid id, Action<AttendantListAggregate> commandHandler)
-        {
-            var random = new Random();
-            if (random.Next(1, 10) > 5)
-                throw new NpgsqlException();
-
-            return await HandleWithMapping(id, commandHandler);
         }
 
         async Task<CommandResult> HandleWithMapping(Guid id, Action<AttendantListAggregate> commandHandler)

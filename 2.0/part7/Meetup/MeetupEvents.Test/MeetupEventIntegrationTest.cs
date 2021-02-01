@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using MeetupEvents.Contracts;
 using MeetupEvents.Domain;
+using MeetupEvents.Queries;
+using Microsoft.Extensions.Configuration;
 using Polly;
 using Polly.Extensions.Http;
 using Polly.Retry;
@@ -20,8 +22,8 @@ namespace MeetupEvents.Test
 {
     public class MeetupEventIntegrationTest : IClassFixture<WebApiFixture>
     {
-        readonly WebApiFixture Fixture;
-        readonly HttpClient    Client;
+        readonly WebApiFixture      Fixture;
+        readonly HttpClient         Client;
 
         public MeetupEventIntegrationTest(WebApiFixture fixture, ITestOutputHelper testOutput)
         {
@@ -128,7 +130,7 @@ namespace MeetupEvents.Test
             // assert
             var expectedMeetup = await Get(meetupEventId);
             expectedMeetup.Going(joe).Should().BeTrue();
-            
+
             async Task AttendWithRetry(Guid userId)
                 => await Retry().ExecuteAsync(() => Attend(meetupEventId, userId));
         }
@@ -254,15 +256,15 @@ namespace MeetupEvents.Test
             => Client.PutAsJsonAsync($"{AttendantListUrl}/cancel-attendance",
                 new CancelAttendance(meetupEventId, memberId));
 
-        Task<ReadModels.V1.MeetupEvent> Get(Guid meetupEventId)
-            => Client.GetFromJsonAsync<ReadModels.V1.MeetupEvent>($"{BaseUrl}/{meetupEventId}");
+        Task<ReadModels.V1.MeetupEvent> Get(Guid meetupEventId) =>
+            Fixture.Queries.Handle(new Contracts.Queries.V1.Get(meetupEventId));
 
         AsyncRetryPolicy<HttpResponseMessage> Retry()
         {
             Random jitterer = new();
             return HttpPolicyExtensions
                 .HandleTransientHttpError()
-                .WaitAndRetryAsync(3, _ => TimeSpan.FromMilliseconds(jitterer.Next(10, 200)));
+                .WaitAndRetryAsync(3, _ => TimeSpan.FromMilliseconds(jitterer.Next(50, 200)));
         }
     }
 
