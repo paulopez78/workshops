@@ -9,6 +9,7 @@
 * [Docker](https://www.docker.com/products/docker-desktop) 
 * [Git](https://git-scm.com/downloads)
 * [MongoDB Compass](https://www.mongodb.com/try/download/compass/)
+* [Grpcurl](https://github.com/fullstorydev/grpcurl)
 * [BloomRpc](https://github.com/uw-labs/bloomrpc)
 
 ## Only Windows 10

@@ -35,9 +35,8 @@
 
 ## 11:30-13:00
 
-- Aggregates
+- Entities/Aggregates/Unit testing
 - Split Aggregates
-- Integration tests examples
 
 ## 15:00-17:00
 
