@@ -32,6 +32,17 @@ namespace MeetupEvents.Test
             return builder;
         }
 
+        public MeetupEvent.MeetupEventClient CreateGrpcClient()
+        {
+            var client = CreateDefaultClient();
+            var channel = GrpcChannel.ForAddress(client.BaseAddress, new GrpcChannelOptions
+            {
+                HttpClient = client
+            });
+
+            return new MeetupEvent.MeetupEventClient(channel);
+        }
+
         // migrate automatically database
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {

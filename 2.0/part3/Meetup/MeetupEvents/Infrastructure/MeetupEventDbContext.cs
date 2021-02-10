@@ -35,7 +35,7 @@ namespace MeetupEvents.Infrastructure
 
             // modelBuilder.Entity<Commands.V1.Attend>(b =>
             // {
-            //     b.Property<int>("Id")
+            //     b.Property<Guid>("Id")
             //         .HasColumnType("uuid")
             //         .ValueGeneratedOnAdd();
             //     b.HasKey("Id");
